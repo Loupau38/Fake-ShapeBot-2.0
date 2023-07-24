@@ -182,13 +182,12 @@ def generateShapeCodes(potentialShapeCode:str) -> tuple[list[str]|str,bool]:
         shapeCodes = [[layer] for layer in layers]
     else:
         shapeCodes = [layers]
-    numQuads = round(len(shapeCodes[0][0])/2)
-    if cutInParams or qcutInParams:
-        takeQuads = math.ceil(numQuads/2)
     #handle cut
     if cutInParams:
         newShapeCodes = []
         for shape in shapeCodes:
+            numQuads = round(len(shape[0])/2)
+            takeQuads = math.ceil(numQuads/2)
             shape1 = []
             shape2 = []
             for layer in shape:
@@ -199,6 +198,8 @@ def generateShapeCodes(potentialShapeCode:str) -> tuple[list[str]|str,bool]:
     elif qcutInParams:
         newShapeCodes = []
         for shape in shapeCodes:
+            numQuads = round(len(shape[0])/2)
+            takeQuads = math.ceil(numQuads/2)
             takeQuads1 = math.ceil(takeQuads/2)
             takeQuads2 = takeQuads - takeQuads1
             takeQuads3 = math.ceil((numQuads-takeQuads)/2)
