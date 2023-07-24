@@ -8,7 +8,7 @@ async def globalLogMessage(message:str,client:discord.Client) -> None:
     else:
         logChannel = await client.fetch_channel(globalInfos.GLOBAL_LOG_CHANNEL)
         await logChannel.send(message)
-async def sendMessage(message:discord.message.Message,userMessage:str,client:discord.Client,guildId:int|None):
+async def sendMessage(message:discord.message.Message,userMessage:str,client:discord.Client,guildId:int|None) -> None:
     try:
         response = responses.handleResponse(userMessage)
         if response is not None:
@@ -56,7 +56,7 @@ async def getAllServerSettings(guildId:int,property:str):
             defaultValue = defaultValue.copy()
         await setAllServerSettings(guildId,property,defaultValue)
     return allServerSettings[guildId][property]
-def runDiscordBot():
+def runDiscordBot() -> None:
     global client
     client = discord.Client(intents=discord.Intents.all())
     tree = discord.app_commands.CommandTree(client)
