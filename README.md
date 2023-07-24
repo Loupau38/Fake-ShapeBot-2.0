@@ -4,7 +4,7 @@ v1.0
 <br>
 <br>
 <br>
-Put your shape code and parameters in {}
+Put your shape code and parameters in `{}`
  
 Shapes :
 
