@@ -1,5 +1,4 @@
 import math
-import shapeViewer
 COLOR_SHAPES = ["C","R","S","W"]
 NO_COLOR_SHAPES = ["P","c"]
 COLORS = ["u","r","g","b","c","p","y","w","k"]
@@ -62,20 +61,24 @@ def generateShapeCodes(potentialShapeCode:str) -> tuple[list[str]|str,bool]:
     # handle level/milestone shapes
     for prefix in LEVEL_SHAPE_PREFIXES:
         if potentialShapeCode.startswith(prefix):
+            invalidLvl = False
+            level = potentialShapeCode[len(prefix):]
             try:
-                level = int(potentialShapeCode[len(prefix):])-1
+                level = int(level)
+                if (level < 1) or (level > len(LEVEL_SHAPES)):
+                    invalidLvl = True
             except ValueError:
-                return "Invalid level/milestone number",False
-            if level not in range(len(LEVEL_SHAPES)):
-                return "Invalid level/milestone number",False
-            potentialShapeCode = LEVEL_SHAPES[level]
+                invalidLvl = True
+            if invalidLvl:
+                return f"Invalid level/milestone number : '{level}'",False
+            potentialShapeCode = LEVEL_SHAPES[level-1]
             break
     # separate in layers
     if LAYER_SEPARATOR in potentialShapeCode:
         layers = potentialShapeCode.split(LAYER_SEPARATOR)
         for i,layer in enumerate(layers):
             if layer == "":
-                return f"Layer {i} empty",False
+                return f"Layer {i+1} empty",False
     else:
         if potentialShapeCode == "":
             return "Empty shape code",False
@@ -92,7 +95,7 @@ def generateShapeCodes(potentialShapeCode:str) -> tuple[list[str]|str,bool]:
         for i,layer in enumerate(layers):
             for char in layer:
                 if char not in ("0","1"):
-                    return f"Use of 'struct' parameter but layer {i} doesn't contain only '0' or '1'",False
+                    return f"Use of 'struct' parameter but layer {i+1} doesn't contain only '0' or '1'",False
         for i,layer in enumerate(layers):
             newLayer = ""
             if i > 2:
@@ -109,7 +112,7 @@ def generateShapeCodes(potentialShapeCode:str) -> tuple[list[str]|str,bool]:
     for layerIndex,layer in enumerate(layers):
         for charIndex,char in enumerate(layer):
             if char not in [*COLOR_SHAPES,*NO_COLOR_SHAPES,*COLORS,NOTHING_CHAR]:
-                return f"Invalid char in layer {layerIndex} at char {charIndex} : '{char}'",False
+                return f"Invalid char in layer {layerIndex+1} ({layer}), at char {charIndex+1} : '{char}'",False
     # handle {C} -> {Cu} transformation
     for layerIndex,layer in enumerate(layers):
         newLayer = ""
@@ -121,11 +124,10 @@ def generateShapeCodes(potentialShapeCode:str) -> tuple[list[str]|str,bool]:
                 skipNext = False
                 continue
             expand = False
-            if charIndex == lastChar:
+            isLastChar = charIndex == lastChar
+            if (char in COLOR_SHAPES) and ((isLastChar) or (layer[charIndex+1] not in COLORS)):
                 expand = True
-            elif (char in COLOR_SHAPES) and (layer[charIndex+1] not in COLORS):
-                expand = True
-            elif (char in [*NO_COLOR_SHAPES,NOTHING_CHAR]) and (layer[charIndex+1] != NOTHING_CHAR):
+            elif (char in [*NO_COLOR_SHAPES,NOTHING_CHAR]) and ((isLastChar) or (layer[charIndex+1] != NOTHING_CHAR)):
                 expand = True
             if expand:
                 if char in [*NO_COLOR_SHAPES,NOTHING_CHAR]:
@@ -141,7 +143,7 @@ def generateShapeCodes(potentialShapeCode:str) -> tuple[list[str]|str,bool]:
         shapeMode = True
         lastChar = len(layer)-1
         for charIndex,char in enumerate(layer):
-            errorMsgStart = f"Char in layer {layerIndex} at char {charIndex}"
+            errorMsgStart = f"Char in layer {layerIndex+1} ({layer}) at char {charIndex+1} ({char})"
             if shapeMode:
                 if char not in [*COLOR_SHAPES,*NO_COLOR_SHAPES,NOTHING_CHAR]:
                     return f"{errorMsgStart} must be a shape or empty",False
@@ -173,9 +175,9 @@ def generateShapeCodes(potentialShapeCode:str) -> tuple[list[str]|str,bool]:
                 newLayer = layer
             layers[layerIndex] = newLayer
     expectedLayerLen = len(layers[0])
-    for layer in layers:
+    for layerIndex,layer in enumerate(layers[1:]):
         if len(layer) != expectedLayerLen:
-            return "All layers don't have the same number of quadrants",False
+            return f"Layer {layerIndex+2} ({layer}){f' (or 1 ({layers[0]}))' if layerIndex == 0 else ''} doesn't have the expected number of quadrants",False
     if "lsep" in params:
         shapeCodes = [[layer] for layer in layers]
     else:
