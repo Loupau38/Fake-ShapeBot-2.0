@@ -152,12 +152,14 @@ def runDiscordBot():
         await interaction.response.send_message(responseMsg,ephemeral=True)
     @tree.command(name="stop",description="Owner only, stops the bot")
     async def stopCommand(interaction:discord.Interaction) -> None:
-        if isAllowedToRunOwnerCommand(interaction):
+        allowedToStop = isAllowedToRunOwnerCommand(interaction)
+        if allowedToStop:
             responseMsg = "Stopping bot"
         else:
             responseMsg = globalInfos.NO_PERMISSION_TEXT
         await interaction.response.send_message(responseMsg,ephemeral=True)
-        await client.close()
+        if allowedToStop:
+            await client.close()
     @tree.command(name="global-pause",description="Owner only, globally pauses the bot")
     async def globalPauseCommand(interaction:discord.Interaction) -> None:
         global globalPaused
