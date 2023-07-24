@@ -32,7 +32,7 @@ Colors :
  
 Parameters :
 
-Each parameter must have a "+" if front of it
+Each parameter must have a "+" in front of it
 - +struct : Use "0" and "1" in your shape code and they will be replaced by nothing or a circle with the color depending on the layer
 - +fill : For each layer, if it contains one quadrant, that quadrant will be repeated 4 times, if two quadrants, they will be repeated 2 times
 - +lfill : Same as "fill" but with layers instead of quadrants
@@ -40,7 +40,7 @@ Each parameter must have a "+" if front of it
 - +qcut : Same as "cut" but will cut the shape in 4 instead of 2
 - +lsep : Will separate each layer of the shape
 
-Note : "cut" and "qcut" are mutualy exclusive
+Note : "cut" and "qcut" are mutually exclusive
  
 Additional features :
 
