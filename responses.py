@@ -5,7 +5,6 @@ os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = ""
 del os
 import pygame
 import globalInfos
-import io
 def handleResponse(message:str) -> str|None:
     potentialShapeCodes = shapeCodeGenerator.getPotentialShapeCodesFromMessage(message)
     if potentialShapeCodes == []:
