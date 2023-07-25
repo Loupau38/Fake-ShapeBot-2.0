@@ -1,6 +1,7 @@
 import discord
 import responses
 import globalInfos
+import blueprints
 import json
 async def globalLogMessage(message:str,client:discord.Client) -> None:
     if globalInfos.GLOBAL_LOG_CHANNEL is None:
@@ -183,16 +184,13 @@ def runDiscordBot() -> None:
     async def viewShapesCommand(interaction:discord.Interaction,message:str) -> None:
         if globalPaused:
             return
-        guildId = interaction.guild_id
-        if (guildId is not None) and (await getAllServerSettings(guildId,"paused")):
-            return
         try:
             response = responses.handleResponse(message)
             if response is None:
                 await interaction.response.send_message("No potential shape codes detected",ephemeral=True)
             else:
                 response, hasInvalid, errorMsgs = response
-                if response is None:
+                if hasInvalid:
                     await interaction.response.send_message(", ".join(errorMsgs),ephemeral=True)
                 else:
                     imagePath, spoiler = response
@@ -357,6 +355,16 @@ def runDiscordBot() -> None:
             responseMsg = f"'restrictToRolesInverted' parameter has been set to {inverted}"
         else:
             responseMsg = globalInfos.NO_PERMISSION_TEXT
+        await interaction.response.send_message(responseMsg,ephemeral=True)
+    @tree.command(name="change-blueprint-version",description="Change a blueprint's version")
+    @discord.app_commands.describe(blueprint="The full blueprint code",version="The blueprint version number (current latest is 1019)")
+    async def changeBlueprintVersionCommand(interaction:discord.Interaction,blueprint:str,version:int) -> None:
+        if globalPaused:
+            return
+        try:
+            responseMsg = f"```{blueprints.changeBlueprintVersion(blueprint,version)}```"
+        except Exception as e:
+            responseMsg = f"Exception happened : {e}"
         await interaction.response.send_message(responseMsg,ephemeral=True)
     with open(globalInfos.TOKEN_PATH) as f:
         token = f.read()

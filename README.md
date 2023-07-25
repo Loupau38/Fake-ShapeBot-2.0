@@ -64,7 +64,8 @@ Slash commands
 <br>
 <br>
 Public commands :
-- /view-shapes [message] : will trigger the shape viewer like a regular message but will send the response back only to you and will also include any error message
+- /view-shapes [message] : will trigger the shape viewer like a regular message but will send the response back only to you and will also include any error messages
+- /change-blueprint-version [blueprint] [version] : Changes a blueprint's version and returns the new code
  
 Admin commands :
 - Pausing :<br>
