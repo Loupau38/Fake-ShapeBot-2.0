@@ -2,6 +2,7 @@ import os
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = ""
 del os
 import pygame
+import globalInfos
 LAYER_SIZE_REDUCTION = 0.70 # maybe it should be 0.76, maybe not
 COLORS = {
     "u":(187,187,186),
@@ -21,7 +22,7 @@ DEFAULT_BG_CIRCLE_DIAMETER = 520
 DEFAULT_SHAPE_DIAMETER = 422
 DEFAULT_BORDER_SIZE = 25 # should be 15, artificially increased to look better
 def renderShape(shapeCode:str,surfaceSize:int) -> pygame.Surface:
-    fakeSurfaceSize = 500
+    fakeSurfaceSize = globalInfos.INITIAL_SHAPE_SIZE
     shapeSize = (fakeSurfaceSize*DEFAULT_SHAPE_DIAMETER)/DEFAULT_IMAGE_SIZE
     shapeBorderSize = round((fakeSurfaceSize*DEFAULT_BORDER_SIZE)/DEFAULT_IMAGE_SIZE)
     bgCircleDiameter = (fakeSurfaceSize*DEFAULT_BG_CIRCLE_DIAMETER)/DEFAULT_IMAGE_SIZE
@@ -52,7 +53,8 @@ def renderShape(shapeCode:str,surfaceSize:int) -> pygame.Surface:
         "c" : {
             "type" : "circle",
             "pos" : (0,shapeSizeOn2,shapeSizeOn2),
-            "color" : (50,160,180)
+            "color" : (50,160,180),
+            "border" : False
         }
     }
     decomposedShapeCode = shapeCode.split(":")
@@ -98,15 +100,4 @@ def renderShape(shapeCode:str,surfaceSize:int) -> pygame.Surface:
             returnSurface.blit(tempLayerSurface,(
             (fakeSurfaceSize/2)-(tempLayerSurface.get_width()/2),
             (fakeSurfaceSize/2)-(tempLayerSurface.get_height()/2)))
-    return pygame.transform.smoothscale(returnSurface,(surfaceSize,surfaceSize))
-# if __name__ == "__main__":
-#     from loupauTools import pygameTools
-#     BG_COLOR = (49,51,56)
-#     shapeCode = "SrRgCbWc:WpCyRkSw:c-P-CuP-"
-#     surface = pygame.Surface((500,500))
-#     surface.fill(BG_COLOR)
-#     renderedShape = renderShape(shapeCode,100)
-#     surface.blit(renderedShape,(0,0))
-#     pygame.image.save(renderedShape,"./bot logo.png")
-#     pygameTools.init()
-#     pygameTools.displaySurface(surface)
+    return pygame.transform.smoothscale(returnSurface,(surfaceSize,surfaceSize)) # pygame doesn't work well at low resolution so render at size 500 then downscale to the desired size

@@ -47,9 +47,6 @@ async def setAllServerSettings(guildId:int,property:str,value) -> None:
     allServerSettings[guildId][property] = value
     with open(globalInfos.ALL_SERVER_SETTINGS_PATH,"w") as f:
         json.dump(allServerSettings,f)
-    # allServerSettingsChannel = await client.fetch_channel(globalInfos.ALL_SERVER_SETTINGS_CHANNEL_ID)
-    # allServerSettingsMessage = await allServerSettingsChannel.fetch_message(globalInfos.ALL_SERVER_SETTINGS_MESSAGE_ID)
-    # await allServerSettingsMessage.edit(content=json.dumps(allServerSettings))
 async def getAllServerSettings(guildId:int,property:str):
     if (allServerSettings.get(guildId) is None) or (allServerSettings[guildId].get(property) is None):
         defaultValue = globalInfos.SERVER_SETTINGS_DEFAULTS.get(property)
@@ -72,9 +69,6 @@ def runDiscordBot() -> None:
             allServerSettings = {}
             with open(globalInfos.ALL_SERVER_SETTINGS_PATH,"w") as f:
                 json.dump(allServerSettings,f)
-        # allServerSettingsChannel = await client.fetch_channel(globalInfos.ALL_SERVER_SETTINGS_CHANNEL_ID)
-        # allServerSettingsMessage = await allServerSettingsChannel.fetch_message(globalInfos.ALL_SERVER_SETTINGS_MESSAGE_ID)
-        # allServerSettings = json.loads(allServerSettingsMessage.content)
         newAllServerSettings = {}
         for k,v in allServerSettings.items():
             newAllServerSettings[int(k)] = v
