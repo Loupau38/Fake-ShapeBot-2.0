@@ -3,6 +3,7 @@ import responses
 import globalInfos
 import blueprints
 import json
+import shapeViewer
 async def globalLogMessage(message:str,client:discord.Client) -> None:
     if globalInfos.GLOBAL_LOG_CHANNEL is None:
         print(message)
@@ -73,6 +74,7 @@ def runDiscordBot() -> None:
         for k,v in allServerSettings.items():
             newAllServerSettings[int(k)] = v
         allServerSettings = newAllServerSettings
+        shapeViewer.preRenderQuadrants()
         print(f"{client.user} is now running")
     @client.event
     async def on_message(message:discord.message.Message) -> None:

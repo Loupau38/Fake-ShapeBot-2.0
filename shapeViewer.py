@@ -21,11 +21,12 @@ DEFAULT_IMAGE_SIZE = 602
 DEFAULT_BG_CIRCLE_DIAMETER = 520
 DEFAULT_SHAPE_DIAMETER = 422
 DEFAULT_BORDER_SIZE = 25 # should be 15, artificially increased to look better
-def renderShape(shapeCode:str,surfaceSize:int) -> pygame.Surface:
+def preRenderQuadrants() -> None:
+    global preRenderedQuadrants
+    preRenderedQuadrants = {}
     fakeSurfaceSize = globalInfos.INITIAL_SHAPE_SIZE
     shapeSize = (fakeSurfaceSize*DEFAULT_SHAPE_DIAMETER)/DEFAULT_IMAGE_SIZE
     shapeBorderSize = round((fakeSurfaceSize*DEFAULT_BORDER_SIZE)/DEFAULT_IMAGE_SIZE)
-    bgCircleDiameter = (fakeSurfaceSize*DEFAULT_BG_CIRCLE_DIAMETER)/DEFAULT_IMAGE_SIZE
     shapeSizeOn2 = shapeSize/2
     shapesShape = {
         "C" : {
@@ -57,41 +58,47 @@ def renderShape(shapeCode:str,surfaceSize:int) -> pygame.Surface:
             "border" : False
         }
     }
-    decomposedShapeCode = shapeCode.split(":")
-    numQuads = int(len(decomposedShapeCode[0])/2)
-    decomposedShapeCode = [[(layer[i*2],layer[(i*2)+1]) for i in range(numQuads)] for layer in decomposedShapeCode]
-    returnSurface = pygame.Surface((fakeSurfaceSize,fakeSurfaceSize),pygame.SRCALPHA)
-    pygame.draw.circle(returnSurface,BG_CIRCLE_COLOR,(fakeSurfaceSize/2,fakeSurfaceSize/2),bgCircleDiameter/2)
-    for layerIndex, layer in enumerate(decomposedShapeCode):
-        for quadIndex, quad in enumerate(layer):
-            quadShape = quad[0]
-            quadColor = quad[1]
-            if quadShape == "-":
-                continue
+    for shapeKey,shape in shapesShape.items():
+        if shape.get("color") is None:
+            colors = COLORS
+        else:
+            colors = {"-":shape["color"]}
+        for colorKey, colorValue in colors.items():
             quadSurface = pygame.Surface((shapeSizeOn2,shapeSizeOn2),flags=pygame.SRCALPHA)
-            shapeShape = shapesShape[quadShape]
-            tempColor = shapeShape.get("color")
-            if tempColor is None:
-                tempColor = COLORS[quadColor]
-            if shapeShape["type"] == "circle":
-                pygame.draw.circle(quadSurface,tempColor,
-                    (shapeShape["pos"][0],shapeShape["pos"][1]),shapeShape["pos"][2])
-                if shapeShape.get("border") is not False:
+            if shape["type"] == "circle":
+                pygame.draw.circle(quadSurface,colorValue,
+                    (shape["pos"][0],shape["pos"][1]),shape["pos"][2])
+                if shape.get("border") is not False:
                     pygame.draw.circle(quadSurface,SHAPE_BORDER_COLOR,
-                        (shapeShape["pos"][0],shapeShape["pos"][1]),shapeShape["pos"][2],shapeBorderSize)
+                        (shape["pos"][0],shape["pos"][1]),shape["pos"][2],shapeBorderSize)
                     pygame.draw.line(quadSurface,SHAPE_BORDER_COLOR,(0,0),(0,shapeSizeOn2),shapeBorderSize)
                     pygame.draw.line(quadSurface,SHAPE_BORDER_COLOR,(0,shapeSizeOn2),(shapeSizeOn2,shapeSizeOn2),shapeBorderSize)
-            elif shapeShape["type"] == "rect":
+            elif shape["type"] == "rect":
                 quadSurface.fill(SHAPE_BORDER_COLOR)
-                pygame.draw.rect(quadSurface,tempColor,pygame.Rect(
+                pygame.draw.rect(quadSurface,colorValue,pygame.Rect(
                     shapeBorderSize/2,
                     shapeBorderSize,
                     shapeSizeOn2-(1.5*shapeBorderSize),
                     shapeSizeOn2-(1.5*shapeBorderSize)))
             else:
-                pygame.draw.polygon(quadSurface,tempColor,shapeShape["points"])
-                pygame.draw.polygon(quadSurface,SHAPE_BORDER_COLOR,shapeShape["points"],shapeBorderSize)
+                pygame.draw.polygon(quadSurface,colorValue,shape["points"])
+                pygame.draw.polygon(quadSurface,SHAPE_BORDER_COLOR,shape["points"],shapeBorderSize)
+            preRenderedQuadrants[shapeKey+colorKey] = quadSurface
+def renderShape(shapeCode:str,surfaceSize:int) -> pygame.Surface:
+    fakeSurfaceSize = globalInfos.INITIAL_SHAPE_SIZE
+    bgCircleDiameter = (fakeSurfaceSize*DEFAULT_BG_CIRCLE_DIAMETER)/DEFAULT_IMAGE_SIZE
+    shapeSize = (fakeSurfaceSize*DEFAULT_SHAPE_DIAMETER)/DEFAULT_IMAGE_SIZE
+    decomposedShapeCode = shapeCode.split(":")
+    numQuads = int(len(decomposedShapeCode[0])/2)
+    decomposedShapeCode = [[layer[i*2:(i*2)+2] for i in range(numQuads)] for layer in decomposedShapeCode]
+    returnSurface = pygame.Surface((fakeSurfaceSize,fakeSurfaceSize),pygame.SRCALPHA)
+    pygame.draw.circle(returnSurface,BG_CIRCLE_COLOR,(fakeSurfaceSize/2,fakeSurfaceSize/2),bgCircleDiameter/2)
+    for layerIndex, layer in enumerate(decomposedShapeCode):
+        for quadIndex, quad in enumerate(layer):
+            if quad.startswith("-"):
+                continue
             tempLayerSurface = pygame.Surface((shapeSize,shapeSize),flags=pygame.SRCALPHA)
+            quadSurface = preRenderedQuadrants[quad]
             tempLayerSurface.blit(quadSurface,(tempLayerSurface.get_width()/2,0))
             tempLayerSurface = pygame.transform.rotate(tempLayerSurface,-((360/numQuads)*quadIndex))
             tempLayerSurface = pygame.transform.scale(tempLayerSurface,(
