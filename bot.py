@@ -57,7 +57,7 @@ async def getAllServerSettings(guildId:int,property:str):
     return allServerSettings[guildId][property]
 def runDiscordBot() -> None:
     global client
-    client = discord.Client(intents=discord.Intents.all())
+    client = discord.Client(intents=discord.Intents.all(),activity=discord.Game("shapez 2"))
     tree = discord.app_commands.CommandTree(client)
     @client.event
     async def on_ready() -> None:

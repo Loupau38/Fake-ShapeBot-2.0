@@ -43,7 +43,7 @@ def preRenderQuadrants() -> None:
         },
         "W" : {
             "type" : "polygon",
-            "points" : [(0,0),(shapeSizeOn2,0),(shapeSize/4,shapeSizeOn2),(0,shapeSizeOn2)]
+            "points" : [(shapeSizeOn2,0),(shapeSizeOn2,shapeSizeOn2),(0,shapeSizeOn2),(0,shapeSize/4)]
         },
         "P" : {
             "type" : "circle",
