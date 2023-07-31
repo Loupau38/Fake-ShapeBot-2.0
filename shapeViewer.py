@@ -48,7 +48,7 @@ def preRenderQuadrants() -> None:
         "P" : {
             "type" : "circle",
             "pos" : (shapeSize/6,shapeSize/3,shapeSize/12),
-            "color" : (68,68,80),
+            "color" : (122,148,166),
             "border" : False
         },
         "c" : {
