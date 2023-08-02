@@ -14,25 +14,36 @@ async def sendMessage(userMessage:str,sendErrors:bool,ephemeral:bool,sendMsgFunc
     try:
         response = responses.handleResponse(userMessage)
         msgTxt = ""
+        errTxt = ""
         file = None
         if response is None:
-            msgTxt = "No potential shape codes detected"
+            errTxt = "No potential shape codes detected"
         else:
             response, hasInvalid, errorMsgs = response
             if hasInvalid:
-                msgTxt = "\n".join(f"- {msg}" for msg in errorMsgs)
+                errTxt = "\n".join(f"- {msg}" for msg in errorMsgs)
             if response is not None:
-                image, spoiler = response
+                image, spoiler, resultingShapeCodes = response
                 file = discord.File(image,"shapes.png",spoiler=spoiler)
-        if (msgTxt != "") and (not sendErrors):
+                if resultingShapeCodes is not None:
+                    msgTxt = " ".join(f"{{{code}}}" for code in resultingShapeCodes)
+        if (errTxt != "") and (not sendErrors):
             await addReactionFunc("\u2753")
-        if (file is not None) or ((msgTxt != "") and sendErrors):
+        if (file is not None) or (msgTxt != "") or ((errTxt != "") and sendErrors):
             kwargs = {}
             if file is not None:
                 kwargs["file"] = file
             if ephemeral:
                 kwargs["ephemeral"] = ephemeral
-            await sendMsgFunc(msgTxt if sendErrors else "",**kwargs)
+            responseMsg = []
+            if msgTxt != "":
+                responseMsg.append(msgTxt)
+            if (errTxt != "") and sendErrors:
+                responseMsg.append(errTxt)
+            responseMsg = "\n\n".join(responseMsg)
+            if len(responseMsg) > globalInfos.MESSAGE_MAX_LENGTH:
+                responseMsg = "Message too long"
+            await sendMsgFunc(responseMsg,**kwargs)
     except Exception as e:
         await globalLogMessage(f"Exception happened : {e}")
 def isAllowedToRunOwnerCommand(interaction:discord.Interaction) -> bool:

@@ -5,7 +5,7 @@ v1.0
 <br>
 <br>
 Put your shape code and parameters in `{}`
- 
+
 Shapes :
 
 - Colorable :
@@ -17,7 +17,7 @@ Shapes :
   - P : Pin
   - c : Crystal
   - \- : Nothing
- 
+
 Colors :
 
 - r : Red
@@ -29,7 +29,7 @@ Colors :
 - w : White
 - k : Black
 - \- : Nothing
- 
+
 Parameters :
 
 Each parameter must have a "+" in front of it
@@ -41,21 +41,22 @@ Each parameter must have a "+" in front of it
 - +lsep : Will separate each layer of the shape
 
 Note : "cut" and "qcut" are mutually exclusive
- 
+
 Additional features :
 
 - If the shape code starts with either "level", "lvl" or "m" followed by a number, it will produce the shape for the corresponding milestone
 - Shape expansion : Colorable shapes (like "C") not followed by a color will have "u" appended ("Cu"), uncolorable shapes (like "P" or "-") not followed by "-" will have "-" appended ("P-" or "--")
- 
+
 No matter in which order you put your parameters in your shape code, they will be executed in the following order :<br>
 milestone shapes, lfill, struct, shape expansion, fill, lsep, cut/qcut
- 
+
 Display parameters :
 Display parameters must be put outside of the "{}", have a "/" in front of them and have a ":" separating the parameter name from the value (if there is one)
 
 - /size:80 : will control the width and height in pixels of each shape (default:56, min:10, max:100)
 - /spoiler : will mark the resulting image as spoiler
- 
+- /result : will additionally send the generated shape codes
+
 Note : shapes with more than 4 layers and/or with more/less than 4 quadrants per layer are supported
 <br>
 <br>
@@ -66,7 +67,7 @@ Slash commands
 Public commands :
 - /view-shapes [message] : will trigger the shape viewer like a regular message but will send the response back only to you and will also include any error messages
 - /change-blueprint-version [blueprint] [version] : Changes a blueprint's version and returns the new code
- 
+
 Admin commands :
 - Pausing :<br>
   While paused, the bot will not send any public messages on the server
@@ -86,7 +87,7 @@ Admin commands :
   - /admin-roles-add [role] : adds a role ID to the list
   - /admin-roles-remove [role] : removes a role ID from the list
   - /admin-roles-view : view the 'adminRoles' list
- 
+
 Owner commands :<br>
 - /global-pause : pauses the bot globally
 - /global-unpause : unpauses the bot globally

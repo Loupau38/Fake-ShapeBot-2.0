@@ -19,3 +19,9 @@ CHANNEL_ID_LEN = 19
 ROLE_ID_LEN = 19
 MAX_ROLES_PER_LIST = 10
 INITIAL_SHAPE_SIZE = 500
+DISPLAY_PARAMS_DEFAULT = {
+    "spoiler" : False,
+    "size" : 56,
+    "result" : False
+}
+MESSAGE_MAX_LENGTH = 2000
