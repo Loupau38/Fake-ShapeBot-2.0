@@ -5,7 +5,6 @@ os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = ""
 del os
 import pygame
 import globalInfos
-import PIL.Image
 import io
 def handleResponse(message:str) -> None|tuple[None|tuple[str,bool],bool,list[str]]:
     potentialShapeCodes = shapeCodeGenerator.getPotentialShapeCodesFromMessage(message)
@@ -44,8 +43,6 @@ def handleResponse(message:str) -> None|tuple[None|tuple[str,bool],bool,list[str
                 renderedShape = shapeViewer.renderShape(code,size)
                 divMod = divmod(i,globalInfos.SHAPES_PER_ROW)
                 finalImage.blit(renderedShape,(size*divMod[1],size*divMod[0]))
-            finalImageBytes = pygame.image.tobytes(finalImage,"RGBA")
-            finalImageBytes2 = PIL.Image.frombuffer("RGBA",finalImage.get_size(),finalImageBytes,"raw","RGBA",0,1)
             with io.BytesIO() as buffer:
-                finalImageBytes2.save(buffer,"png")
+                pygame.image.save(finalImage,buffer,"png")
                 return (io.BytesIO(buffer.getvalue()),spoiler),hasAtLeastOneInvalidShapeCode,errorMsgs
