@@ -46,8 +46,6 @@ async def setAllServerSettings(guildId:int,property:str,value) -> None:
     if allServerSettings.get(guildId) is None:
         allServerSettings[guildId] = {}
     allServerSettings[guildId][property] = value
-    with open(globalInfos.ALL_SERVER_SETTINGS_PATH,"w") as f:
-        json.dump(allServerSettings,f)
 async def getAllServerSettings(guildId:int,property:str):
     if (allServerSettings.get(guildId) is None) or (allServerSettings[guildId].get(property) is None):
         defaultValue = globalInfos.SERVER_SETTINGS_DEFAULTS.get(property)
@@ -156,6 +154,8 @@ def runDiscordBot() -> None:
             responseMsg = globalInfos.NO_PERMISSION_TEXT
         await interaction.response.send_message(responseMsg,ephemeral=True)
         if allowedToStop:
+            with open(globalInfos.ALL_SERVER_SETTINGS_PATH,"w") as f:
+                json.dump(allServerSettings,f)
             await client.close()
     @tree.command(name="global-pause",description="Owner only, globally pauses the bot")
     async def globalPauseCommand(interaction:discord.Interaction) -> None:
