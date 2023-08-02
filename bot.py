@@ -4,24 +4,37 @@ import globalInfos
 import blueprints
 import json
 import shapeViewer
-async def globalLogMessage(message:str,client:discord.Client) -> None:
+async def globalLogMessage(message:str) -> None:
     if globalInfos.GLOBAL_LOG_CHANNEL is None:
         print(message)
     else:
         logChannel = await client.fetch_channel(globalInfos.GLOBAL_LOG_CHANNEL)
         await logChannel.send(message)
-async def sendMessage(message:discord.message.Message,userMessage:str,client:discord.Client) -> None:
+async def sendMessage(userMessage:str,sendErrors:bool,ephemeral:bool,sendMsgFunc,addReactionFunc=None) -> None:
     try:
         response = responses.handleResponse(userMessage)
-        if response is not None:
+        msgTxt = ""
+        file = None
+        if response is None:
+            msgTxt = "No potential shape codes detected"
+        else:
             response, hasInvalid, errorMsgs = response
             if hasInvalid:
-                await message.add_reaction("\u2753")
+                msgTxt = "\n".join(f"- {msg}" for msg in errorMsgs)
             if response is not None:
-                imagePath, spoiler = response
-                await message.channel.send(file=discord.File(imagePath,"shapes.png",spoiler=spoiler))
+                image, spoiler = response
+                file = discord.File(image,"shapes.png",spoiler=spoiler)
+        if (msgTxt != "") and (not sendErrors):
+            await addReactionFunc("\u2753")
+        if (file is not None) or ((msgTxt != "") and sendErrors):
+            kwargs = {}
+            if file is not None:
+                kwargs["file"] = file
+            if ephemeral:
+                kwargs["ephemeral"] = ephemeral
+            await sendMsgFunc(msgTxt if sendErrors else "",**kwargs)
     except Exception as e:
-        await globalLogMessage(f"Exception happened : {e}",client)
+        await globalLogMessage(f"Exception happened : {e}")
 def isAllowedToRunOwnerCommand(interaction:discord.Interaction) -> bool:
     if interaction.user.id in globalInfos.OWNER_USERS:
         return True
@@ -124,7 +137,7 @@ def runDiscordBot() -> None:
             if doSendReaction:
                 await message.add_reaction("\U0001F916")
         if await doSendMessage(message):
-            await sendMessage(message,userMessage,client)
+            await sendMessage(userMessage,False,False,message.channel.send,message.add_reaction)
     @tree.command(name="pause",description="Admin only, pauses the bot on this server")
     async def pauseCommand(interaction:discord.Interaction) -> None:
         if globalPaused:
@@ -180,21 +193,7 @@ def runDiscordBot() -> None:
     async def viewShapesCommand(interaction:discord.Interaction,message:str) -> None:
         if globalPaused:
             return
-        try:
-            response = responses.handleResponse(message)
-            if response is None:
-                await interaction.response.send_message("No potential shape codes detected",ephemeral=True)
-            else:
-                response, hasInvalid, errorMsgs = response
-                if hasInvalid:
-                    await interaction.response.send_message(", ".join(errorMsgs),ephemeral=True)
-                else:
-                    imagePath, spoiler = response
-                    await interaction.response.send_message(
-                        ", ".join(errorMsgs),
-                        file=discord.File(imagePath,"shapes.png",spoiler=spoiler),ephemeral=True)
-        except Exception as e:
-            await globalLogMessage(f"Exception happened : {e}",client)
+        await sendMessage(message,True,True,interaction.response.send_message)
     @tree.command(name="restrict-to-channel",description="Admin only, restricts the use of the shape viewer in public messages to one channel only")
     @discord.app_commands.describe(channel="A channel id or 0 if you want to remove a previously set channel")
     async def restrictToChannelCommand(interaction:discord.Interaction,channel:str) -> None:
@@ -281,7 +280,7 @@ def runDiscordBot() -> None:
             if adminRolesList == []:
                 responseMsg = "Empty list"
             else:
-                responseMsg = "\n".join(f"<@&{int(role)}> : {int(role)}" for role in adminRolesList)
+                responseMsg = "\n".join(f"- <@&{int(role)}> : {int(role)}" for role in adminRolesList)
         else:
             responseMsg = globalInfos.NO_PERMISSION_TEXT
         await interaction.response.send_message(responseMsg,ephemeral=True)
@@ -337,7 +336,7 @@ def runDiscordBot() -> None:
             if restrictToRolesList == []:
                 responseMsg = "Empty list"
             else:
-                responseMsg = "\n".join(f"<@&{int(role)}> : {int(role)}" for role in restrictToRolesList)
+                responseMsg = "\n".join(f"- <@&{int(role)}> : {int(role)}" for role in restrictToRolesList)
         else:
             responseMsg = globalInfos.NO_PERMISSION_TEXT
         await interaction.response.send_message(responseMsg,ephemeral=True)

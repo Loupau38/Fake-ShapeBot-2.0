@@ -19,7 +19,7 @@ def handleResponse(message:str) -> None|tuple[None|tuple[str,bool],bool,list[str
             if isShapeCodeValid:
                 shapeCodes.extend(shapeCodesOrError)
             else:
-                errorMsgs.append(f"Invalid shape code for shape {i} : {shapeCodesOrError}")
+                errorMsgs.append(f"Invalid shape code for shape {i+1} : {shapeCodesOrError}")
                 hasAtLeastOneInvalidShapeCode = True
         if shapeCodes == []:
             return None,hasAtLeastOneInvalidShapeCode,errorMsgs
