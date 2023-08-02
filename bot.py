@@ -10,7 +10,7 @@ async def globalLogMessage(message:str,client:discord.Client) -> None:
     else:
         logChannel = await client.fetch_channel(globalInfos.GLOBAL_LOG_CHANNEL)
         await logChannel.send(message)
-async def sendMessage(message:discord.message.Message,userMessage:str,client:discord.Client,guildId:int|None) -> None:
+async def sendMessage(message:discord.message.Message,userMessage:str,client:discord.Client) -> None:
     try:
         response = responses.handleResponse(userMessage)
         if response is not None:
@@ -126,7 +126,7 @@ def runDiscordBot() -> None:
             if doSendReaction:
                 await message.add_reaction("\U0001F916")
         if await doSendMessage(message):
-            await sendMessage(message,userMessage,client,guildId)
+            await sendMessage(message,userMessage,client)
     @tree.command(name="pause",description="Admin only, pauses the bot on this server")
     async def pauseCommand(interaction:discord.Interaction) -> None:
         if globalPaused:
