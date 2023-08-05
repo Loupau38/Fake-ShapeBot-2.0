@@ -33,6 +33,7 @@ Colors :
 Parameters :
 
 Each parameter must have a "+" in front of it
+
 - +struct : Use "0" and "1" in your shape code and they will be replaced by nothing or a circle with the color depending on the layer
 - +fill : For each layer, if it contains one quadrant, that quadrant will be repeated 4 times, if two quadrants, they will be repeated 2 times
 - +lfill : Same as "fill" but with layers instead of quadrants
@@ -51,6 +52,7 @@ No matter in which order you put your parameters in your shape code, they will b
 milestone shapes, lfill, struct, shape expansion, fill, lsep, cut/qcut
 
 Display parameters :
+
 Display parameters must be put outside of the "{}", have a "/" in front of them and have a ":" separating the parameter name from the value (if there is one)
 
 - /size:80 : will control the width and height in pixels of each shape (default:56, min:10, max:100)
@@ -65,10 +67,12 @@ Slash commands
 <br>
 <br>
 Public commands :
+
 - /view-shapes [message] : will trigger the shape viewer like a regular message but will send the response back only to you and will also include any error messages
 - /change-blueprint-version [blueprint] [version] : Changes a blueprint's version and returns the new code
 
 Admin commands :
+
 - Pausing :<br>
   While paused, the bot will not send any public messages on the server
   - /pause : pauses the bot
@@ -88,7 +92,8 @@ Admin commands :
   - /admin-roles-remove [role] : removes a role ID from the list
   - /admin-roles-view : view the 'adminRoles' list
 
-Owner commands :<br>
+Owner commands :
+
 - /global-pause : pauses the bot globally
 - /global-unpause : unpauses the bot globally
 - /stop : stops the bot

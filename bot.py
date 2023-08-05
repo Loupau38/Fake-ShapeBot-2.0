@@ -67,9 +67,15 @@ async def isAllowedToRunAdminCommand(interaction:discord.Interaction) -> bool:
             return True
     return False
 async def setAllServerSettings(guildId:int,property:str,value) -> None:
+    global canSaveSettings
     if allServerSettings.get(guildId) is None:
         allServerSettings[guildId] = {}
     allServerSettings[guildId][property] = value
+    if canSaveSettings:
+        canSaveSettings = False
+        with open(globalInfos.ALL_SERVER_SETTINGS_PATH,"w") as f:
+            json.dump(allServerSettings,f)
+        canSaveSettings = True
 async def getAllServerSettings(guildId:int,property:str):
     if (allServerSettings.get(guildId) is None) or (allServerSettings[guildId].get(property) is None):
         defaultValue = globalInfos.SERVER_SETTINGS_DEFAULTS.get(property)
@@ -178,8 +184,6 @@ def runDiscordBot() -> None:
             responseMsg = globalInfos.NO_PERMISSION_TEXT
         await interaction.response.send_message(responseMsg,ephemeral=True)
         if allowedToStop:
-            with open(globalInfos.ALL_SERVER_SETTINGS_PATH,"w") as f:
-                json.dump(allServerSettings,f)
             await client.close()
     @tree.command(name="global-pause",description="Owner only, globally pauses the bot")
     async def globalPauseCommand(interaction:discord.Interaction) -> None:
@@ -376,3 +380,4 @@ def runDiscordBot() -> None:
         token = f.read()
     client.run(token)
 globalPaused = False
+canSaveSettings = True
