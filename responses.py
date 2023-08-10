@@ -6,12 +6,37 @@ del os
 import pygame
 import globalInfos
 import io
-def handleResponse(message:str) -> None|tuple[None|tuple[io.BytesIO,bool,None|list[str]],bool,list[str]]:
+class DisplayParam:
+    def __init__(self,type:str,default,*,rangeStart:int|None=None,rangeStop:int|None=None) -> None:
+        self.type = type
+        self.default = default
+        if type == "int":
+            self.rangeStart = rangeStart
+            self.rangeStop = rangeStop
+    def getValidValue(self,inputValue:tuple[str]|tuple[str,str]) -> bool|int|None:
+        if self.type == "bool":
+            return True
+        try:
+            return min(self.rangeStop,max(self.rangeStart,int(inputValue[1])))
+        except IndexError:
+            pass
+        except ValueError:
+            pass
+DISPLAY_PARAMS:dict[str,DisplayParam] = {
+    "spoiler" : DisplayParam("bool",False),
+    "size" : DisplayParam("int",
+        globalInfos.DEFAULT_SHAPE_SIZE,
+        rangeStart=globalInfos.MIN_SHAPE_SIZE,
+        rangeStop=globalInfos.MAX_SHAPE_SIZE),
+    "result" : DisplayParam("bool",False),
+    "3d" : DisplayParam("bool",False)
+}
+def handleResponse(message:str) -> None|tuple[None|tuple[io.BytesIO,bool,None|list[str],None|list[str]],bool,list[str]]:
     potentialShapeCodes = shapeCodeGenerator.getPotentialShapeCodesFromMessage(message)
     if potentialShapeCodes == []:
         return
     else:
-        shapeCodes = []
+        shapeCodes:list[str] = []
         hasAtLeastOneInvalidShapeCode = False
         errorMsgs = []
         for i,code in enumerate(potentialShapeCodes):
@@ -25,35 +50,38 @@ def handleResponse(message:str) -> None|tuple[None|tuple[io.BytesIO,bool,None|li
             return None,hasAtLeastOneInvalidShapeCode,errorMsgs
         else:
             potentialDisplayParams = shapeCodeGenerator.getPotentialDisplayParamsFromMessage(message)
-            spoiler = globalInfos.DISPLAY_PARAMS_DEFAULT["spoiler"]
-            size = globalInfos.DISPLAY_PARAMS_DEFAULT["size"]
-            showResult = globalInfos.DISPLAY_PARAMS_DEFAULT["result"]
+            curDisplayParams = {k:v.default for k,v in DISPLAY_PARAMS.items()}
             for param in potentialDisplayParams:
-                if param[0] == "spoiler":
-                    spoiler = True
-                elif param[0] == "size":
-                    try:
-                        size = min(globalInfos.MAX_SHAPE_SIZE,max(globalInfos.MIN_SHAPE_SIZE,int(param[1])))
-                    except ValueError:
-                        pass
-                elif param[0] == "result":
-                    showResult = True
+                if DISPLAY_PARAMS.get(param[0]) is not None:
+                    tempValue = DISPLAY_PARAMS[param[0]].getValidValue(param)
+                    if tempValue is not None:
+                        curDisplayParams[param[0]] = tempValue
             numShapes = len(shapeCodes)
+            size = curDisplayParams["size"]
             finalImage = pygame.Surface(
                 (size*min(globalInfos.SHAPES_PER_ROW,numShapes),size*(((numShapes-1)//globalInfos.SHAPES_PER_ROW)+1)),
                 pygame.SRCALPHA)
+            renderedShapesCache = {}
             for i,code in enumerate(shapeCodes):
-                renderedShape = shapeViewer.renderShape(code,size)
+                if renderedShapesCache.get(code) is None:
+                    renderedShapesCache[code] = shapeViewer.renderShape(code,size)
                 divMod = divmod(i,globalInfos.SHAPES_PER_ROW)
-                finalImage.blit(renderedShape,(size*divMod[1],size*divMod[0]))
+                finalImage.blit(renderedShapesCache[code],(size*divMod[1],size*divMod[0]))
+            viewer3dLinks = None
+            if curDisplayParams["3d"]:
+                viewer3dLinks = [
+                    f"<{globalInfos.VIEWER_3D_LINK_START}{code.replace(':',globalInfos.VIEWER_3D_COLON_REPLACEMENT)}>"
+                    for code in shapeCodes]
             with io.BytesIO() as buffer:
                 pygame.image.save(finalImage,buffer,"png")
-                return (
-                    (
-                        io.BytesIO(buffer.getvalue()),
-                        spoiler,
-                        shapeCodes if showResult else None
-                    ),
-                    hasAtLeastOneInvalidShapeCode,
-                    errorMsgs
-                )
+                finalImageBytes = io.BytesIO(buffer.getvalue())
+            return (
+                (
+                    finalImageBytes,
+                    curDisplayParams["spoiler"],
+                    shapeCodes if curDisplayParams["result"] else None,
+                    viewer3dLinks
+                ),
+                hasAtLeastOneInvalidShapeCode,
+                errorMsgs
+            )

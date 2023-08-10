@@ -13,34 +13,35 @@ async def globalLogMessage(message:str) -> None:
 async def sendMessage(userMessage:str,sendErrors:bool,ephemeral:bool,sendMsgFunc,addReactionFunc=None) -> None:
     try:
         response = responses.handleResponse(userMessage)
-        msgTxt = ""
-        errTxt = ""
+        msgParts = []
+        hasErrors = False
         file = None
         if response is None:
-            errTxt = "No potential shape codes detected"
+            hasErrors = True
+            if sendErrors:
+                msgParts.append("No potential shape codes detected")
         else:
             response, hasInvalid, errorMsgs = response
             if hasInvalid:
-                errTxt = "\n".join(f"- {msg}" for msg in errorMsgs)
+                hasErrors = True
+                if sendErrors:
+                    msgParts.append("\n".join(f"- {msg}" for msg in errorMsgs))
             if response is not None:
-                image, spoiler, resultingShapeCodes = response
+                image, spoiler, resultingShapeCodes, viewer3dLinks = response
                 file = discord.File(image,"shapes.png",spoiler=spoiler)
                 if resultingShapeCodes is not None:
-                    msgTxt = " ".join(f"{{{code}}}" for code in resultingShapeCodes)
-        if (errTxt != "") and (not sendErrors):
+                    msgParts.append(" ".join(f"{{{code}}}" for code in resultingShapeCodes))
+                if viewer3dLinks is not None:
+                    msgParts.append("\n".join(viewer3dLinks))
+        if (hasErrors) and (not sendErrors):
             await addReactionFunc("\u2753")
-        if (file is not None) or (msgTxt != "") or ((errTxt != "") and sendErrors):
+        if (file is not None) or (msgParts != []):
             kwargs = {}
             if file is not None:
                 kwargs["file"] = file
             if ephemeral:
                 kwargs["ephemeral"] = ephemeral
-            responseMsg = []
-            if msgTxt != "":
-                responseMsg.append(msgTxt)
-            if (errTxt != "") and sendErrors:
-                responseMsg.append(errTxt)
-            responseMsg = "\n\n".join(responseMsg)
+            responseMsg = "\n\n".join(msgParts)
             if len(responseMsg) > globalInfos.MESSAGE_MAX_LENGTH:
                 responseMsg = "Message too long"
             await sendMsgFunc(responseMsg,**kwargs)
@@ -51,11 +52,11 @@ def isAllowedToRunOwnerCommand(interaction:discord.Interaction) -> bool:
         return True
     return False
 async def isAllowedToRunAdminCommand(interaction:discord.Interaction) -> bool:
-    if isAllowedToRunOwnerCommand(interaction):
-        return True
     guildId = interaction.guild_id
     if guildId is None:
         return False
+    if isAllowedToRunOwnerCommand(interaction):
+        return True
     if interaction.user.guild_permissions.administrator:
         return True
     if allServerSettings.get(guildId) is None:

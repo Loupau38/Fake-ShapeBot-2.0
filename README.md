@@ -58,6 +58,7 @@ Display parameters must be put outside of the "{}", have a "/" in front of them 
 - /size:80 : will control the width and height in pixels of each shape (default:56, min:10, max:100)
 - /spoiler : will mark the resulting image as spoiler
 - /result : will additionally send the generated shape codes
+- /3d : will additionally send links to [DontMash's 3D shape viewer](https://shapez.soren.codes/shape)
 
 Note : shapes with more than 4 layers and/or with more/less than 4 quadrants per layer are supported
 <br>

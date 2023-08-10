@@ -1,8 +1,9 @@
 import shapeOperations
+import globalInfos
 import math
 COLOR_SHAPES = ["C","R","S","W"]
 NO_COLOR_SHAPES = ["P","c"]
-COLORS = ["u","r","g","b","c","p","y","w","k"]
+COLORS = globalInfos.SHAPE_COLORS
 NOTHING_CHAR = "-"
 COLOR_SHAPES_DEFAULT_COLOR = COLORS[0]
 NO_COLOR_SHAPES_DEFAULT_COLOR = NOTHING_CHAR

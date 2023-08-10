@@ -1,5 +1,6 @@
 import shapeOperations
 import shapeCodeGenerator
+import globalInfos
 import pygame
 
 class Operation:
@@ -17,8 +18,8 @@ class Instruction:
     DEF = "def"
     OP = "op"
 
-    def __init__(self,type:str,*,shapeVars:list[int],shapeCodes:list[str],
-            inputShapeVars:list[int],operation:Operation,outputShapeVars:list[int]) -> None:
+    def __init__(self,type:str,*,shapeVars:list[int]|None=None,shapeCodes:list[str]|None=None,
+            inputShapeVars:list[int]|None=None,operation:Operation|None=None,outputShapeVars:list[int]|None=None) -> None:
         self.type = type
         if type == Instruction.DEF:
             self.vars = shapeVars
@@ -37,13 +38,13 @@ OPERATIONS:dict[str,Operation] = {
     "r180" : Operation(1,1,"Rotate 180°",shapeOperations.rotate180),
     "sh" : Operation(2,2,"Swap halves",shapeOperations.swapHalves),
     "stack" : Operation(2,1,"Stack",shapeOperations.stack),
-    "paint" : Operation(2,1,"Paint",shapeOperations.topPaint),
+    "paint" : Operation(2,1,"Paint",shapeOperations.topPaint,[1]),
     "pin" : Operation(1,1,"Push pin",shapeOperations.pushPin),
-    "crystal" : Operation(2,1,"Generate crystals",shapeOperations.genCrystal)
+    "crystal" : Operation(2,1,"Generate crystals",shapeOperations.genCrystal,[1])
 }
 
 for k,v in OPERATIONS.items():
-    v.image = pygame.image.load(IMAGES_START_PATH+k)
+    v.image = pygame.image.load(f"{IMAGES_START_PATH}{k}.png")
 
 def getInstructionsFromText(text:str) -> tuple[bool,list[Instruction]|str]:
     def decodeInstruction(instruction:str) -> tuple[bool,str|Instruction]:
@@ -78,21 +79,25 @@ def getInstructionsFromText(text:str) -> tuple[bool,list[Instruction]|str]:
                     return False,f"Empty {k} section"
             if OPERATIONS.get(op) is None:
                 return False,f"Unknown operation '{op}'"
-            inputs = inputs.split(",")
+            inputs = [i.replace("m","p") for i in inputs.split(",")]
             outputs = outputs.split(",")
             inputsInt = []
             outputsInt = []
+            curOperation = OPERATIONS.get(op)
             for i,input in enumerate(inputs):
-                try:
-                    inputsInt.append(int(input))
-                except ValueError:
-                    return False, f"Input {i+1} not an integer"
+                if i in curOperation.colorInputindexes:
+                    if input not in globalInfos.SHAPE_COLORS:
+                        return False,f"Input {i+1} msut be a color"
+                else:
+                    try:
+                        inputsInt.append(int(input))
+                    except ValueError:
+                        return False,f"Input {i+1} not an integer"
             for i,output in enumerate(inputs):
                 try:
                     outputsInt.append(int(output))
                 except ValueError:
-                    return False, f"Output {i+1} not an integer"
-            curOperation = OPERATIONS.get(op)
+                    return False,f"Output {i+1} not an integer"
             for e,g,t in zip((curOperation.numInputs,curOperation.numOutputs),(len(inputsInt),len(outputsInt)),("inputs","outputs")):
                 if e != g:
                     return False,f"Number of operation {t} isn't the same as number of {t} given ({e} vs {g})"
