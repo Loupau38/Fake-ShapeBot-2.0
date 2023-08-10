@@ -46,71 +46,90 @@ OPERATIONS:dict[str,Operation] = {
 for k,v in OPERATIONS.items():
     v.image = pygame.image.load(f"{IMAGES_START_PATH}{k}.png")
 
-def getInstructionsFromText(text:str) -> tuple[bool,list[Instruction]|str]:
-    def decodeInstruction(instruction:str) -> tuple[bool,str|Instruction]:
-        if "=" in instruction:
-            if instruction.count("=") > 1:
-                return False,"Max 1 '=' per instruction"
-            shapeVars, shapeCode = instruction.split("=")
-            if shapeVars == "":
-                return False,"Empty variables section"
-            if shapeCode == "":
-                return False,"Empty shape code section"
-            shapeVars = shapeVars.split(",")
-            shapeVarsInt = []
-            for i,sv in enumerate(shapeVars):
-                try:
-                    shapeVarsInt.append(int(sv))
-                except ValueError:
-                    return False, f"Shape variable {i+1} not an integer"
-            shapeCodesOrError, isShapeCodeValid = shapeCodeGenerator.generateShapeCodes(shapeCode)
-            if not isShapeCodeValid:
-                return False,f"Error decoding shape code : {shapeCodesOrError}"
-            if len(shapeCodesOrError) != len(shapeVarsInt):
-                return False, f"Number of shape codes outputed isn't the same as number of shape variables given \
-                    ({len(shapeCodesOrError)} vs {len(shapeVarsInt)})"
-            return True,Instruction(Instruction.DEF,shapeVars=shapeVarsInt,shapeCodes=shapeCodesOrError)
+def _decodeInstruction(instruction:str) -> tuple[bool,str|Instruction]:
+
+    if "=" in instruction:
+
+        if instruction.count("=") > 1:
+            return False,"Max 1 '=' per instruction"
+
+        shapeVars, shapeCode = instruction.split("=")
+        if shapeVars == "":
+            return False,"Empty variables section"
+        if shapeCode == "":
+            return False,"Empty shape code section"
+
+        shapeVars = shapeVars.split(",")
+        shapeVarsInt = []
+        for i,sv in enumerate(shapeVars):
+            try:
+                shapeVarsInt.append(int(sv))
+            except ValueError:
+                return False, f"Shape variable {i+1} not an integer"
+
+        shapeCodesOrError, isShapeCodeValid = shapeCodeGenerator.generateShapeCodes(shapeCode)
+        if not isShapeCodeValid:
+            return False,f"Error decoding shape code : {shapeCodesOrError}"
+
+        if len(shapeCodesOrError) != len(shapeVarsInt):
+            return False, f"Number of shape codes outputed isn't the same as number of shape variables given \
+                ({len(shapeCodesOrError)} vs {len(shapeVarsInt)})"
+
+        return True,Instruction(Instruction.DEF,shapeVars=shapeVarsInt,shapeCodes=shapeCodesOrError)
+
+    if instruction.count(":") != 2:
+        return False,"Operation instruction must contain 2 ':'"
+
+    inputs, op, outputs = instruction.split(":")
+    for k,v in {"inputs":inputs,"operation":op,"outputs":outputs}.items():
+        if v == "":
+            return False,f"Empty {k} section"
+
+    if OPERATIONS.get(op) is None:
+        return False,f"Unknown operation '{op}'"
+
+    inputs = [i.replace("m","p") for i in inputs.split(",")]
+    outputs = outputs.split(",")
+    inputsInt = []
+    outputsInt = []
+    curOperation = OPERATIONS.get(op)
+
+    for i,input in enumerate(inputs):
+        if i in curOperation.colorInputindexes:
+            if input not in globalInfos.SHAPE_COLORS:
+                return False,f"Input {i+1} must be a color"
         else:
-            if instruction.count(":") != 2:
-                return False,"Operation instruction must contain 2 ':'"
-            inputs, op, outputs = instruction.split(":")
-            for k,v in {"inputs":inputs,"operation":op,"outputs":outputs}.items():
-                if v == "":
-                    return False,f"Empty {k} section"
-            if OPERATIONS.get(op) is None:
-                return False,f"Unknown operation '{op}'"
-            inputs = [i.replace("m","p") for i in inputs.split(",")]
-            outputs = outputs.split(",")
-            inputsInt = []
-            outputsInt = []
-            curOperation = OPERATIONS.get(op)
-            for i,input in enumerate(inputs):
-                if i in curOperation.colorInputindexes:
-                    if input not in globalInfos.SHAPE_COLORS:
-                        return False,f"Input {i+1} msut be a color"
-                else:
-                    try:
-                        inputsInt.append(int(input))
-                    except ValueError:
-                        return False,f"Input {i+1} not an integer"
-            for i,output in enumerate(inputs):
-                try:
-                    outputsInt.append(int(output))
-                except ValueError:
-                    return False,f"Output {i+1} not an integer"
-            for e,g,t in zip((curOperation.numInputs,curOperation.numOutputs),(len(inputsInt),len(outputsInt)),("inputs","outputs")):
-                if e != g:
-                    return False,f"Number of operation {t} isn't the same as number of {t} given ({e} vs {g})"
-            return True,Instruction(Instruction.OP,inputShapeVars=inputsInt,operation=curOperation,outputShapeVars=outputsInt)
+            try:
+                inputsInt.append(int(input))
+            except ValueError:
+                return False,f"Input {i+1} not an integer"
+
+    for i,output in enumerate(inputs):
+        try:
+            outputsInt.append(int(output))
+        except ValueError:
+            return False,f"Output {i+1} not an integer"
+
+    for e,g,t in zip((curOperation.numInputs,curOperation.numOutputs),(len(inputsInt),len(outputsInt)),("inputs","outputs")):
+        if e != g:
+            return False,f"Number of operation {t} isn't the same as number of {t} given ({e} vs {g})"
+
+    return True,Instruction(Instruction.OP,inputShapeVars=inputsInt,operation=curOperation,outputShapeVars=outputsInt)
+
+def getInstructionsFromText(text:str) -> tuple[bool,list[Instruction]|str]:
+
     if text == "":
         return False,"Empty text"
+
     instructions = text.split(";")
     decodedInstructions = []
+
     for i,instruction in enumerate(instructions):
-        valid, decodedInstructionOrError = decodeInstruction(instruction)
+        valid, decodedInstructionOrError = _decodeInstruction(instruction)
         if not valid:
             return False,f"Error in instruction {i+1} : {decodedInstructionOrError}"
         decodedInstructions.append(decodedInstructionOrError)
+
     return True,decodedInstructions
 
 def genOperationGraph(instructions:list):

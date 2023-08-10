@@ -1,12 +1,14 @@
 import shapeOperations
 import globalInfos
 import math
+
 COLOR_SHAPES = ["C","R","S","W"]
 NO_COLOR_SHAPES = ["P","c"]
 COLORS = globalInfos.SHAPE_COLORS
 NOTHING_CHAR = "-"
 COLOR_SHAPES_DEFAULT_COLOR = COLORS[0]
 NO_COLOR_SHAPES_DEFAULT_COLOR = NOTHING_CHAR
+
 LAYER_SEPARATOR = ":"
 PARAM_PREFIX = "+"
 DISPLAY_PARAM_PREFIX = "/"
@@ -15,11 +17,13 @@ DISPLAY_PARAM_KEY_VALUE_SEPARATOR = ":"
 SHAPE_CODE_OPENING = "{"
 SHAPE_CODE_CLOSING = "}"
 INGNORE_CHARS_IN_SHAPE_CODE = ["`"]
+
 LEVEL_SHAPE_PREFIXES = ["level","lvl","m"]
 LEVEL_SHAPES = ["CuCuCuCu","----RuRu","Cu------","CuCuRuRu","CuCuCuRu",
     "Cu----Ru","CuRuCuRu:Cu--Cu--","SuSuSuSu","WuCuWuCu:CuCuCuCu","RrCrRrCr",
     "SgCrCrSg:--CuCu--","SgCrCrSg:CbCbCbCb","RuCrP-Cr:----Ru--","RgCrP-Cr:P-P-RgP-:CbCb--Cb","RuCwP-Cw:----Ru--",
     "CwCrCwCr:CrCwCrCw:CwCrCwCr:CrCwCrCw","Cuc-Cuc-","P-"]
+
 def getPotentialShapeCodesFromMessage(message:str) -> list[str]:
     if (message == "") or (SHAPE_CODE_OPENING not in message):
         return []
@@ -31,6 +35,7 @@ def getPotentialShapeCodesFromMessage(message:str) -> list[str]:
             if potentialShapeCode != "":
                 potentialShapeCodes.append(potentialShapeCode)
     return potentialShapeCodes
+
 def getPotentialDisplayParamsFromMessage(message:str) -> list[tuple]:
     if (message == "") or (DISPLAY_PARAM_PREFIX not in message):
         return []
@@ -46,20 +51,25 @@ def getPotentialDisplayParamsFromMessage(message:str) -> list[tuple]:
         else:
             potentialDisplayParams.append((potentialDisplayParam,))
     return potentialDisplayParams
+
 def generateShapeCodes(potentialShapeCode:str) -> tuple[list[str]|str,bool]:
     """Returns (``[shapeCode0,shapeCode1,...]`` or ``errorMsg``), ``isShapeCodeValid``"""
+
     for char in INGNORE_CHARS_IN_SHAPE_CODE:
         potentialShapeCode = potentialShapeCode.replace(char,"")
+
     if PARAM_PREFIX in potentialShapeCode:
         params = potentialShapeCode.split(PARAM_PREFIX)
         potentialShapeCode = params[0]
         params = params[1:]
     else:
         params = []
+
     cutInParams = "cut" in params
     qcutInParams = "qcut" in params
     if cutInParams and qcutInParams:
         return "Mutualy exclusive 'cut' and 'qcut' parameters present",False
+
     # handle level/milestone shapes
     for prefix in LEVEL_SHAPE_PREFIXES:
         if potentialShapeCode.startswith(prefix):
@@ -75,6 +85,7 @@ def generateShapeCodes(potentialShapeCode:str) -> tuple[list[str]|str,bool]:
                 return f"Invalid level/milestone number : '{level}'",False
             potentialShapeCode = LEVEL_SHAPES[level-1]
             break
+
     # separate in layers
     if LAYER_SEPARATOR in potentialShapeCode:
         layers = potentialShapeCode.split(LAYER_SEPARATOR)
@@ -85,6 +96,7 @@ def generateShapeCodes(potentialShapeCode:str) -> tuple[list[str]|str,bool]:
         if potentialShapeCode == "":
             return "Empty shape code",False
         layers = [potentialShapeCode]
+
     # handle lfill
     if "lfill" in params:
         layersLen = len(layers)
@@ -92,6 +104,7 @@ def generateShapeCodes(potentialShapeCode:str) -> tuple[list[str]|str,bool]:
             layers = [layers[0]]*4
         elif layersLen == 2:
             layers = [layers[0],layers[1]]*2
+
     # handle struct
     if "struct" in params:
         for i,layer in enumerate(layers):
@@ -107,14 +120,17 @@ def generateShapeCodes(potentialShapeCode:str) -> tuple[list[str]|str,bool]:
             for char in layer:
                 newLayer += f"C{color}" if char == "1" else NOTHING_CHAR*2
             layers[i] = newLayer
+
     # change magenta to purple
     for layerIndex,layer in enumerate(layers):
         layers[layerIndex] = layer.replace("m","p")
+
     # verify if only valid chars
     for layerIndex,layer in enumerate(layers):
         for charIndex,char in enumerate(layer):
             if char not in [*COLOR_SHAPES,*NO_COLOR_SHAPES,*COLORS,NOTHING_CHAR]:
                 return f"Invalid char in layer {layerIndex+1} ({layer}), at char {charIndex+1} : '{char}'",False
+
     # handle {C} -> {Cu} transformation
     for layerIndex,layer in enumerate(layers):
         newLayer = ""
@@ -140,6 +156,7 @@ def generateShapeCodes(potentialShapeCode:str) -> tuple[list[str]|str,bool]:
                 skipNext = True
                 newLayer += char
         layers[layerIndex] = newLayer
+
     # verify if shapes and colors are in the right positions
     for layerIndex,layer in enumerate(layers):
         shapeMode = True
@@ -164,6 +181,7 @@ def generateShapeCodes(potentialShapeCode:str) -> tuple[list[str]|str,bool]:
                 if (not nextMustBeColor) and (char != NOTHING_CHAR):
                     return f"{errorMsgStart} must be empty"
                 shapeMode = True
+
     # handle fill
     if "fill" in params:
         for layerIndex,layer in enumerate(layers):
@@ -176,21 +194,26 @@ def generateShapeCodes(potentialShapeCode:str) -> tuple[list[str]|str,bool]:
             else:
                 newLayer = layer
             layers[layerIndex] = newLayer
+
     expectedLayerLen = len(layers[0])
     for layerIndex,layer in enumerate(layers[1:]):
         if len(layer) != expectedLayerLen:
             return f"Layer {layerIndex+2} ({layer}){f' (or 1 ({layers[0]}))' if layerIndex == 0 else ''} doesn't have the expected number of quadrants",False
+
+    # handle lsep
     if "lsep" in params:
         shapeCodes = [[layer] for layer in layers]
     else:
         shapeCodes = [layers]
-    #handle cut
+
+    # handle cut
     if cutInParams:
         newShapeCodes = []
         for shape in shapeCodes:
             shape1, shape2 = shapeOperations.cut(shapeOperations.Shape.fromListOfLayers(shape))
             newShapeCodes.extend([shape1.toListOfLayers(),shape2.toListOfLayers()])
-    #handle qcut
+
+    # handle qcut
     elif qcutInParams:
         newShapeCodes = []
         for shape in shapeCodes:
@@ -212,8 +235,10 @@ def generateShapeCodes(potentialShapeCode:str) -> tuple[list[str]|str,bool]:
             newShapeCodes.extend([shape1,shape2,shape3,shape4])
     else:
         newShapeCodes = shapeCodes
+
     noEmptyShapeCodes = []
     for shape in newShapeCodes:
         if any((char != NOTHING_CHAR) for char in ("".join(shape))):
             noEmptyShapeCodes.append(":".join(shape))
+
     return noEmptyShapeCodes,True
