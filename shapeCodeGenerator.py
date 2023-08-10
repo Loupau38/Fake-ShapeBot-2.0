@@ -1,3 +1,4 @@
+import shapeOperations
 import math
 COLOR_SHAPES = ["C","R","S","W"]
 NO_COLOR_SHAPES = ["P","c"]
@@ -186,14 +187,8 @@ def generateShapeCodes(potentialShapeCode:str) -> tuple[list[str]|str,bool]:
     if cutInParams:
         newShapeCodes = []
         for shape in shapeCodes:
-            numQuads = round(len(shape[0])/2)
-            takeQuads = math.ceil(numQuads/2)
-            shape1 = []
-            shape2 = []
-            for layer in shape:
-                shape1.append(f"{NOTHING_CHAR*((numQuads-takeQuads)*2)}{layer[:takeQuads*2]}")
-                shape2.append(f"{layer[takeQuads*2:]}{NOTHING_CHAR*(takeQuads*2)}")
-            newShapeCodes.extend([shape1,shape2])
+            shape1, shape2 = shapeOperations.cut(shapeOperations.Shape.fromListOfLayers(shape))
+            newShapeCodes.extend([shape1.toListOfLayers(),shape2.toListOfLayers()])
     #handle qcut
     elif qcutInParams:
         newShapeCodes = []
