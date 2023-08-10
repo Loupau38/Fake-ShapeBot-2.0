@@ -1,6 +1,7 @@
+import globalInfos
 import math
 
-NOTHING_CHAR = "-"
+NOTHING_CHAR = globalInfos.SHAPE_NOTHING_CHAR
 PIN_CHAR = "P"
 CRYSTAL_CHAR = "c"
 UNCOLORABLE_SHAPES = [CRYSTAL_CHAR,PIN_CHAR,NOTHING_CHAR]
@@ -29,13 +30,13 @@ class Shape:
         return Shape(newLayers)
 
     def fromShapeCode(shapeCode:str):
-        return Shape.fromListOfLayers(shapeCode.split(":"))
+        return Shape.fromListOfLayers(shapeCode.split(globalInfos.SHAPE_LAYER_SEPARATOR))
 
     def toListOfLayers(self) -> list[str]:
         return ["".join(q.shape+q.color for q in l) for l in self.layers]
 
     def toShapeCode(self) -> str:
-        return ":".join(self.toListOfLayers())
+        return globalInfos.SHAPE_LAYER_SEPARATOR.join(self.toListOfLayers())
 
 def cut(shape:Shape) -> tuple[Shape,Shape]:
     takeQuads = math.ceil(shape.numQuads/2)

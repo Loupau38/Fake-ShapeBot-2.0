@@ -5,11 +5,14 @@ import math
 COLOR_SHAPES = ["C","R","S","W"]
 NO_COLOR_SHAPES = ["P","c"]
 COLORS = globalInfos.SHAPE_COLORS
-NOTHING_CHAR = "-"
+NOTHING_CHAR = globalInfos.SHAPE_NOTHING_CHAR
 COLOR_SHAPES_DEFAULT_COLOR = COLORS[0]
 NO_COLOR_SHAPES_DEFAULT_COLOR = NOTHING_CHAR
+STRUCT_COLORS = ["r","g","b","w"]
+CHAR_REPLACEMENT = {
+    "m" : "p" # change magenta to purple
+}
 
-LAYER_SEPARATOR = ":"
 PARAM_PREFIX = "+"
 DISPLAY_PARAM_PREFIX = "/"
 DISPLAY_PARAM_EXIT_CHAR = " "
@@ -87,8 +90,8 @@ def generateShapeCodes(potentialShapeCode:str) -> tuple[list[str]|str,bool]:
             break
 
     # separate in layers
-    if LAYER_SEPARATOR in potentialShapeCode:
-        layers = potentialShapeCode.split(LAYER_SEPARATOR)
+    if globalInfos.SHAPE_LAYER_SEPARATOR in potentialShapeCode:
+        layers = potentialShapeCode.split(globalInfos.SHAPE_LAYER_SEPARATOR)
         for i,layer in enumerate(layers):
             if layer == "":
                 return f"Layer {i+1} empty",False
@@ -113,17 +116,18 @@ def generateShapeCodes(potentialShapeCode:str) -> tuple[list[str]|str,bool]:
                     return f"Use of 'struct' parameter but layer {i+1} doesn't contain only '0' or '1'",False
         for i,layer in enumerate(layers):
             newLayer = ""
-            if i > 2:
-                color = "w"
+            if i > len(STRUCT_COLORS)-1:
+                color = STRUCT_COLORS[-1]
             else:
-                color = ["r","g","b"][i]
+                color = STRUCT_COLORS[i]
             for char in layer:
                 newLayer += f"C{color}" if char == "1" else NOTHING_CHAR*2
             layers[i] = newLayer
 
-    # change magenta to purple
-    for layerIndex,layer in enumerate(layers):
-        layers[layerIndex] = layer.replace("m","p")
+    # replace some characters
+    for old,new in CHAR_REPLACEMENT.items():
+        for layerIndex,layer in enumerate(layers):
+            layers[layerIndex] = layer.replace(old,new)
 
     # verify if only valid chars
     for layerIndex,layer in enumerate(layers):
@@ -239,6 +243,6 @@ def generateShapeCodes(potentialShapeCode:str) -> tuple[list[str]|str,bool]:
     noEmptyShapeCodes = []
     for shape in newShapeCodes:
         if any((char != NOTHING_CHAR) for char in ("".join(shape))):
-            noEmptyShapeCodes.append(":".join(shape))
+            noEmptyShapeCodes.append(globalInfos.SHAPE_LAYER_SEPARATOR.join(shape))
 
     return noEmptyShapeCodes,True

@@ -82,9 +82,12 @@ def handleResponse(message:str) -> None|tuple[None|tuple[io.BytesIO,bool,None|li
 
     viewer3dLinks = None
     if curDisplayParams["3d"]:
-        viewer3dLinks = [
-            f"<{globalInfos.VIEWER_3D_LINK_START}{code.replace(':',globalInfos.VIEWER_3D_COLON_REPLACEMENT)}>"
-            for code in shapeCodes]
+        viewer3dLinks = []
+        for code in shapeCodes:
+            link = f"<{globalInfos.VIEWER_3D_LINK_START}{code}>"
+            for old,new in globalInfos.VIEWER_3D_CHAR_REPLACEMENT:
+                link.replace(old,new)
+            viewer3dLinks.append(link)
 
     with io.BytesIO() as buffer:
         pygame.image.save(finalImage,buffer,"png")

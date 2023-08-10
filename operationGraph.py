@@ -29,6 +29,10 @@ class Instruction:
             self.op = operation
             self.outputs = outputShapeVars
 
+INSTRUCTION_SEPARATOR = ";"
+DEFINITION_SEPARATOR = "="
+VALUE_SEPARATOR = ","
+OPERATION_SEPARATOR = ":"
 IMAGES_START_PATH = "./operationGraphImages/"
 OPERATIONS:dict[str,Operation] = {
     "cut" : Operation(1,2,"Cut",shapeOperations.cut),
@@ -48,18 +52,18 @@ for k,v in OPERATIONS.items():
 
 def _decodeInstruction(instruction:str) -> tuple[bool,str|Instruction]:
 
-    if "=" in instruction:
+    if DEFINITION_SEPARATOR in instruction:
 
-        if instruction.count("=") > 1:
-            return False,"Max 1 '=' per instruction"
+        if instruction.count(DEFINITION_SEPARATOR) > 1:
+            return False,f"Max 1 '{DEFINITION_SEPARATOR}' per instruction"
 
-        shapeVars, shapeCode = instruction.split("=")
+        shapeVars, shapeCode = instruction.split(DEFINITION_SEPARATOR)
         if shapeVars == "":
             return False,"Empty variables section"
         if shapeCode == "":
             return False,"Empty shape code section"
 
-        shapeVars = shapeVars.split(",")
+        shapeVars = shapeVars.split(VALUE_SEPARATOR)
         shapeVarsInt = []
         for i,sv in enumerate(shapeVars):
             try:
@@ -77,10 +81,10 @@ def _decodeInstruction(instruction:str) -> tuple[bool,str|Instruction]:
 
         return True,Instruction(Instruction.DEF,shapeVars=shapeVarsInt,shapeCodes=shapeCodesOrError)
 
-    if instruction.count(":") != 2:
-        return False,"Operation instruction must contain 2 ':'"
+    if instruction.count(OPERATION_SEPARATOR) != 2:
+        return False,f"Operation instruction must contain 2 '{OPERATION_SEPARATOR}'"
 
-    inputs, op, outputs = instruction.split(":")
+    inputs, op, outputs = instruction.split(OPERATION_SEPARATOR)
     for k,v in {"inputs":inputs,"operation":op,"outputs":outputs}.items():
         if v == "":
             return False,f"Empty {k} section"
@@ -88,8 +92,8 @@ def _decodeInstruction(instruction:str) -> tuple[bool,str|Instruction]:
     if OPERATIONS.get(op) is None:
         return False,f"Unknown operation '{op}'"
 
-    inputs = [i.replace("m","p") for i in inputs.split(",")]
-    outputs = outputs.split(",")
+    inputs = [i.replace("m","p") for i in inputs.split(VALUE_SEPARATOR)]
+    outputs = outputs.split(VALUE_SEPARATOR)
     inputsInt = []
     outputsInt = []
     curOperation = OPERATIONS.get(op)
@@ -121,7 +125,7 @@ def getInstructionsFromText(text:str) -> tuple[bool,list[Instruction]|str]:
     if text == "":
         return False,"Empty text"
 
-    instructions = text.split(";")
+    instructions = text.split(INSTRUCTION_SEPARATOR)
     decodedInstructions = []
 
     for i,instruction in enumerate(instructions):
@@ -132,5 +136,5 @@ def getInstructionsFromText(text:str) -> tuple[bool,list[Instruction]|str]:
 
     return True,decodedInstructions
 
-def genOperationGraph(instructions:list):
+def genOperationGraph(instructions:list[Instruction]):
     pass

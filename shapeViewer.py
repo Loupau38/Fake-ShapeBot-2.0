@@ -73,7 +73,7 @@ def preRenderQuadrants() -> None:
         if shape.get("color") is None:
             colors = COLORS
         else:
-            colors = {"-":shape["color"]}
+            colors = {globalInfos.SHAPE_NOTHING_CHAR:shape["color"]}
 
         for colorKey, colorValue in colors.items():
 
@@ -112,7 +112,7 @@ preRenderedShadows:dict[str,pygame.Surface] = {}
 
 def renderShape(shapeCode:str,surfaceSize:int) -> pygame.Surface:
 
-    decomposedShapeCode = shapeCode.split(":")
+    decomposedShapeCode = shapeCode.split(globalInfos.SHAPE_LAYER_SEPARATOR)
     numQuads = int(len(decomposedShapeCode[0])/2)
     decomposedShapeCode = [[layer[i*2:(i*2)+2] for i in range(numQuads)] for layer in decomposedShapeCode]
 
@@ -123,7 +123,7 @@ def renderShape(shapeCode:str,surfaceSize:int) -> pygame.Surface:
         curLayerSizeReduction = LAYER_SIZE_REDUCTION ** layerIndex
         for quadIndex, quad in enumerate(layer):
 
-            if quad.startswith("-"):
+            if quad.startswith(globalInfos.SHAPE_NOTHING_CHAR):
                 continue
 
             shapeShape = SHAPES_SHAPE[quad[0]]
