@@ -32,28 +32,28 @@ Colors :
 
 Parameters :
 
-Each parameter must have a "+" in front of it
+Each parameter must have a `+` in front of it
 
-- +struct : Use "0" and "1" in your shape code and they will be replaced by nothing or a circle with the color depending on the layer
+- +struct : Use `0` and `1` in your shape code and they will be replaced by nothing or a circle with the color depending on the layer
 - +fill : For each layer, if it contains one quadrant, that quadrant will be repeated 4 times, if two quadrants, they will be repeated 2 times
-- +lfill : Same as "fill" but with layers instead of quadrants
+- +lfill : Same as `fill` but with layers instead of quadrants
 - +cut : Will cut the shape in half and show the two resulting shapes
-- +qcut : Same as "cut" but will cut the shape in 4 instead of 2
+- +qcut : Same as `cut` but will cut the shape in 4 instead of 2
 - +lsep : Will separate each layer of the shape
 
-Note : "cut" and "qcut" are mutually exclusive
+Note : `cut` and `qcut` are mutually exclusive
 
 Additional features :
 
-- If the shape code starts with either "level", "lvl" or "m" followed by a number, it will produce the shape for the corresponding milestone
-- Shape expansion : Colorable shapes (like "C") not followed by a color will have "u" appended ("Cu"), uncolorable shapes (like "P" or "-") not followed by "-" will have "-" appended ("P-" or "--")
+- If the shape code starts with either `level`, `lvl` or `m` followed by a number, it will produce the shape for the corresponding milestone
+- Shape expansion : Colorable shapes (like `C`) not followed by a color will have `u` appended (`Cu`), uncolorable shapes (like `P` or `-`) not followed by `-` will have `-` appended (`P-` or `--`)
 
 No matter in which order you put your parameters in your shape code, they will be executed in the following order :<br>
 milestone shapes, lfill, struct, shape expansion, fill, lsep, cut/qcut
 
 Display parameters :
 
-Display parameters must be put outside of the "{}", have a "/" in front of them and have a ":" separating the parameter name from the value (if there is one)
+Display parameters must be put outside of the `{}`, have a `/` in front of them and have a `:` separating the parameter name from the value (if there is one)
 
 - /size:80 : will control the width and height in pixels of each shape (default:56, min:10, max:100)
 - /spoiler : will mark the resulting image as spoiler
