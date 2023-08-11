@@ -13,9 +13,9 @@ Shapes :
   - R : Rectangle/Square
   - W : Windmill/Fan
   - S : Star/Spike
+  - c : Crystal
 - Uncolorable :
   - P : Pin
-  - c : Crystal
   - \- : Nothing
 
 Colors :

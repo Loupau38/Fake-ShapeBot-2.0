@@ -219,7 +219,7 @@ def generateShapeCodes(potentialShapeCode:str) -> tuple[list[str]|str,bool]:
             shape2 = []
             for layer in shape:
                 shape1.append(f"{NOTHING_CHAR*((numQuads-takeQuads)*2)}{layer[:takeQuads*2]}")
-                shape1.append(f"{layer[takeQuads*2:]}{NOTHING_CHAR*(takeQuads*2)}")
+                shape2.append(f"{layer[takeQuads*2:]}{NOTHING_CHAR*(takeQuads*2)}")
             newShapeCodes.extend([shape1,shape2])
 
     # handle qcut
