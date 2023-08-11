@@ -4,7 +4,7 @@ import math
 NOTHING_CHAR = globalInfos.SHAPE_NOTHING_CHAR
 PIN_CHAR = "P"
 CRYSTAL_CHAR = "c"
-UNCOLORABLE_SHAPES = [CRYSTAL_CHAR,PIN_CHAR,NOTHING_CHAR]
+UNPAINTABLE_SHAPES = [CRYSTAL_CHAR,PIN_CHAR,NOTHING_CHAR]
 REPLACED_BY_CRYSTAL = [PIN_CHAR,NOTHING_CHAR]
 
 class Quadrant:
@@ -37,6 +37,9 @@ class Shape:
 
     def toShapeCode(self) -> str:
         return globalInfos.SHAPE_LAYER_SEPARATOR.join(self.toListOfLayers())
+    
+    def isEmpty(self) -> bool:
+        return all(c == NOTHING_CHAR for c in "".join(self.toListOfLayers()))
 
 def cut(shape:Shape) -> tuple[Shape,Shape]:
     takeQuads = math.ceil(shape.numQuads/2)
@@ -77,14 +80,19 @@ def stack(bottomShape:Shape,topShape:Shape) -> Shape:
 
 def topPaint(shape:Shape,color:str) -> Shape:
     newLayers = shape.layers[:-1]
-    newLayers.append([Quadrant(q.shape,NOTHING_CHAR if q.shape in UNCOLORABLE_SHAPES else color) for q in shape.layers[-1]])
+    newLayers.append([Quadrant(q.shape,NOTHING_CHAR if q.shape in UNPAINTABLE_SHAPES else color) for q in shape.layers[-1]])
     return Shape(newLayers)
 
 def fullPaint(shape:Shape,color:str) -> Shape:
-    return Shape([[Quadrant(q.shape,NOTHING_CHAR if q.shape in UNCOLORABLE_SHAPES else color) for q in l] for l in shape.layers])
+    return Shape([[Quadrant(q.shape,NOTHING_CHAR if q.shape in UNPAINTABLE_SHAPES else color) for q in l] for l in shape.layers])
 
 def pushPin(shape:Shape) -> Shape:
     return Shape([[Quadrant("P",NOTHING_CHAR),*(l[1:])] for l in shape.layers])
 
 def genCrystal(shape:Shape,color:str) -> Shape:
     return Shape([[Quadrant(CRYSTAL_CHAR,color) if q.shape in REPLACED_BY_CRYSTAL else q for q in l] for l in shape.layers])
+
+def unstack(shape:Shape) -> tuple[Shape,Shape]:
+    if shape.numLayers == 1:
+        return Shape([[Quadrant(NOTHING_CHAR,NOTHING_CHAR)]]),shape.layers[0]
+    return Shape(shape.layers[:-1]),shape.layers[-1]

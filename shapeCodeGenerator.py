@@ -1,9 +1,8 @@
-import shapeOperations
 import globalInfos
 import math
 
-COLOR_SHAPES = ["C","R","S","W"]
-NO_COLOR_SHAPES = ["P","c"]
+COLOR_SHAPES = ["C","R","S","W","c"]
+NO_COLOR_SHAPES = ["P"]
 COLORS = globalInfos.SHAPE_COLORS
 NOTHING_CHAR = globalInfos.SHAPE_NOTHING_CHAR
 COLOR_SHAPES_DEFAULT_COLOR = COLORS[0]
@@ -25,7 +24,7 @@ LEVEL_SHAPE_PREFIXES = ["level","lvl","m"]
 LEVEL_SHAPES = ["CuCuCuCu","----RuRu","Cu------","CuCuRuRu","CuCuCuRu",
     "Cu----Ru","CuRuCuRu:Cu--Cu--","SuSuSuSu","WuCuWuCu:CuCuCuCu","RrCrRrCr",
     "SgCrCrSg:--CuCu--","SgCrCrSg:CbCbCbCb","RuCrP-Cr:----Ru--","RgCrP-Cr:P-P-RgP-:CbCb--Cb","RuCwP-Cw:----Ru--",
-    "CwCrCwCr:CrCwCrCw:CwCrCwCr:CrCwCrCw","Cuc-Cuc-","P-"]
+    "CwCrCwCr:CrCwCrCw:CwCrCwCr:CrCwCrCw","CucrCucr","P-"]
 
 def getPotentialShapeCodesFromMessage(message:str) -> list[str]:
     if (message == "") or (SHAPE_CODE_OPENING not in message):
@@ -214,8 +213,14 @@ def generateShapeCodes(potentialShapeCode:str) -> tuple[list[str]|str,bool]:
     if cutInParams:
         newShapeCodes = []
         for shape in shapeCodes:
-            shape1, shape2 = shapeOperations.cut(shapeOperations.Shape.fromListOfLayers(shape))
-            newShapeCodes.extend([shape1.toListOfLayers(),shape2.toListOfLayers()])
+            numQuads = round(len(shape[0])/2)
+            takeQuads = math.ceil(numQuads/2)
+            shape1 = []
+            shape2 = []
+            for layer in shape:
+                shape1.append(f"{NOTHING_CHAR*((numQuads-takeQuads)*2)}{layer[:takeQuads*2]}")
+                shape1.append(f"{layer[takeQuads*2:]}{NOTHING_CHAR*(takeQuads*2)}")
+            newShapeCodes.extend([shape1,shape2])
 
     # handle qcut
     elif qcutInParams:

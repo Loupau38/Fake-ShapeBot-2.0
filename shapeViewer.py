@@ -30,7 +30,10 @@ SIZE_CHANGE_RATIO = FAKE_SURFACE_SIZE / DEFAULT_IMAGE_SIZE
 SHAPE_SIZE = DEFAULT_SHAPE_DIAMETER * SIZE_CHANGE_RATIO
 SHAPE_BORDER_SIZE = round(DEFAULT_BORDER_SIZE*SIZE_CHANGE_RATIO)
 BG_CIRCLE_DIAMETER = DEFAULT_BG_CIRCLE_DIAMETER * SIZE_CHANGE_RATIO
-SHAPE_SIZE_ON_2 = SHAPE_SIZE/2
+SHAPE_SIZE_ON_2 = SHAPE_SIZE / 2
+SHAPE_SIZE_ON_4 = SHAPE_SIZE / 4
+SHAPE_SIZE_ON_8 = SHAPE_SIZE / 8
+SHAPE_SIZE_ON_16 = SHAPE_SIZE / 16
 
 SHAPES_SHAPE = {
     "C" : {
@@ -43,11 +46,11 @@ SHAPES_SHAPE = {
     },
     "S" : {
         "type" : "polygon",
-        "points" : [(SHAPE_SIZE_ON_2,0),(SHAPE_SIZE/4,SHAPE_SIZE_ON_2),(0,SHAPE_SIZE_ON_2),(0,SHAPE_SIZE/4)]
+        "points" : [(SHAPE_SIZE_ON_2,0),(SHAPE_SIZE_ON_4,SHAPE_SIZE_ON_2),(0,SHAPE_SIZE_ON_2),(0,SHAPE_SIZE_ON_4)]
     },
     "W" : {
         "type" : "polygon",
-        "points" : [(SHAPE_SIZE_ON_2,0),(SHAPE_SIZE_ON_2,SHAPE_SIZE_ON_2),(0,SHAPE_SIZE_ON_2),(0,SHAPE_SIZE/4)]
+        "points" : [(SHAPE_SIZE_ON_2,0),(SHAPE_SIZE_ON_2,SHAPE_SIZE_ON_2),(0,SHAPE_SIZE_ON_2),(0,SHAPE_SIZE_ON_4)]
     },
     "P" : {
         "type" : "circle",
@@ -56,9 +59,12 @@ SHAPES_SHAPE = {
         "border" : False
     },
     "c" : {
-        "type" : "circle",
-        "pos" : (0,SHAPE_SIZE_ON_2,SHAPE_SIZE_ON_2),
-        "color" : (50,160,180),
+        "type" : "polygon",
+        "points" : [(0,SHAPE_SIZE_ON_2),(0,SHAPE_SIZE_ON_16),
+            (SHAPE_SIZE_ON_8,SHAPE_SIZE_ON_16),((SHAPE_SIZE/32)*7,0),
+            (SHAPE_SIZE_ON_4,SHAPE_SIZE_ON_8),(SHAPE_SIZE_ON_8*3,SHAPE_SIZE_ON_8),
+            (SHAPE_SIZE_ON_8*3,SHAPE_SIZE_ON_4),(SHAPE_SIZE_ON_2,(SHAPE_SIZE_ON_16)*5),
+            ((SHAPE_SIZE_ON_16)*7,SHAPE_SIZE_ON_8*3),((SHAPE_SIZE_ON_16)*7,SHAPE_SIZE_ON_2)],
         "border" : False
     }
 }

@@ -1,2 +1,2 @@
-v1.0 :
+## v1.0 :
 - Added all initial features

@@ -12,7 +12,7 @@ async def globalLogMessage(message:str) -> None:
         logChannel = await client.fetch_channel(globalInfos.GLOBAL_LOG_CHANNEL)
         await logChannel.send(message)
 
-async def sendMessage(userMessage:str,sendErrors:bool,ephemeral:bool,sendMsgFunc,addReactionFunc=None) -> None:
+async def useShapeViewer(userMessage:str,sendErrors:bool,ephemeral:bool,sendMsgFunc,addReactionFunc=None) -> None:
     try:
 
         response = responses.handleResponse(userMessage)
@@ -223,7 +223,7 @@ def runDiscordBot() -> None:
                 await message.add_reaction("\U0001F916")
 
         if await doSendMessage(message):
-            await sendMessage(message.content,False,False,message.channel.send,message.add_reaction)
+            await useShapeViewer(message.content,False,False,message.channel.send,message.add_reaction)
 
     @tree.command(name="pause",description="Admin only, pauses the bot on this server")
     async def pauseCommand(interaction:discord.Interaction) -> None:
@@ -283,10 +283,10 @@ def runDiscordBot() -> None:
     async def viewShapesCommand(interaction:discord.Interaction,message:str) -> None:
         if globalPaused:
             return
-        await sendMessage(message,True,True,interaction.response.send_message)
+        await useShapeViewer(message,True,True,interaction.response.send_message)
 
     @tree.command(name="change-blueprint-version",description="Change a blueprint's version")
-    @discord.app_commands.describe(blueprint="The full blueprint code",version="The blueprint version number (current latest is 1019)")
+    @discord.app_commands.describe(blueprint="The full blueprint code",version="The blueprint version number (current latest is 1022)")
     async def changeBlueprintVersionCommand(interaction:discord.Interaction,blueprint:str,version:int) -> None:
         if globalPaused:
             return
