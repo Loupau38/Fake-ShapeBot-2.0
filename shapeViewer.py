@@ -61,10 +61,10 @@ SHAPES_SHAPE = {
     "c" : {
         "type" : "polygon",
         "points" : [(0,SHAPE_SIZE_ON_2),(0,SHAPE_SIZE_ON_16),
-            (SHAPE_SIZE_ON_8,SHAPE_SIZE_ON_16),((SHAPE_SIZE/32)*7,0),
+            (SHAPE_SIZE_ON_16,SHAPE_SIZE_ON_16),((SHAPE_SIZE/32)*7,0),
             (SHAPE_SIZE_ON_4,SHAPE_SIZE_ON_8),(SHAPE_SIZE_ON_8*3,SHAPE_SIZE_ON_8),
-            (SHAPE_SIZE_ON_8*3,SHAPE_SIZE_ON_4),(SHAPE_SIZE_ON_2,(SHAPE_SIZE_ON_16)*5),
-            ((SHAPE_SIZE_ON_16)*7,SHAPE_SIZE_ON_8*3),((SHAPE_SIZE_ON_16)*7,SHAPE_SIZE_ON_2)],
+            (SHAPE_SIZE_ON_8*3,SHAPE_SIZE_ON_4),(SHAPE_SIZE_ON_2,SHAPE_SIZE_ON_16*5),
+            (SHAPE_SIZE_ON_16*7,SHAPE_SIZE_ON_16*7),(SHAPE_SIZE_ON_16*7,SHAPE_SIZE_ON_2)],
         "border" : False
     }
 }

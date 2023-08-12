@@ -115,10 +115,7 @@ def generateShapeCodes(potentialShapeCode:str) -> tuple[list[str]|str,bool]:
                     return f"Use of 'struct' parameter but layer {i+1} doesn't contain only '0' or '1'",False
         for i,layer in enumerate(layers):
             newLayer = ""
-            if i > len(STRUCT_COLORS)-1:
-                color = STRUCT_COLORS[-1]
-            else:
-                color = STRUCT_COLORS[i]
+            color = STRUCT_COLORS[min(i,len(STRUCT_COLORS)-1)]
             for char in layer:
                 newLayer += f"C{color}" if char == "1" else NOTHING_CHAR*2
             layers[i] = newLayer
