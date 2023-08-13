@@ -126,7 +126,17 @@ def renderShape(shapeCode:str,surfaceSize:int) -> pygame.Surface:
     pygame.draw.circle(returnSurface,BG_CIRCLE_COLOR,(FAKE_SURFACE_SIZE/2,FAKE_SURFACE_SIZE/2),BG_CIRCLE_DIAMETER/2)
 
     for layerIndex, layer in enumerate(decomposedShapeCode):
+
         curLayerSizeReduction = LAYER_SIZE_REDUCTION ** layerIndex
+        resizedQuadSurfaceSize = round(SHAPE_SIZE_ON_2*curLayerSizeReduction)
+        withBorderQuadSurface = pygame.Surface(
+            (resizedQuadSurfaceSize+SHAPE_BORDER_SIZE,resizedQuadSurfaceSize+SHAPE_BORDER_SIZE),
+            pygame.SRCALPHA)
+        tempLayerSurface = pygame.Surface((
+            (resizedQuadSurfaceSize*2)+SHAPE_BORDER_SIZE,
+            (resizedQuadSurfaceSize*2)+SHAPE_BORDER_SIZE),
+            flags=pygame.SRCALPHA)
+
         for quadIndex, quad in enumerate(layer):
 
             if quad.startswith(globalInfos.SHAPE_NOTHING_CHAR):
@@ -134,65 +144,76 @@ def renderShape(shapeCode:str,surfaceSize:int) -> pygame.Surface:
 
             shapeShape = SHAPES_SHAPE[quad[0]]
             quadSurface = preRenderedQuadrants[quad]
-            resizedQuadSurfaceSize = round(SHAPE_SIZE_ON_2*curLayerSizeReduction)
-            withBorderQuadSurface = pygame.Surface(
-                (resizedQuadSurfaceSize+SHAPE_BORDER_SIZE,resizedQuadSurfaceSize+SHAPE_BORDER_SIZE),
-                pygame.SRCALPHA)
             quadSurface = pygame.transform.scale(quadSurface,(resizedQuadSurfaceSize,resizedQuadSurfaceSize))
+            curWithBorderQuadSurface = withBorderQuadSurface.copy()
 
             if (shapeShape.get("border") is False) and (layerIndex != 0):
                 quadShadowSurface = preRenderedShadows[quad]
                 quadShadowSurface = pygame.transform.scale(quadShadowSurface,
                     (resizedQuadSurfaceSize+(SHAPE_BORDER_SIZE/2),resizedQuadSurfaceSize+(SHAPE_BORDER_SIZE/2)))
-                withBorderQuadSurface.blit(quadShadowSurface,(SHAPE_BORDER_SIZE/2,0))
+                curWithBorderQuadSurface.blit(quadShadowSurface,(SHAPE_BORDER_SIZE/2,0))
 
-            withBorderQuadSurface.blit(quadSurface,(SHAPE_BORDER_SIZE/2,SHAPE_BORDER_SIZE/2))
+            curWithBorderQuadSurface.blit(quadSurface,(SHAPE_BORDER_SIZE/2,SHAPE_BORDER_SIZE/2))
 
-            if shapeShape.get("border") is not False:
+            curTempLayerSurface = tempLayerSurface.copy()
+            curTempLayerSurface.blit(curWithBorderQuadSurface,(resizedQuadSurfaceSize,0))
+            curTempLayerSurface = pygame.transform.rotate(curTempLayerSurface,-((360/numQuads)*quadIndex))
+            returnSurface.blit(curTempLayerSurface,(
+            (FAKE_SURFACE_SIZE/2)-(curTempLayerSurface.get_width()/2),
+            (FAKE_SURFACE_SIZE/2)-(curTempLayerSurface.get_height()/2)))
 
-                if shapeShape["type"] == "circle":
-                    pygame.draw.circle(withBorderQuadSurface,SHAPE_BORDER_COLOR,
-                        (
-                            (shapeShape["pos"][0]*curLayerSizeReduction)+(SHAPE_BORDER_SIZE/2),
-                            (shapeShape["pos"][1]*curLayerSizeReduction)+(SHAPE_BORDER_SIZE/2)),
-                        (shapeShape["pos"][2]*curLayerSizeReduction)+(SHAPE_BORDER_SIZE/2),
-                        SHAPE_BORDER_SIZE,
-                        draw_top_right=True)
-                    pygame.draw.line(withBorderQuadSurface,SHAPE_BORDER_COLOR,
-                        (SHAPE_BORDER_SIZE/2,0),
-                        (SHAPE_BORDER_SIZE/2,resizedQuadSurfaceSize+SHAPE_BORDER_SIZE),
-                        SHAPE_BORDER_SIZE)
-                    pygame.draw.line(withBorderQuadSurface,SHAPE_BORDER_COLOR,
-                        (0,resizedQuadSurfaceSize+(SHAPE_BORDER_SIZE/2)),
-                        (resizedQuadSurfaceSize+SHAPE_BORDER_SIZE,resizedQuadSurfaceSize+(SHAPE_BORDER_SIZE/2)),
-                        SHAPE_BORDER_SIZE)
+        for quadIndex, quad in enumerate(layer):
 
-                elif shapeShape["type"] == "rect":
-                    pygame.draw.rect(withBorderQuadSurface,SHAPE_BORDER_COLOR,
-                        pygame.Rect(
-                            shapeShape["pos"][0]*curLayerSizeReduction,
-                            shapeShape["pos"][1]*curLayerSizeReduction,
-                            (shapeShape["pos"][2]*curLayerSizeReduction)+SHAPE_BORDER_SIZE,
-                            (shapeShape["pos"][3]*curLayerSizeReduction)+SHAPE_BORDER_SIZE
-                        ),
-                        SHAPE_BORDER_SIZE)
+            if quad.startswith(globalInfos.SHAPE_NOTHING_CHAR):
+                continue
 
-                else:
-                    scaledPoints = [
-                        ((point[0]*curLayerSizeReduction)+(SHAPE_BORDER_SIZE/2),
-                         (point[1]*curLayerSizeReduction)+(SHAPE_BORDER_SIZE/2)) for point in shapeShape["points"]]
-                    pygame.draw.polygon(withBorderQuadSurface,SHAPE_BORDER_COLOR,scaledPoints,SHAPE_BORDER_SIZE)
-                    for point in scaledPoints:
-                        pygame.draw.circle(withBorderQuadSurface,SHAPE_BORDER_COLOR,point,(SHAPE_BORDER_SIZE/2)-1)
+            shapeShape = SHAPES_SHAPE[quad[0]]
 
-            tempLayerSurface = pygame.Surface((
-                (resizedQuadSurfaceSize*2)+SHAPE_BORDER_SIZE,
-                (resizedQuadSurfaceSize*2)+SHAPE_BORDER_SIZE),
-                flags=pygame.SRCALPHA)
-            tempLayerSurface.blit(withBorderQuadSurface,(resizedQuadSurfaceSize,0))
-            tempLayerSurface = pygame.transform.rotate(tempLayerSurface,-((360/numQuads)*quadIndex))
-            returnSurface.blit(tempLayerSurface,(
-            (FAKE_SURFACE_SIZE/2)-(tempLayerSurface.get_width()/2),
-            (FAKE_SURFACE_SIZE/2)-(tempLayerSurface.get_height()/2)))
+            if shapeShape.get("border") is False:
+                continue
+
+            curWithBorderQuadSurface = withBorderQuadSurface.copy()
+
+            if shapeShape["type"] == "circle":
+                pygame.draw.circle(curWithBorderQuadSurface,SHAPE_BORDER_COLOR,
+                    (
+                        (shapeShape["pos"][0]*curLayerSizeReduction)+(SHAPE_BORDER_SIZE/2),
+                        (shapeShape["pos"][1]*curLayerSizeReduction)+(SHAPE_BORDER_SIZE/2)),
+                    (shapeShape["pos"][2]*curLayerSizeReduction)+(SHAPE_BORDER_SIZE/2),
+                    SHAPE_BORDER_SIZE,
+                    draw_top_right=True)
+                pygame.draw.line(curWithBorderQuadSurface,SHAPE_BORDER_COLOR,
+                    (SHAPE_BORDER_SIZE/2,0),
+                    (SHAPE_BORDER_SIZE/2,resizedQuadSurfaceSize+SHAPE_BORDER_SIZE),
+                    SHAPE_BORDER_SIZE)
+                pygame.draw.line(curWithBorderQuadSurface,SHAPE_BORDER_COLOR,
+                    (0,resizedQuadSurfaceSize+(SHAPE_BORDER_SIZE/2)),
+                    (resizedQuadSurfaceSize+SHAPE_BORDER_SIZE,resizedQuadSurfaceSize+(SHAPE_BORDER_SIZE/2)),
+                    SHAPE_BORDER_SIZE)
+
+            elif shapeShape["type"] == "rect":
+                pygame.draw.rect(curWithBorderQuadSurface,SHAPE_BORDER_COLOR,
+                    pygame.Rect(
+                        shapeShape["pos"][0]*curLayerSizeReduction,
+                        shapeShape["pos"][1]*curLayerSizeReduction,
+                        (shapeShape["pos"][2]*curLayerSizeReduction)+SHAPE_BORDER_SIZE,
+                        (shapeShape["pos"][3]*curLayerSizeReduction)+SHAPE_BORDER_SIZE
+                    ),
+                    SHAPE_BORDER_SIZE)
+
+            else:
+                scaledPoints = [
+                    ((point[0]*curLayerSizeReduction)+(SHAPE_BORDER_SIZE/2),
+                        (point[1]*curLayerSizeReduction)+(SHAPE_BORDER_SIZE/2)) for point in shapeShape["points"]]
+                pygame.draw.polygon(curWithBorderQuadSurface,SHAPE_BORDER_COLOR,scaledPoints,SHAPE_BORDER_SIZE)
+                for point in scaledPoints:
+                    pygame.draw.circle(curWithBorderQuadSurface,SHAPE_BORDER_COLOR,point,(SHAPE_BORDER_SIZE/2)-1)
+
+            curTempLayerSurface = tempLayerSurface.copy()
+            curTempLayerSurface.blit(curWithBorderQuadSurface,(resizedQuadSurfaceSize,0))
+            curTempLayerSurface = pygame.transform.rotate(curTempLayerSurface,-((360/numQuads)*quadIndex))
+            returnSurface.blit(curTempLayerSurface,(
+            (FAKE_SURFACE_SIZE/2)-(curTempLayerSurface.get_width()/2),
+            (FAKE_SURFACE_SIZE/2)-(curTempLayerSurface.get_height()/2)))
 
     return pygame.transform.smoothscale(returnSurface,(surfaceSize,surfaceSize)) # pygame doesn't work well at low resolution so render at size 500 then downscale to the desired size
