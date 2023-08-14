@@ -1,12 +1,12 @@
-<h2>Fake ShapeBot 2.0</h2>
+# Fake ShapeBot 2.0
 
 v1.0
-<br>
-<br>
-<br>
+
+## Shape viewer :
+
 Put your shape code and parameters in `{}`
 
-Shapes :
+### Shapes :
 
 - Colorable :
   - C : Circle
@@ -18,7 +18,7 @@ Shapes :
   - P : Pin
   - \- : Nothing
 
-Colors :
+### Colors :
 
 - r : Red
 - g : Green
@@ -30,7 +30,7 @@ Colors :
 - k : Black
 - \- : Nothing
 
-Parameters :
+### Parameters :
 
 Each parameter must have a `+` in front of it
 
@@ -43,15 +43,15 @@ Each parameter must have a `+` in front of it
 
 Note : `cut` and `qcut` are mutually exclusive
 
-Additional features :
+### Additional features :
 
 - If the shape code starts with either `level`, `lvl` or `m` followed by a number, it will produce the shape for the corresponding milestone
 - Shape expansion : Colorable shapes (like `C`) not followed by a color will have `u` appended (`Cu`), uncolorable shapes (like `P` or `-`) not followed by `-` will have `-` appended (`P-` or `--`)
 
-No matter in which order you put your parameters in your shape code, they will be executed in the following order :<br>
+No matter in which order you put your parameters in your shape code, they will be executed in the following order :\
 milestone shapes, lfill, struct, shape expansion, fill, lsep, cut/qcut
 
-Display parameters :
+### Display parameters :
 
 Display parameters must be put outside of the `{}`, have a `/` in front of them and have a `:` separating the parameter name from the value (if there is one)
 
@@ -61,40 +61,37 @@ Display parameters must be put outside of the `{}`, have a `/` in front of them 
 - /3d : Will additionally send links to [DontMash's 3D shape viewer](https://shapez.soren.codes/shape)
 
 Note : shapes with more than 4 layers and/or with more/less than 4 quadrants per layer are supported
-<br>
-<br>
-<br>
-Slash commands
-<br>
-<br>
-Public commands :
+
+## Slash commands
+
+### Public commands :
 
 - /view-shapes [message] : Will trigger the shape viewer like a regular message but will send the response back only to you and will also include any error messages
 - /change-blueprint-version [blueprint] [version] : Changes a blueprint's version and returns the new code
 - /member-count : Displays the member count of the server it is executed in (with additional info such as online/offline count and percentage)
 
-Admin commands :
+### Admin commands :
 
-- Pausing :<br>
+- Pausing :\
   While paused, the bot will not send any public messages on the server
   - /pause : Pauses the bot
   - /unpause : Unpauses the bot
-- Restrict to channel :<br>
+- Restrict to channel :\
   The bot will only send public messages on the channel it is restricted to
   - /restrict-to-channel [channel] : Sets the channel ID to restrict the bot to, use 0 to clear this parameter and not restrict the bot to any channel
-- Restrict to roles :<br>
+- Restrict to roles :\
   If 'restrictToRolesInverted' is false, only users who have at least one role part of the 'restrictToRoles' list will be able to make the bot send public messages. If true, only users who have at least one role that isn't part of the list will be able to. In both cases, if the list is empty, every user will be able to.
   - /restrict-to-roles-add [role] : Adds a role ID to the list
   - /restrict-to-roles-remove [role] : Removes a role ID from the list
   - /restrict-to-roles-view : View the 'restrictToRoles' list
   - /restrict-to-roles-set-inverted [inverted] : Sets the 'restrictToRolesInverted' parameter
-- Admin roles :<br>
+- Admin roles :\
   Only users who have a role part of the 'adminRoles' list or who have the administrator permission will be able to use admin commands
   - /admin-roles-add [role] : Adds a role ID to the list
   - /admin-roles-remove [role] : Removes a role ID from the list
   - /admin-roles-view : View the 'adminRoles' list
 
-Owner commands :
+### Owner commands :
 
 - /global-pause : Pauses the bot globally
 - /global-unpause : Unpauses the bot globally
