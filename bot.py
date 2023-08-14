@@ -300,6 +300,49 @@ def runDiscordBot() -> None:
             responseMsg = f"Error happened : {e}"
         await interaction.response.send_message(responseMsg,ephemeral=True)
 
+    @tree.command(name="member-count",description="Display the number of members in this server")
+    async def MemberCountCommand(interaction:discord.Interaction) -> None:
+        if globalPaused:
+            return
+        def fillText(text:str,desiredLen:int,align:str) -> str:
+            toFill = desiredLen - len(text)
+            if align == "l":
+                return text + (" "*toFill)
+            elif align == "r":
+                return (" "*toFill) + text
+            else:
+                num = int(toFill/2)
+                return (" "*num) + text + (" "*(toFill-num))
+        if interaction.guild is None:
+            responseMsg = "Not in a server"
+        else:
+            guild = await client.fetch_guild(interaction.guild_id,with_counts=True)
+            total = guild.approximate_member_count
+            online = guild.approximate_presence_count
+            offline = total - online
+            totalTxt, onlineTxt, offlineTxt = "Total", "Online", "Offline"
+            onlineProportion = online / total
+            onlinePercent = round(onlineProportion*100)
+            offlinePercent = 100-onlinePercent
+            onlinePercent, offlinePercent = f"{onlinePercent}%", f"{offlinePercent}%"
+            online, total, offline = [str(n) for n in (online,total,offline)]
+            totalMaxLen = max(len(s) for s in (total,totalTxt))
+            onlineMaxLen = max(len(s) for s in (online,onlinePercent,onlineTxt))
+            offlineMaxLen = max(len(s) for s in (offline,offlinePercent,offlineTxt))
+            numSpaces = 20
+            totalLen = onlineMaxLen + numSpaces + totalMaxLen + numSpaces + offlineMaxLen
+            spaces = " "*numSpaces
+            filledProgressBar = round(onlineProportion*totalLen)
+            lines = [
+                f"{fillText(onlineTxt,onlineMaxLen,'l')}{spaces}{fillText(totalTxt,totalMaxLen,'c')}{spaces}{fillText(offlineTxt,offlineMaxLen,'r')}",
+                f"{fillText(online,onlineMaxLen,'l')}{spaces}{fillText(total,totalMaxLen,'c')}{spaces}{fillText(offline,offlineMaxLen,'r')}",
+                f"{fillText(onlinePercent,onlineMaxLen,'l')}{spaces}{' '*totalMaxLen}{spaces}{fillText(offlinePercent,offlineMaxLen,'r')}",
+                f"{'#'*filledProgressBar}{'-'*(totalLen-filledProgressBar)}"
+            ]
+            responseMsg = "\n".join(lines)
+            responseMsg = f"```{responseMsg}```"
+        await interaction.response.send_message(responseMsg,ephemeral=True)
+
     @tree.command(name="restrict-to-channel",description="Admin only, restricts the use of the shape viewer in public messages to one channel only")
     @discord.app_commands.describe(channel="A channel id or 0 if you want to remove a previously set channel")
     async def restrictToChannelCommand(interaction:discord.Interaction,channel:str) -> None:
