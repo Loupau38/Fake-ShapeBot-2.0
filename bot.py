@@ -4,6 +4,8 @@ import blueprints
 import shapeViewer
 import discord
 import json
+import sys
+import traceback
 
 async def globalLogMessage(message:str) -> None:
     if globalInfos.GLOBAL_LOG_CHANNEL is None:
@@ -12,7 +14,7 @@ async def globalLogMessage(message:str) -> None:
         logChannel = await client.fetch_channel(globalInfos.GLOBAL_LOG_CHANNEL)
         await logChannel.send(message)
 
-async def useShapeViewer(userMessage:str,sendErrors:bool,ephemeral:bool,sendMsgFunc,addReactionFunc=None) -> None:
+async def useShapeViewer(userMessage:str,sendErrors:bool) -> tuple[bool,str,discord.File|None]:
     try:
 
         response = responses.handleResponse(userMessage)
@@ -41,22 +43,15 @@ async def useShapeViewer(userMessage:str,sendErrors:bool,ephemeral:bool,sendMsgF
                 if viewer3dLinks is not None:
                     msgParts.append("\n".join(viewer3dLinks))
 
-        if (hasErrors) and (not sendErrors):
-            await addReactionFunc("\u2753")
+        responseMsg = "\n\n".join(msgParts)
+        if len(responseMsg) > globalInfos.MESSAGE_MAX_LENGTH:
+            responseMsg = "Message too long"
 
-        if (file is not None) or (msgParts != []):
-            kwargs = {}
-            if file is not None:
-                kwargs["file"] = file
-            if ephemeral:
-                kwargs["ephemeral"] = ephemeral
-            responseMsg = "\n\n".join(msgParts)
-            if len(responseMsg) > globalInfos.MESSAGE_MAX_LENGTH:
-                responseMsg = "Message too long"
-            await sendMsgFunc(responseMsg,**kwargs)
+        return hasErrors, responseMsg, file
 
-    except Exception as e:
-        await globalLogMessage(f"Exception happened : {e}")
+    except Exception:
+        await globalLogMessage(("".join(traceback.format_exception(*sys.exc_info())))[:-1])
+        return True, "Unknown error happened" if sendErrors else "", None
 
 def isAllowedToRunOwnerCommand(interaction:discord.Interaction) -> bool:
     if interaction.user.id in globalInfos.OWNER_USERS:
@@ -223,7 +218,11 @@ def runDiscordBot() -> None:
                 await message.add_reaction("\U0001F916")
 
         if await doSendMessage(message):
-            await useShapeViewer(message.content,False,False,message.channel.send,message.add_reaction)
+            hasErrors, responseMsg, file = await useShapeViewer(message.content,False)
+            if hasErrors:
+                await message.add_reaction(globalInfos.INVALID_SHAPE_CODE_REACTION)
+            if (responseMsg != "") or (file is not None):
+                await message.channel.send(responseMsg,**({} if file is None else {"file":file}))
 
     @tree.command(name="pause",description="Admin only, pauses the bot on this server")
     async def pauseCommand(interaction:discord.Interaction) -> None:
@@ -283,7 +282,12 @@ def runDiscordBot() -> None:
     async def viewShapesCommand(interaction:discord.Interaction,message:str) -> None:
         if globalPaused:
             return
-        await useShapeViewer(message,True,True,interaction.response.send_message)
+        await interaction.response.send_message("Please wait...",ephemeral=True)
+        ogMsg = await interaction.original_response()
+        if len(message) > globalInfos.SEND_LOADING_GIF_FOR_NUM_CHARS:
+            await ogMsg.edit(attachments=[discord.File(globalInfos.LOADING_GIF_PATH)])
+        _, responseMsg, file = await useShapeViewer(message,True)
+        await ogMsg.edit(content=responseMsg,**{"attachments":[] if file is None else [file]})
 
     @tree.command(name="change-blueprint-version",description="Change a blueprint's version")
     @discord.app_commands.describe(blueprint="The full blueprint code",version="The blueprint version number (current latest is 1022)")
@@ -293,7 +297,7 @@ def runDiscordBot() -> None:
         try:
             responseMsg = f"```{blueprints.changeBlueprintVersion(blueprint,version)}```"
         except Exception as e:
-            responseMsg = f"Exception happened : {e}"
+            responseMsg = f"Error happened : {e}"
         await interaction.response.send_message(responseMsg,ephemeral=True)
 
     @tree.command(name="restrict-to-channel",description="Admin only, restricts the use of the shape viewer in public messages to one channel only")
