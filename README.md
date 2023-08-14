@@ -55,10 +55,10 @@ Display parameters :
 
 Display parameters must be put outside of the `{}`, have a `/` in front of them and have a `:` separating the parameter name from the value (if there is one)
 
-- /size:80 : will control the width and height in pixels of each shape (default:56, min:10, max:100)
-- /spoiler : will mark the resulting image as spoiler
-- /result : will additionally send the generated shape codes
-- /3d : will additionally send links to [DontMash's 3D shape viewer](https://shapez.soren.codes/shape)
+- /size:80 : Will control the width and height in pixels of each shape (default:56, min:10, max:100)
+- /spoiler : Will mark the resulting image as spoiler
+- /result : Will additionally send the generated shape codes
+- /3d : Will additionally send links to [DontMash's 3D shape viewer](https://shapez.soren.codes/shape)
 
 Note : shapes with more than 4 layers and/or with more/less than 4 quadrants per layer are supported
 <br>
@@ -69,32 +69,33 @@ Slash commands
 <br>
 Public commands :
 
-- /view-shapes [message] : will trigger the shape viewer like a regular message but will send the response back only to you and will also include any error messages
+- /view-shapes [message] : Will trigger the shape viewer like a regular message but will send the response back only to you and will also include any error messages
 - /change-blueprint-version [blueprint] [version] : Changes a blueprint's version and returns the new code
+- /member-count : Displays the member count of the server it is executed in (with additional info such as online/offline count and percentage)
 
 Admin commands :
 
 - Pausing :<br>
   While paused, the bot will not send any public messages on the server
-  - /pause : pauses the bot
-  - /unpause : unpauses the bot
+  - /pause : Pauses the bot
+  - /unpause : Unpauses the bot
 - Restrict to channel :<br>
   The bot will only send public messages on the channel it is restricted to
   - /restrict-to-channel [channel] : Sets the channel ID to restrict the bot to, use 0 to clear this parameter and not restrict the bot to any channel
 - Restrict to roles :<br>
   If 'restrictToRolesInverted' is false, only users who have at least one role part of the 'restrictToRoles' list will be able to make the bot send public messages. If true, only users who have at least one role that isn't part of the list will be able to. In both cases, if the list is empty, every user will be able to.
-  - /restrict-to-roles-add [role] : adds a role ID to the list
-  - /restrict-to-roles-remove [role] : removes a role ID from the list
-  - /restrict-to-roles-view : view the 'restrictToRoles' list
-  - /restrict-to-roles-set-inverted [inverted] : sets the 'restrictToRolesInverted' parameter
+  - /restrict-to-roles-add [role] : Adds a role ID to the list
+  - /restrict-to-roles-remove [role] : Removes a role ID from the list
+  - /restrict-to-roles-view : View the 'restrictToRoles' list
+  - /restrict-to-roles-set-inverted [inverted] : Sets the 'restrictToRolesInverted' parameter
 - Admin roles :<br>
   Only users who have a role part of the 'adminRoles' list or who have the administrator permission will be able to use admin commands
-  - /admin-roles-add [role] : adds a role ID to the list
-  - /admin-roles-remove [role] : removes a role ID from the list
-  - /admin-roles-view : view the 'adminRoles' list
+  - /admin-roles-add [role] : Adds a role ID to the list
+  - /admin-roles-remove [role] : Removes a role ID from the list
+  - /admin-roles-view : View the 'adminRoles' list
 
 Owner commands :
 
-- /global-pause : pauses the bot globally
-- /global-unpause : unpauses the bot globally
-- /stop : stops the bot
+- /global-pause : Pauses the bot globally
+- /global-unpause : Unpauses the bot globally
+- /stop : Stops the bot
