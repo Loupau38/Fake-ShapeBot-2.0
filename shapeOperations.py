@@ -215,8 +215,7 @@ def pushPin(shape:Shape) -> list[Shape]:
         if newLayer[0].shape == CRYSTAL_CHAR:
             for quadIndex in getConnected(newLayer,0,True):
                 newLayer[quadIndex] = Quadrant(NOTHING_CHAR,NOTHING_CHAR)
-        if i == 0:
-            newLayer[0] = Quadrant(PIN_CHAR,NOTHING_CHAR)
+        newLayer[0] = Quadrant(PIN_CHAR,NOTHING_CHAR) if i == 0 else Quadrant(NOTHING_CHAR,NOTHING_CHAR)
         newLayers.append(newLayer)
     newLayers = cleanUpEmptyUpperLayers(newLayers)
     return [Shape(newLayers)]
