@@ -2,6 +2,7 @@ import responses
 import globalInfos
 import blueprints
 import shapeViewer
+import operationGraph
 import discord
 import json
 import sys
@@ -122,19 +123,22 @@ def isValidRoleId(role:str) -> bool:
         return False
     return True
 
-async def doSendMessage(message:discord.Message) -> bool:
+async def isAllowedToUsePublicFeature(initiator:discord.Message|discord.Interaction) -> bool:
 
-    if message.author.id in globalInfos.OWNER_USERS:
+    initiatorType = {discord.Message:0,discord.Interaction:1}[type(initiator)]
+
+    authorId = initiator.author.id if initiatorType == 0 else initiator.user.id
+    if authorId in globalInfos.OWNER_USERS:
         return True
 
     if globalPaused:
         return False
 
-    if message.guild is None:
+    guildId = initiator.guild_id
+    if guildId is None:
         return True
 
-    guildId = message.guild.id
-    userRoles = message.author.roles[1:]
+    userRoles = initiator.author.roles[1:] if initiatorType == 0 else initiator.user.roles
     adminRoles = await getAllServerSettings(guildId,"adminRoles")
     for role in userRoles:
         if role.id in adminRoles:
@@ -143,7 +147,8 @@ async def doSendMessage(message:discord.Message) -> bool:
     if await getAllServerSettings(guildId,"paused"):
         return False
 
-    if await getAllServerSettings(guildId,"restrictToChannel") not in (None,message.channel.id):
+    channelId = initiator.channel.id
+    if await getAllServerSettings(guildId,"restrictToChannel") not in (None,channelId):
         return False
 
     restrictToRoles = await getAllServerSettings(guildId,"restrictToRoles")
@@ -217,7 +222,7 @@ def runDiscordBot() -> None:
             if await doSendReaction(message):
                 await message.add_reaction("\U0001F916")
 
-        if await doSendMessage(message):
+        if await isAllowedToUsePublicFeature(message):
             hasErrors, responseMsg, file = await useShapeViewer(message.content,False)
             if hasErrors:
                 await message.add_reaction(globalInfos.INVALID_SHAPE_CODE_REACTION)
@@ -342,6 +347,40 @@ def runDiscordBot() -> None:
             responseMsg = "\n".join(lines)
             responseMsg = f"```{responseMsg}```"
         await interaction.response.send_message(responseMsg,ephemeral=True)
+
+    @tree.command(name="operation-graph",description="See documentation on github")
+    @discord.app_commands.describe(public="Wether to send the result publicly in the channel or only to you (errors are always sent privately)",
+        see_shape_vars="Wether or not to send the shape codes that were affected to every shape variable")
+    async def operationGraphCommand(interaction:discord.Interaction,instructions:str,public:bool=False,see_shape_vars:bool=False) -> None:
+        if globalPaused:
+            return
+        await interaction.response.send_message("Please wait...",ephemeral=True)
+        ogMsg = await interaction.original_response()
+        if len(instructions) > globalInfos.SEND_LOADING_GIF_FOR_NUM_CHARS:
+            await ogMsg.edit(attachments=[discord.File(globalInfos.LOADING_GIF_PATH)])
+        valid, instructionsOrError = operationGraph.getInstructionsFromText(instructions)
+        responseMsg = ""
+        file = None
+        hasErrors = False
+        if valid:
+            valid, responseOrError = operationGraph.genOperationGraph(instructionsOrError,see_shape_vars)
+            if valid:
+                image, shapeVarValues = responseOrError
+                file = discord.File(image,"graph.png")
+                if see_shape_vars:
+                    responseMsg = "\n".join(f"- {k} : {{{v}}}" for k,v in shapeVarValues.items())
+            else:
+                responseMsg = instructionsOrError
+                hasErrors = True
+        else:
+            responseMsg = instructionsOrError
+            hasErrors = True
+        if hasErrors or (not public):
+            await ogMsg.edit(content=responseMsg,**{"attachments":[] if file is None else [file]})
+        else:
+            await ogMsg.delete()
+            if await isAllowedToUsePublicFeature(interaction):
+                await interaction.channel.send(responseMsg,file=file)
 
     @tree.command(name="restrict-to-channel",description="Admin only, restricts the use of the shape viewer in public messages to one channel only")
     @discord.app_commands.describe(channel="A channel id or 0 if you want to remove a previously set channel")
