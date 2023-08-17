@@ -123,18 +123,6 @@ def cleanUpEmptyUpperLayers(layers:list[list[Quadrant]]) -> list[list[Quadrant]]
             break
     return layers[:i+1]
 
-def crystalsUnsupported(shape:Shape|list[Shape],op:str) -> None:
-    if type(shape) == list:
-        layers = []
-        for s in shape:
-            layers.extend(s.layers)
-    else:
-        layers = shape.layers
-    for l in layers:
-        for q in l:
-            if q.shape == CRYSTAL_CHAR:
-                raise InvalidOperationInputs(f"Crystals not supported for operation '{op}'")
-
 def differentNumQuadsUnsupported(func):
     def wrapper(*args,**kwargs) -> None:
         shapes:list[Shape] = []

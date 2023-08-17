@@ -69,6 +69,7 @@ Note : shapes with more than 4 layers and/or with more/less than 4 quadrants per
 - /view-shapes [message] : Will trigger the shape viewer like a regular message but will send the response back only to you and will also include any error messages
 - /change-blueprint-version [blueprint] [version] : Changes a blueprint's version and returns the new code
 - /member-count : Displays the member count of the server it is executed in (with additional info such as online/offline count and percentage)
+- /operation-graph [instructions] [public] [see_shape_vars] : See the [/operation-graph documentation](https://github.com/Loupau38/Fake-ShapeBot-2.0/blob/main/operationGraphDoc.md)
 
 ### Admin commands :
 

@@ -104,9 +104,12 @@ def getInstructionsFromText(text:str) -> tuple[bool,list[Instruction]|str]:
             shapeVarsInt = []
             for i,sv in enumerate(shapeVars):
                 try:
-                    shapeVarsInt.append(int(sv))
+                    curVar = int(sv)
                 except ValueError:
-                    return False, f"Shape variable {i+1} not an integer"
+                    return False,f"Shape variable {i+1} not an integer"
+                if curVar < 0:
+                    return False,f"Shape variable {i+1} can't be negative"
+                shapeVarsInt.append(curVar)
 
             shapeCodesOrError, isShapeCodeValid = shapeCodeGenerator.generateShapeCodes(shapeCode)
             if not isShapeCodeValid:
@@ -143,15 +146,21 @@ def getInstructionsFromText(text:str) -> tuple[bool,list[Instruction]|str]:
                 colorInputs.append(input)
             else:
                 try:
-                    inputsInt.append(int(input))
+                    curVar = int(input)
                 except ValueError:
                     return False,f"Input {i+1} not an integer"
+                if curVar < 0:
+                    return False,f"Input {i+1} can't be negative"
+                inputsInt.append(curVar)
 
         for i,output in enumerate(outputs):
             try:
-                outputsInt.append(int(output))
+                curVar = int(output)
             except ValueError:
                 return False,f"Output {i+1} not an integer"
+            if curVar < 0:
+                return False,f"Output {i+1} can't be negative"
+            outputsInt.append(curVar)
 
         for e,g,t in zip((curOperation.numInputs,curOperation.numOutputs),(len(inputsInt)+len(colorInputs),len(outputsInt)),("inputs","outputs")):
             if e != g:
