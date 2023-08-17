@@ -289,7 +289,7 @@ def runDiscordBot() -> None:
             return
         await interaction.response.send_message("Please wait...",ephemeral=True)
         ogMsg = await interaction.original_response()
-        if len(message) > globalInfos.SEND_LOADING_GIF_FOR_NUM_CHARS:
+        if len(message) > globalInfos.SEND_LOADING_GIF_FOR_NUM_CHARS_SHAPE_VIEWER:
             await ogMsg.edit(attachments=[discord.File(globalInfos.LOADING_GIF_PATH)])
         _, responseMsg, file = await useShapeViewer(message,True)
         await ogMsg.edit(content=responseMsg,**{"attachments":[] if file is None else [file]})
@@ -356,7 +356,7 @@ def runDiscordBot() -> None:
             return
         await interaction.response.send_message("Please wait...",ephemeral=True)
         ogMsg = await interaction.original_response()
-        if len(instructions) > globalInfos.SEND_LOADING_GIF_FOR_NUM_CHARS:
+        if len(instructions) > globalInfos.SEND_LOADING_GIF_FOR_NUM_CHARS_OP_GRAPH:
             await ogMsg.edit(attachments=[discord.File(globalInfos.LOADING_GIF_PATH)])
         valid, instructionsOrError = operationGraph.getInstructionsFromText(instructions)
         responseMsg = ""
