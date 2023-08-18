@@ -243,6 +243,7 @@ def genOperationGraph(instructions:list[Instruction],showShapeVars:bool) -> tupl
     graphNodes:dict[int,GraphNode] = {}
     curId = 0
     handledInstructions = {}
+    wasProcessingInstructionIndex = None
 
     def renderShape(shapeCode) -> pygame.Surface:
         return shapeViewer.renderShape(shapeCode,GRAPH_NODE_SIZE)
@@ -253,6 +254,7 @@ def genOperationGraph(instructions:list[Instruction],showShapeVars:bool) -> tupl
         return curId - 1
 
     def genGraphNode(instruction:Instruction,instructionIndex:int) -> int:
+        nonlocal wasProcessingInstructionIndex
 
         def createFinalOutputShape(inputs:list[int],shapeCode:str,shapeVar:int) -> int:
             curId = newId()
@@ -305,6 +307,7 @@ def genOperationGraph(instructions:list[Instruction],showShapeVars:bool) -> tupl
 
         graphNodes[curCurId].inputs.extend(connectedInputs)
 
+        wasProcessingInstructionIndex = instructionIndex
         outputShapeCodes = instruction.op.func(*[shapeOperations.Shape.fromShapeCode(s) for s in inputShapeCodes],*instruction.colorInputs)
         outputShapeCodes = [s.toShapeCode() for s in outputShapeCodes]
 
@@ -329,7 +332,7 @@ def genOperationGraph(instructions:list[Instruction],showShapeVars:bool) -> tupl
         for i,instruction in enumerate(instructions):
             genGraphNode(instruction,i)
     except shapeOperations.InvalidOperationInputs as e:
-        return False,f"Error happened somewhere : {e}"
+        return False,f"Error happened in instruction {wasProcessingInstructionIndex+1} : {e}"
     except RecursionError:
         return False,f"Too many connected instructions"
 

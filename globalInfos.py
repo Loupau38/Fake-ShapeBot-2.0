@@ -21,6 +21,7 @@ MAX_ROLES_PER_LIST = 10
 
 # texts
 NO_PERMISSION_TEXT = "You don't have the permission to do this"
+UNKNOWN_ERROR_TEXT = "Unknown error happened"
 
 # shape viewer
 INITIAL_SHAPE_SIZE = 500

@@ -15,6 +15,9 @@ async def globalLogMessage(message:str) -> None:
         logChannel = await client.fetch_channel(globalInfos.GLOBAL_LOG_CHANNEL)
         await logChannel.send(message)
 
+async def globalLogError() -> None:
+    await globalLogMessage(("".join(traceback.format_exception(*sys.exc_info())))[:-1])
+
 async def useShapeViewer(userMessage:str,sendErrors:bool) -> tuple[bool,str,discord.File|None]:
     try:
 
@@ -51,8 +54,8 @@ async def useShapeViewer(userMessage:str,sendErrors:bool) -> tuple[bool,str,disc
         return hasErrors, responseMsg, file
 
     except Exception:
-        await globalLogMessage(("".join(traceback.format_exception(*sys.exc_info())))[:-1])
-        return True, "Unknown error happened" if sendErrors else "", None
+        await globalLogError()
+        return True, globalInfos.UNKNOWN_ERROR_TEXT if sendErrors else "", None
 
 def isAllowedToRunOwnerCommand(interaction:discord.Interaction) -> bool:
     if interaction.user.id in globalInfos.OWNER_USERS:
@@ -358,22 +361,27 @@ def runDiscordBot() -> None:
         ogMsg = await interaction.original_response()
         if len(instructions) > globalInfos.SEND_LOADING_GIF_FOR_NUM_CHARS_OP_GRAPH:
             await ogMsg.edit(attachments=[discord.File(globalInfos.LOADING_GIF_PATH)])
-        valid, instructionsOrError = operationGraph.getInstructionsFromText(instructions)
         responseMsg = ""
         file = None
         hasErrors = False
-        if valid:
-            valid, responseOrError = operationGraph.genOperationGraph(instructionsOrError,see_shape_vars)
+        try:
+            valid, instructionsOrError = operationGraph.getInstructionsFromText(instructions)
             if valid:
-                image, shapeVarValues = responseOrError
-                file = discord.File(image,"graph.png")
-                if see_shape_vars:
-                    responseMsg = "\n".join(f"- {k} : {{{v}}}" for k,v in shapeVarValues.items())
+                valid, responseOrError = operationGraph.genOperationGraph(instructionsOrError,see_shape_vars)
+                if valid:
+                    image, shapeVarValues = responseOrError
+                    file = discord.File(image,"graph.png")
+                    if see_shape_vars:
+                        responseMsg = "\n".join(f"- {k} : {{{v}}}" for k,v in shapeVarValues.items())
+                else:
+                    responseMsg = responseOrError
+                    hasErrors = True
             else:
                 responseMsg = instructionsOrError
                 hasErrors = True
-        else:
-            responseMsg = instructionsOrError
+        except Exception:
+            await globalLogError()
+            responseMsg = globalInfos.UNKNOWN_ERROR_TEXT
             hasErrors = True
         if hasErrors or (not public):
             await ogMsg.edit(content=responseMsg,**{"attachments":[] if file is None else [file]})
