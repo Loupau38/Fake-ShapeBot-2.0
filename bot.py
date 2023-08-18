@@ -57,6 +57,16 @@ async def useShapeViewer(userMessage:str,sendErrors:bool) -> tuple[bool,str,disc
         await globalLogError()
         return True, globalInfos.UNKNOWN_ERROR_TEXT if sendErrors else "", None
 
+def isDisabledInGuild(guildId:int|None) -> bool:
+
+    if globalInfos.RESTRICT_TO_SERVERS is None:
+        return False
+
+    if guildId in globalInfos.RESTRICT_TO_SERVERS:
+        return False
+
+    return True
+
 def isAllowedToRunOwnerCommand(interaction:discord.Interaction) -> bool:
     if interaction.user.id in globalInfos.OWNER_USERS:
         return True
@@ -82,6 +92,16 @@ async def isAllowedToRunAdminCommand(interaction:discord.Interaction) -> bool:
     for role in userRoles:
         if role.id in adminRoles:
             return True
+
+    return False
+
+def exitCommandWithoutResponse(interaction:discord.Interaction) -> bool:
+
+    if globalPaused:
+        return True
+
+    if isDisabledInGuild(interaction.guild_id):
+        return True
 
     return False
 
@@ -137,7 +157,11 @@ async def isAllowedToUsePublicFeature(initiator:discord.Message|discord.Interact
     if globalPaused:
         return False
 
-    guildId = initiator.guild_id
+    guildId = None if initiator.guild is None else initiator.guild.id
+
+    if isDisabledInGuild(guildId):
+        return False
+
     if guildId is None:
         return True
 
@@ -176,10 +200,15 @@ async def doSendReaction(message:discord.Message) -> bool:
     if globalPaused:
         return False
 
-    if message.guild is None:
+    guildId = None if message.guild is None else message.guild.id
+
+    if isDisabledInGuild(guildId):
+        return False
+
+    if guildId is None:
         return True
 
-    if await getAllServerSettings(message.guild.id,"paused"):
+    if await getAllServerSettings(guildId,"paused"):
         return False
 
     return True
@@ -234,7 +263,7 @@ def runDiscordBot() -> None:
 
     @tree.command(name="pause",description="Admin only, pauses the bot on this server")
     async def pauseCommand(interaction:discord.Interaction) -> None:
-        if globalPaused:
+        if exitCommandWithoutResponse(interaction):
             return
         if await isAllowedToRunAdminCommand(interaction):
             await setAllServerSettings(interaction.guild_id,"paused",True)
@@ -245,7 +274,7 @@ def runDiscordBot() -> None:
 
     @tree.command(name="unpause",description="Admin only, unpauses the bot on this server")
     async def unpauseCommand(interaction:discord.Interaction) -> None:
-        if globalPaused:
+        if exitCommandWithoutResponse(interaction):
             return
         if await isAllowedToRunAdminCommand(interaction):
             await setAllServerSettings(interaction.guild_id,"paused",False)
@@ -288,7 +317,7 @@ def runDiscordBot() -> None:
     @tree.command(name="view-shapes",description="View shapes, useful if the bot says a shape code is invalid and you want to know why")
     @discord.app_commands.describe(message="The message like you would normally send it")
     async def viewShapesCommand(interaction:discord.Interaction,message:str) -> None:
-        if globalPaused:
+        if exitCommandWithoutResponse(interaction):
             return
         await interaction.response.send_message("Please wait...",ephemeral=True)
         ogMsg = await interaction.original_response()
@@ -300,7 +329,7 @@ def runDiscordBot() -> None:
     @tree.command(name="change-blueprint-version",description="Change a blueprint's version")
     @discord.app_commands.describe(blueprint="The full blueprint code",version="The blueprint version number (current latest is 1022)")
     async def changeBlueprintVersionCommand(interaction:discord.Interaction,blueprint:str,version:int) -> None:
-        if globalPaused:
+        if exitCommandWithoutResponse(interaction):
             return
         try:
             responseMsg = f"```{blueprints.changeBlueprintVersion(blueprint,version)}```"
@@ -310,7 +339,7 @@ def runDiscordBot() -> None:
 
     @tree.command(name="member-count",description="Display the number of members in this server")
     async def MemberCountCommand(interaction:discord.Interaction) -> None:
-        if globalPaused:
+        if exitCommandWithoutResponse(interaction):
             return
         def fillText(text:str,desiredLen:int,align:str) -> str:
             toFill = desiredLen - len(text)
@@ -355,7 +384,7 @@ def runDiscordBot() -> None:
     @discord.app_commands.describe(public="Wether to send the result publicly in the channel or only to you (errors are always sent privately)",
         see_shape_vars="Wether or not to send the shape codes that were affected to every shape variable")
     async def operationGraphCommand(interaction:discord.Interaction,instructions:str,public:bool=False,see_shape_vars:bool=False) -> None:
-        if globalPaused:
+        if exitCommandWithoutResponse(interaction):
             return
         await interaction.response.send_message("Please wait...",ephemeral=True)
         ogMsg = await interaction.original_response()
@@ -393,7 +422,7 @@ def runDiscordBot() -> None:
     @tree.command(name="restrict-to-channel",description="Admin only, restricts the use of the shape viewer in public messages to one channel only")
     @discord.app_commands.describe(channel="A channel id or 0 if you want to remove a previously set channel")
     async def restrictToChannelCommand(interaction:discord.Interaction,channel:str) -> None:
-        if globalPaused:
+        if exitCommandWithoutResponse(interaction):
             return
         if await isAllowedToRunAdminCommand(interaction):
             if isValidChannelId(channel):
@@ -412,7 +441,7 @@ def runDiscordBot() -> None:
     @tree.command(name="admin-roles-add",description="Admin only, adds a role to the admin roles list")
     @discord.app_commands.describe(role="A role id")
     async def adminRolesAddCommand(interaction:discord.Interaction,role:str) -> None:
-        if globalPaused:
+        if exitCommandWithoutResponse(interaction):
             return
         if await isAllowedToRunAdminCommand(interaction):
             if isValidRoleId(role):
@@ -436,7 +465,7 @@ def runDiscordBot() -> None:
     @tree.command(name="admin-roles-remove",description="Admin only, removes a role from the admin roles list")
     @discord.app_commands.describe(role="A role id")
     async def adminRolesRemoveCommand(interaction:discord.Interaction,role:str) -> None:
-        if globalPaused:
+        if exitCommandWithoutResponse(interaction):
             return
         if await isAllowedToRunAdminCommand(interaction):
             if isValidRoleId(role):
@@ -456,7 +485,7 @@ def runDiscordBot() -> None:
 
     @tree.command(name="admin-roles-view",description="Admin only, see the list of admin roles")
     async def adminRolesViewCommand(interaction:discord.Interaction) -> None:
-        if globalPaused:
+        if exitCommandWithoutResponse(interaction):
             return
         if await isAllowedToRunAdminCommand(interaction):
             adminRolesList = await getAllServerSettings(interaction.guild_id,"adminRoles")
@@ -471,7 +500,7 @@ def runDiscordBot() -> None:
     @tree.command(name="restrict-to-roles-add",description="Admin only, adds a role to the restrict to roles list")
     @discord.app_commands.describe(role="A role id")
     async def restrictToRolesAddCommand(interaction:discord.Interaction,role:str) -> None:
-        if globalPaused:
+        if exitCommandWithoutResponse(interaction):
             return
         if await isAllowedToRunAdminCommand(interaction):
             if isValidRoleId(role):
@@ -495,7 +524,7 @@ def runDiscordBot() -> None:
     @tree.command(name="restrict-to-roles-remove",description="Admin only, removes a role from the restrict to roles list")
     @discord.app_commands.describe(role="A role id")
     async def restrictToRolesRemoveCommand(interaction:discord.Interaction,role:str) -> None:
-        if globalPaused:
+        if exitCommandWithoutResponse(interaction):
             return
         if await isAllowedToRunAdminCommand(interaction):
             if isValidRoleId(role):
@@ -515,7 +544,7 @@ def runDiscordBot() -> None:
 
     @tree.command(name="restrict-to-roles-view",description="Admin only, see the list of restrict to roles")
     async def restrictToRolesViewCommand(interaction:discord.Interaction) -> None:
-        if globalPaused:
+        if exitCommandWithoutResponse(interaction):
             return
         if await isAllowedToRunAdminCommand(interaction):
             restrictToRolesList = await getAllServerSettings(interaction.guild_id,"restrictToRoles")
@@ -530,7 +559,7 @@ def runDiscordBot() -> None:
     @tree.command(name="restrict-to-roles-set-inverted",description="Admin only, sets if the restrict to roles list should be inverted")
     @discord.app_commands.describe(inverted="If True : only users who have at least one role that isn't part of the list will be able to use public message features, if False : only users who have at least one role that is part of the list will be able to use public message features")
     async def restrictToRolesSetInvertedCommand(interaction:discord.Interaction,inverted:bool) -> None:
-        if globalPaused:
+        if exitCommandWithoutResponse(interaction):
             return
         if await isAllowedToRunAdminCommand(interaction):
             await setAllServerSettings(interaction.guild_id,"restrictToRolesInverted",inverted)
