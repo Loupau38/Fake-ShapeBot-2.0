@@ -128,24 +128,6 @@ async def getAllServerSettings(guildId:int,property:str):
 
     return allServerSettings[guildId][property]
 
-def isValidChannelId(channel:str) -> bool:
-    try:
-        channelInt = int(channel)
-    except ValueError:
-        return False
-    if (channelInt < 0) or (len(channel) > globalInfos.CHANNEL_ID_LEN):
-        return False
-    return True
-
-def isValidRoleId(role:str) -> bool:
-    try:
-        rolelInt = int(role)
-    except ValueError:
-        return False
-    if (rolelInt < 0) or (len(role) > globalInfos.ROLE_ID_LEN):
-        return False
-    return True
-
 async def isAllowedToUsePublicFeature(initiator:discord.Message|discord.Interaction) -> bool:
 
     initiatorType = {discord.Message:0,discord.Interaction:1}[type(initiator)]
@@ -261,27 +243,95 @@ def runDiscordBot() -> None:
             if (responseMsg != "") or (file is not None):
                 await message.channel.send(responseMsg,**({} if file is None else {"file":file}))
 
-    @tree.command(name="pause",description="Admin only, pauses the bot on this server")
-    async def pauseCommand(interaction:discord.Interaction) -> None:
-        if exitCommandWithoutResponse(interaction):
-            return
-        if await isAllowedToRunAdminCommand(interaction):
-            await setAllServerSettings(interaction.guild_id,"paused",True)
-            responseMsg = "Bot is now paused on this server"
-        else:
-            responseMsg = globalInfos.NO_PERMISSION_TEXT
-        await interaction.response.send_message(responseMsg,ephemeral=True)
+    class RegisterCommandType:
+        SINGLE_CHANNEL = "singleChannel"
+        ROLE_LIST = "roleList"
 
-    @tree.command(name="unpause",description="Admin only, unpauses the bot on this server")
-    async def unpauseCommand(interaction:discord.Interaction) -> None:
-        if exitCommandWithoutResponse(interaction):
-            return
-        if await isAllowedToRunAdminCommand(interaction):
-            await setAllServerSettings(interaction.guild_id,"paused",False)
-            responseMsg = "Bot is now unpaused on this server"
+    def registerAdminCommand(type_:str,cmdName:str,serverSettingsKey:str,cmdDesc:str="") -> None:
+
+        if type_ == RegisterCommandType.SINGLE_CHANNEL:
+
+            @tree.command(name=cmdName,description=cmdDesc)
+            @discord.app_commands.describe(channel="The channel. Don't provide this parameter to clear it")
+            async def generatedCommand(interaction:discord.Interaction,channel:discord.TextChannel|discord.Thread=None) -> None:
+                if exitCommandWithoutResponse(interaction):
+                    return
+                if await isAllowedToRunAdminCommand(interaction):
+                    if channel is None:
+                        await setAllServerSettings(interaction.guild_id,serverSettingsKey,None)
+                        responseMsg = f"'{serverSettingsKey}' parameter cleared"
+                    else:
+                        await setAllServerSettings(interaction.guild_id,serverSettingsKey,channel.id)
+                        responseMsg = f"'{serverSettingsKey}' parameter set to {channel.mention}"
+                else:
+                    responseMsg = globalInfos.NO_PERMISSION_TEXT
+                await interaction.response.send_message(responseMsg,ephemeral=True)
+
+        elif type_ == RegisterCommandType.ROLE_LIST:
+
+            @tree.command(name=f"{cmdName}-add",description=f"Admin only, adds a role to the '{serverSettingsKey}' list")
+            async def generatedCommand(interaction:discord.Interaction,role:discord.Role) -> None:
+                if exitCommandWithoutResponse(interaction):
+                    return
+                if await isAllowedToRunAdminCommand(interaction):
+                    roleList = await getAllServerSettings(interaction.guild_id,serverSettingsKey)
+                    if len(roleList) >= globalInfos.MAX_ROLES_PER_LIST:
+                        responseMsg = f"Can't have more than {globalInfos.MAX_ROLES_PER_LIST} roles per list"
+                    else:
+                        if role.id in roleList:
+                            responseMsg = f"{role.mention} is already in the list"
+                        else:
+                            roleList.append(role.id)
+                            await setAllServerSettings(interaction.guild_id,serverSettingsKey,roleList)
+                            responseMsg = f"Added {role.mention} to the '{serverSettingsKey}' list"
+                else:
+                    responseMsg = globalInfos.NO_PERMISSION_TEXT
+                await interaction.response.send_message(responseMsg,ephemeral=True)
+
+            @tree.command(name=f"{cmdName}-remove",description=f"Admin only, removes a role from the '{serverSettingsKey}' list")
+            async def generatedCommand(interaction:discord.Interaction,role:discord.Role) -> None:
+                if exitCommandWithoutResponse(interaction):
+                    return
+                if await isAllowedToRunAdminCommand(interaction):
+                    roleList = await getAllServerSettings(interaction.guild_id,serverSettingsKey)
+                    if role.id in roleList:
+                        roleList.remove(role.id)
+                        await setAllServerSettings(interaction.guild_id,serverSettingsKey,roleList)
+                        responseMsg = f"Removed {role.mention} from the '{serverSettingsKey}' list"
+                    else:
+                        responseMsg = "Role is not present in the list"
+                else:
+                    responseMsg = globalInfos.NO_PERMISSION_TEXT
+                await interaction.response.send_message(responseMsg,ephemeral=True)
+
+            @tree.command(name=f"{cmdName}-view",description=f"Admin only, see the '{serverSettingsKey}' list")
+            async def generatedCommand(interaction:discord.Interaction) -> None:
+                if exitCommandWithoutResponse(interaction):
+                    return
+                if await isAllowedToRunAdminCommand(interaction):
+                    roleList = await getAllServerSettings(interaction.guild_id,serverSettingsKey)
+                    roleList = [interaction.guild.get_role(r) for r in roleList]
+                    if roleList== []:
+                        responseMsg = "Empty list"
+                    else:
+                        responseMsg = "\n".join(f"- {role.mention} : {role.id}" for role in roleList)
+                else:
+                    responseMsg = globalInfos.NO_PERMISSION_TEXT
+                await interaction.response.send_message(responseMsg,ephemeral=True)
+
+            @tree.command(name=f"{cmdName}-clear",description=f"Admin only, clears the '{serverSettingsKey}' list")
+            async def generatedCommand(interaction:discord.Interaction) -> None:
+                if exitCommandWithoutResponse(interaction):
+                    return
+                if await isAllowedToRunAdminCommand(interaction):
+                    await setAllServerSettings(interaction.guild_id,serverSettingsKey,[])
+                    responseMsg = f"'{serverSettingsKey}' list cleared"
+                else:
+                    responseMsg = globalInfos.NO_PERMISSION_TEXT
+                await interaction.response.send_message(responseMsg,ephemeral=True)
+
         else:
-            responseMsg = globalInfos.NO_PERMISSION_TEXT
-        await interaction.response.send_message(responseMsg,ephemeral=True)
+            print(f"Unknown type : {type_}")
 
     @tree.command(name="stop",description="Owner only, stops the bot")
     async def stopCommand(interaction:discord.Interaction) -> None:
@@ -310,6 +360,49 @@ def runDiscordBot() -> None:
         if isAllowedToRunOwnerCommand(interaction):
             globalPaused = False
             responseMsg = "Bot is now globally unpaused"
+        else:
+            responseMsg = globalInfos.NO_PERMISSION_TEXT
+        await interaction.response.send_message(responseMsg,ephemeral=True)
+
+    @tree.command(name="pause",description="Admin only, pauses the bot on this server")
+    async def pauseCommand(interaction:discord.Interaction) -> None:
+        if exitCommandWithoutResponse(interaction):
+            return
+        if await isAllowedToRunAdminCommand(interaction):
+            await setAllServerSettings(interaction.guild_id,"paused",True)
+            responseMsg = "Bot is now paused on this server"
+        else:
+            responseMsg = globalInfos.NO_PERMISSION_TEXT
+        await interaction.response.send_message(responseMsg,ephemeral=True)
+
+    @tree.command(name="unpause",description="Admin only, unpauses the bot on this server")
+    async def unpauseCommand(interaction:discord.Interaction) -> None:
+        if exitCommandWithoutResponse(interaction):
+            return
+        if await isAllowedToRunAdminCommand(interaction):
+            await setAllServerSettings(interaction.guild_id,"paused",False)
+            responseMsg = "Bot is now unpaused on this server"
+        else:
+            responseMsg = globalInfos.NO_PERMISSION_TEXT
+        await interaction.response.send_message(responseMsg,ephemeral=True)
+
+    registerAdminCommand(RegisterCommandType.SINGLE_CHANNEL,
+        "restrict-to-channel",
+        "restrictToChannel",
+        "Admin only, restricts the use of the bot in public messages to one channel only")
+
+    registerAdminCommand(RegisterCommandType.ROLE_LIST,"admin-roles","adminRoles")
+
+    registerAdminCommand(RegisterCommandType.ROLE_LIST,"restrict-to-roles","restrictToRoles")
+
+    @tree.command(name="restrict-to-roles-set-inverted",description="Admin only, sets if the restrict to roles list should be inverted")
+    @discord.app_commands.describe(inverted="If True : only users who have at least one role that isn't part of the list will be able to use public message features, if False : only users who have at least one role that is part of the list will be able to use public message features")
+    async def restrictToRolesSetInvertedCommand(interaction:discord.Interaction,inverted:bool) -> None:
+        if exitCommandWithoutResponse(interaction):
+            return
+        if await isAllowedToRunAdminCommand(interaction):
+            await setAllServerSettings(interaction.guild_id,"restrictToRolesInverted",inverted)
+            responseMsg = f"'restrictToRolesInverted' parameter has been set to {inverted}"
         else:
             responseMsg = globalInfos.NO_PERMISSION_TEXT
         await interaction.response.send_message(responseMsg,ephemeral=True)
@@ -418,155 +511,6 @@ def runDiscordBot() -> None:
             await ogMsg.delete()
             if await isAllowedToUsePublicFeature(interaction):
                 await interaction.channel.send(responseMsg,file=file)
-
-    @tree.command(name="restrict-to-channel",description="Admin only, restricts the use of the shape viewer in public messages to one channel only")
-    @discord.app_commands.describe(channel="A channel id or 0 if you want to remove a previously set channel")
-    async def restrictToChannelCommand(interaction:discord.Interaction,channel:str) -> None:
-        if exitCommandWithoutResponse(interaction):
-            return
-        if await isAllowedToRunAdminCommand(interaction):
-            if isValidChannelId(channel):
-                if int(channel) == 0:
-                    await setAllServerSettings(interaction.guild_id,"restrictToChannel",None)
-                    responseMsg = "'restrictToChannel' parameter cleared"
-                else:
-                    await setAllServerSettings(interaction.guild_id,"restrictToChannel",int(channel))
-                    responseMsg = f"'restrictToChannel' parameter set to <#{channel}>"
-            else:
-                responseMsg = "Not a valid channel id"
-        else:
-            responseMsg = globalInfos.NO_PERMISSION_TEXT
-        await interaction.response.send_message(responseMsg,ephemeral=True)
-
-    @tree.command(name="admin-roles-add",description="Admin only, adds a role to the admin roles list")
-    @discord.app_commands.describe(role="A role id")
-    async def adminRolesAddCommand(interaction:discord.Interaction,role:str) -> None:
-        if exitCommandWithoutResponse(interaction):
-            return
-        if await isAllowedToRunAdminCommand(interaction):
-            if isValidRoleId(role):
-                roleInt = int(role)
-                adminRolesList = await getAllServerSettings(interaction.guild_id,"adminRoles")
-                if len(adminRolesList) >= globalInfos.MAX_ROLES_PER_LIST:
-                    responseMsg = f"Can't have more than {globalInfos.MAX_ROLES_PER_LIST} roles per list"
-                else:
-                    if roleInt in adminRolesList:
-                        responseMsg = f"<@&{roleInt}> is already in the list"
-                    else:
-                        adminRolesList.append(roleInt)
-                        await setAllServerSettings(interaction.guild_id,"adminRoles",adminRolesList)
-                        responseMsg = f"Added <@&{roleInt}> to the admin roles list"
-            else:
-                responseMsg = "Not a valid role id"
-        else:
-            responseMsg = globalInfos.NO_PERMISSION_TEXT
-        await interaction.response.send_message(responseMsg,ephemeral=True)
-
-    @tree.command(name="admin-roles-remove",description="Admin only, removes a role from the admin roles list")
-    @discord.app_commands.describe(role="A role id")
-    async def adminRolesRemoveCommand(interaction:discord.Interaction,role:str) -> None:
-        if exitCommandWithoutResponse(interaction):
-            return
-        if await isAllowedToRunAdminCommand(interaction):
-            if isValidRoleId(role):
-                roleInt = int(role)
-                adminRolesList = await getAllServerSettings(interaction.guild_id,"adminRoles")
-                if roleInt in adminRolesList:
-                    adminRolesList.remove(roleInt)
-                    await setAllServerSettings(interaction.guild_id,"adminRoles",adminRolesList)
-                    responseMsg = f"Removed <@&{roleInt}> from the admin roles list"
-                else:
-                    responseMsg = "Role is not present in the list"
-            else:
-                responseMsg = "Not a valid role id"
-        else:
-            responseMsg = globalInfos.NO_PERMISSION_TEXT
-        await interaction.response.send_message(responseMsg,ephemeral=True)
-
-    @tree.command(name="admin-roles-view",description="Admin only, see the list of admin roles")
-    async def adminRolesViewCommand(interaction:discord.Interaction) -> None:
-        if exitCommandWithoutResponse(interaction):
-            return
-        if await isAllowedToRunAdminCommand(interaction):
-            adminRolesList = await getAllServerSettings(interaction.guild_id,"adminRoles")
-            if adminRolesList == []:
-                responseMsg = "Empty list"
-            else:
-                responseMsg = "\n".join(f"- <@&{int(role)}> : {int(role)}" for role in adminRolesList)
-        else:
-            responseMsg = globalInfos.NO_PERMISSION_TEXT
-        await interaction.response.send_message(responseMsg,ephemeral=True)
-
-    @tree.command(name="restrict-to-roles-add",description="Admin only, adds a role to the restrict to roles list")
-    @discord.app_commands.describe(role="A role id")
-    async def restrictToRolesAddCommand(interaction:discord.Interaction,role:str) -> None:
-        if exitCommandWithoutResponse(interaction):
-            return
-        if await isAllowedToRunAdminCommand(interaction):
-            if isValidRoleId(role):
-                roleInt = int(role)
-                restrictToRolesList = await getAllServerSettings(interaction.guild_id,"restrictToRoles")
-                if len(restrictToRolesList) >= globalInfos.MAX_ROLES_PER_LIST:
-                    responseMsg = f"Can't have more than {globalInfos.MAX_ROLES_PER_LIST} roles per list"
-                else:
-                    if roleInt in restrictToRolesList:
-                        responseMsg = f"<@&{roleInt}> is already in the list"
-                    else:
-                        restrictToRolesList.append(roleInt)
-                        await setAllServerSettings(interaction.guild_id,"restrictToRoles",restrictToRolesList)
-                        responseMsg = f"Added <@&{roleInt}> to the restrict to roles list"
-            else:
-                responseMsg = "Not a valid role id"
-        else:
-            responseMsg = globalInfos.NO_PERMISSION_TEXT
-        await interaction.response.send_message(responseMsg,ephemeral=True)
-
-    @tree.command(name="restrict-to-roles-remove",description="Admin only, removes a role from the restrict to roles list")
-    @discord.app_commands.describe(role="A role id")
-    async def restrictToRolesRemoveCommand(interaction:discord.Interaction,role:str) -> None:
-        if exitCommandWithoutResponse(interaction):
-            return
-        if await isAllowedToRunAdminCommand(interaction):
-            if isValidRoleId(role):
-                roleInt = int(role)
-                restrictToRolesList = await getAllServerSettings(interaction.guild_id,"restrictToRoles")
-                if roleInt in restrictToRolesList:
-                    restrictToRolesList.remove(roleInt)
-                    await setAllServerSettings(interaction.guild_id,"restrictToRoles",restrictToRolesList)
-                    responseMsg = f"Removed <@&{roleInt}> from the restrict to roles list"
-                else:
-                    responseMsg = "Role is not present in the list"
-            else:
-                responseMsg = "Not a valid role id"
-        else:
-            responseMsg = globalInfos.NO_PERMISSION_TEXT
-        await interaction.response.send_message(responseMsg,ephemeral=True)
-
-    @tree.command(name="restrict-to-roles-view",description="Admin only, see the list of restrict to roles")
-    async def restrictToRolesViewCommand(interaction:discord.Interaction) -> None:
-        if exitCommandWithoutResponse(interaction):
-            return
-        if await isAllowedToRunAdminCommand(interaction):
-            restrictToRolesList = await getAllServerSettings(interaction.guild_id,"restrictToRoles")
-            if restrictToRolesList == []:
-                responseMsg = "Empty list"
-            else:
-                responseMsg = "\n".join(f"- <@&{int(role)}> : {int(role)}" for role in restrictToRolesList)
-        else:
-            responseMsg = globalInfos.NO_PERMISSION_TEXT
-        await interaction.response.send_message(responseMsg,ephemeral=True)
-
-    @tree.command(name="restrict-to-roles-set-inverted",description="Admin only, sets if the restrict to roles list should be inverted")
-    @discord.app_commands.describe(inverted="If True : only users who have at least one role that isn't part of the list will be able to use public message features, if False : only users who have at least one role that is part of the list will be able to use public message features")
-    async def restrictToRolesSetInvertedCommand(interaction:discord.Interaction,inverted:bool) -> None:
-        if exitCommandWithoutResponse(interaction):
-            return
-        if await isAllowedToRunAdminCommand(interaction):
-            await setAllServerSettings(interaction.guild_id,"restrictToRolesInverted",inverted)
-            responseMsg = f"'restrictToRolesInverted' parameter has been set to {inverted}"
-        else:
-            responseMsg = globalInfos.NO_PERMISSION_TEXT
-        await interaction.response.send_message(responseMsg,ephemeral=True)
 
     with open(globalInfos.TOKEN_PATH) as f:
         token = f.read()
