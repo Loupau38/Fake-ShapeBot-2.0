@@ -67,34 +67,6 @@ def isDisabledInGuild(guildId:int|None) -> bool:
 
     return True
 
-def isAllowedToRunOwnerCommand(interaction:discord.Interaction) -> bool:
-    if interaction.user.id in globalInfos.OWNER_USERS:
-        return True
-    return False
-
-async def isAllowedToRunAdminCommand(interaction:discord.Interaction) -> bool:
-
-    guildId = interaction.guild_id
-    if guildId is None:
-        return False
-
-    if isAllowedToRunOwnerCommand(interaction):
-        return True
-
-    if interaction.user.guild_permissions.administrator:
-        return True
-
-    if allServerSettings.get(guildId) is None:
-        return False
-
-    userRoles = interaction.user.roles[1:]
-    adminRoles = await getAllServerSettings(guildId,"adminRoles")
-    for role in userRoles:
-        if role.id in adminRoles:
-            return True
-
-    return False
-
 def exitCommandWithoutResponse(interaction:discord.Interaction) -> bool:
 
     if globalPaused:
@@ -128,35 +100,76 @@ async def getAllServerSettings(guildId:int,property:str):
 
     return allServerSettings[guildId][property]
 
-async def isAllowedToUsePublicFeature(initiator:discord.Message|discord.Interaction) -> bool:
+class PermissionLvls:
 
-    initiatorType = {discord.Message:0,discord.Interaction:1}[type(initiator)]
+    PUBLIC_FEATURE = 0
+    REACTION = 1
+    PRIVATE_FEATURE = 2
+    ADMIN = 3
+    OWNER = 4
 
-    authorId = initiator.author.id if initiatorType == 0 else initiator.user.id
-    if authorId in globalInfos.OWNER_USERS:
-        return True
+async def hasPermission(requestedLvl:int,*,message:discord.Message|None=None,interaction:discord.Interaction|None=None) -> bool:
+
+    if message is not None:
+
+        userId = message.author.id
+        channelId = message.channel.id
+        if message.guild is None:
+            guildId = None
+        else:
+            guildId = message.guild.id
+            userRoles = message.author.roles[1:]
+            adminPerm = message.author.guild_permissions.administrator
+
+    elif interaction is not None:
+
+        userId = interaction.user.id
+        channelId = interaction.channel_id
+        guildId = interaction.guild_id
+        if interaction.guild is not None:
+            userRoles = interaction.user.roles[1:]
+            adminPerm = interaction.user.guild_permissions.administrator
+
+    else:
+        raise ValueError("No message or interaction in 'hasPermission'")
+
+    if userId in globalInfos.OWNER_USERS:
+        if requestedLvl <= PermissionLvls.OWNER:
+            return True
 
     if globalPaused:
         return False
-
-    guildId = None if initiator.guild is None else initiator.guild.id
 
     if isDisabledInGuild(guildId):
         return False
 
     if guildId is None:
-        return True
+        return requestedLvl < PermissionLvls.ADMIN
 
-    userRoles = initiator.author.roles[1:] if initiatorType == 0 else initiator.user.roles
-    adminRoles = await getAllServerSettings(guildId,"adminRoles")
-    for role in userRoles:
-        if role.id in adminRoles:
+    if adminPerm:
+        isAdmin = True
+    else:
+        isAdmin = False
+        adminRoles = await getAllServerSettings(guildId,"adminRoles")
+        for role in userRoles:
+            if role.id in adminRoles:
+                isAdmin = True
+                break
+    if isAdmin:
+        if requestedLvl <= PermissionLvls.ADMIN:
             return True
+
+    if requestedLvl == PermissionLvls.PRIVATE_FEATURE:
+        return True
 
     if await getAllServerSettings(guildId,"paused"):
         return False
 
-    channelId = initiator.channel.id
+    if requestedLvl == PermissionLvls.REACTION:
+        return True
+
+    # requestedLvl = public feature
+
     if await getAllServerSettings(guildId,"restrictToChannel") not in (None,channelId):
         return False
 
@@ -173,27 +186,6 @@ async def isAllowedToUsePublicFeature(initiator:discord.Message|discord.Interact
             return True
 
     return False
-
-async def doSendReaction(message:discord.Message) -> bool:
-
-    if message.author.id in globalInfos.OWNER_USERS:
-        return True
-
-    if globalPaused:
-        return False
-
-    guildId = None if message.guild is None else message.guild.id
-
-    if isDisabledInGuild(guildId):
-        return False
-
-    if guildId is None:
-        return True
-
-    if await getAllServerSettings(guildId,"paused"):
-        return False
-
-    return True
 
 def detectBPVersion(message:str) -> str|None:
 
@@ -267,18 +259,17 @@ def runDiscordBot() -> None:
     @client.event
     async def on_message(message:discord.Message) -> None:
 
-        messageAuthor = message.author
-        if messageAuthor == client.user:
+        if message.author == client.user:
             return
 
-        if await isAllowedToUsePublicFeature(message):
+        if await hasPermission(PermissionLvls.PUBLIC_FEATURE,message=message):
             hasErrors, responseMsg, file = await useShapeViewer(message.content,False)
             if hasErrors:
                 await message.add_reaction(globalInfos.INVALID_SHAPE_CODE_REACTION)
             if (responseMsg != "") or (file is not None):
                 await message.channel.send(responseMsg,**({} if file is None else {"file":file}))
 
-        if await doSendReaction(message):
+        if await hasPermission(PermissionLvls.REACTION,message=message):
 
             if globalInfos.BOT_ID in (user.id for user in message.mentions):
                 await message.add_reaction("\U0001F916")
@@ -301,7 +292,7 @@ def runDiscordBot() -> None:
             async def generatedCommand(interaction:discord.Interaction,channel:discord.TextChannel|discord.Thread=None) -> None:
                 if exitCommandWithoutResponse(interaction):
                     return
-                if await isAllowedToRunAdminCommand(interaction):
+                if await hasPermission(PermissionLvls.ADMIN,interaction=interaction):
                     if channel is None:
                         await setAllServerSettings(interaction.guild_id,serverSettingsKey,None)
                         responseMsg = f"'{serverSettingsKey}' parameter cleared"
@@ -318,7 +309,7 @@ def runDiscordBot() -> None:
             async def generatedCommand(interaction:discord.Interaction,role:discord.Role) -> None:
                 if exitCommandWithoutResponse(interaction):
                     return
-                if await isAllowedToRunAdminCommand(interaction):
+                if await hasPermission(PermissionLvls.ADMIN,interaction=interaction):
                     roleList = await getAllServerSettings(interaction.guild_id,serverSettingsKey)
                     if len(roleList) >= globalInfos.MAX_ROLES_PER_LIST:
                         responseMsg = f"Can't have more than {globalInfos.MAX_ROLES_PER_LIST} roles per list"
@@ -337,7 +328,7 @@ def runDiscordBot() -> None:
             async def generatedCommand(interaction:discord.Interaction,role:discord.Role) -> None:
                 if exitCommandWithoutResponse(interaction):
                     return
-                if await isAllowedToRunAdminCommand(interaction):
+                if await hasPermission(PermissionLvls.ADMIN,interaction=interaction):
                     roleList = await getAllServerSettings(interaction.guild_id,serverSettingsKey)
                     if role.id in roleList:
                         roleList.remove(role.id)
@@ -353,7 +344,7 @@ def runDiscordBot() -> None:
             async def generatedCommand(interaction:discord.Interaction) -> None:
                 if exitCommandWithoutResponse(interaction):
                     return
-                if await isAllowedToRunAdminCommand(interaction):
+                if await hasPermission(PermissionLvls.ADMIN,interaction=interaction):
                     roleList = await getAllServerSettings(interaction.guild_id,serverSettingsKey)
                     roleList = [interaction.guild.get_role(r) for r in roleList]
                     if roleList== []:
@@ -368,7 +359,7 @@ def runDiscordBot() -> None:
             async def generatedCommand(interaction:discord.Interaction) -> None:
                 if exitCommandWithoutResponse(interaction):
                     return
-                if await isAllowedToRunAdminCommand(interaction):
+                if await hasPermission(PermissionLvls.ADMIN,interaction=interaction):
                     await setAllServerSettings(interaction.guild_id,serverSettingsKey,[])
                     responseMsg = f"'{serverSettingsKey}' list cleared"
                 else:
@@ -380,7 +371,7 @@ def runDiscordBot() -> None:
 
     @tree.command(name="stop",description="Owner only, stops the bot")
     async def stopCommand(interaction:discord.Interaction) -> None:
-        allowedToStop = isAllowedToRunOwnerCommand(interaction)
+        allowedToStop = await hasPermission(PermissionLvls.OWNER,interaction=interaction)
         if allowedToStop:
             responseMsg = "Stopping bot"
         else:
@@ -392,7 +383,7 @@ def runDiscordBot() -> None:
     @tree.command(name="global-pause",description="Owner only, globally pauses the bot")
     async def globalPauseCommand(interaction:discord.Interaction) -> None:
         global globalPaused
-        if isAllowedToRunOwnerCommand(interaction):
+        if await hasPermission(PermissionLvls.OWNER,interaction=interaction):
             globalPaused = True
             responseMsg = "Bot is now globally paused"
         else:
@@ -402,7 +393,7 @@ def runDiscordBot() -> None:
     @tree.command(name="global-unpause",description="Owner only, globally unpauses the bot")
     async def globalUnpauseCommand(interaction:discord.Interaction) -> None:
         global globalPaused
-        if isAllowedToRunOwnerCommand(interaction):
+        if await hasPermission(PermissionLvls.OWNER,interaction=interaction):
             globalPaused = False
             responseMsg = "Bot is now globally unpaused"
         else:
@@ -413,7 +404,7 @@ def runDiscordBot() -> None:
     async def pauseCommand(interaction:discord.Interaction) -> None:
         if exitCommandWithoutResponse(interaction):
             return
-        if await isAllowedToRunAdminCommand(interaction):
+        if await hasPermission(PermissionLvls.ADMIN,interaction=interaction):
             await setAllServerSettings(interaction.guild_id,"paused",True)
             responseMsg = "Bot is now paused on this server"
         else:
@@ -424,7 +415,7 @@ def runDiscordBot() -> None:
     async def unpauseCommand(interaction:discord.Interaction) -> None:
         if exitCommandWithoutResponse(interaction):
             return
-        if await isAllowedToRunAdminCommand(interaction):
+        if await hasPermission(PermissionLvls.ADMIN,interaction=interaction):
             await setAllServerSettings(interaction.guild_id,"paused",False)
             responseMsg = "Bot is now unpaused on this server"
         else:
@@ -445,7 +436,7 @@ def runDiscordBot() -> None:
     async def restrictToRolesSetInvertedCommand(interaction:discord.Interaction,inverted:bool) -> None:
         if exitCommandWithoutResponse(interaction):
             return
-        if await isAllowedToRunAdminCommand(interaction):
+        if await hasPermission(PermissionLvls.ADMIN,interaction=interaction):
             await setAllServerSettings(interaction.guild_id,"restrictToRolesInverted",inverted)
             responseMsg = f"'restrictToRolesInverted' parameter has been set to {inverted}"
         else:
@@ -459,9 +450,13 @@ def runDiscordBot() -> None:
             return
         await interaction.response.send_message("Please wait...",ephemeral=True)
         ogMsg = await interaction.original_response()
-        if len(message) > globalInfos.SEND_LOADING_GIF_FOR_NUM_CHARS_SHAPE_VIEWER:
-            await ogMsg.edit(attachments=[discord.File(globalInfos.LOADING_GIF_PATH)])
-        _, responseMsg, file = await useShapeViewer(message,True)
+        if await hasPermission(PermissionLvls.PRIVATE_FEATURE,interaction=interaction):
+            if len(message) > globalInfos.SEND_LOADING_GIF_FOR_NUM_CHARS_SHAPE_VIEWER:
+                await ogMsg.edit(attachments=[discord.File(globalInfos.LOADING_GIF_PATH)])
+            _, responseMsg, file = await useShapeViewer(message,True)
+        else:
+            responseMsg = globalInfos.NO_PERMISSION_TEXT
+            file = None
         await ogMsg.edit(content=responseMsg,**{"attachments":[] if file is None else [file]})
 
     @tree.command(name="change-blueprint-version",description="Change a blueprint's version")
@@ -469,10 +464,13 @@ def runDiscordBot() -> None:
     async def changeBlueprintVersionCommand(interaction:discord.Interaction,blueprint:str,version:int) -> None:
         if exitCommandWithoutResponse(interaction):
             return
-        try:
-            responseMsg = f"```{blueprints.changeBlueprintVersion(blueprint,version)}```"
-        except Exception as e:
-            responseMsg = f"Error happened : {e}"
+        if await hasPermission(PermissionLvls.PRIVATE_FEATURE,interaction=interaction):
+            try:
+                responseMsg = f"```{blueprints.changeBlueprintVersion(blueprint,version)}```"
+            except Exception as e:
+                responseMsg = f"Error happened : {e}"
+        else:
+            responseMsg = globalInfos.NO_PERMISSION_TEXT
         await interaction.response.send_message(responseMsg,ephemeral=True)
 
     @tree.command(name="member-count",description="Display the number of members in this server")
@@ -488,34 +486,37 @@ def runDiscordBot() -> None:
             else:
                 num = int(toFill/2)
                 return (" "*num) + text + (" "*(toFill-num))
-        if interaction.guild is None:
-            responseMsg = "Not in a server"
+        if await hasPermission(PermissionLvls.PRIVATE_FEATURE,interaction=interaction):
+            if interaction.guild is None:
+                responseMsg = "Not in a server"
+            else:
+                guild = await client.fetch_guild(interaction.guild_id,with_counts=True)
+                total = guild.approximate_member_count
+                online = guild.approximate_presence_count
+                offline = total - online
+                totalTxt, onlineTxt, offlineTxt = "Total", "Online", "Offline"
+                onlineProportion = online / total
+                onlinePercent = round(onlineProportion*100)
+                offlinePercent = 100-onlinePercent
+                onlinePercent, offlinePercent = f"{onlinePercent}%", f"{offlinePercent}%"
+                online, total, offline = [str(n) for n in (online,total,offline)]
+                totalMaxLen = max(len(s) for s in (total,totalTxt))
+                onlineMaxLen = max(len(s) for s in (online,onlinePercent,onlineTxt))
+                offlineMaxLen = max(len(s) for s in (offline,offlinePercent,offlineTxt))
+                numSpaces = 20
+                totalLen = onlineMaxLen + numSpaces + totalMaxLen + numSpaces + offlineMaxLen
+                spaces = " "*numSpaces
+                filledProgressBar = round(onlineProportion*totalLen)
+                lines = [
+                    f"{fillText(onlineTxt,onlineMaxLen,'l')}{spaces}{fillText(totalTxt,totalMaxLen,'c')}{spaces}{fillText(offlineTxt,offlineMaxLen,'r')}",
+                    f"{fillText(online,onlineMaxLen,'l')}{spaces}{fillText(total,totalMaxLen,'c')}{spaces}{fillText(offline,offlineMaxLen,'r')}",
+                    f"{fillText(onlinePercent,onlineMaxLen,'l')}{spaces}{' '*totalMaxLen}{spaces}{fillText(offlinePercent,offlineMaxLen,'r')}",
+                    f"{'#'*filledProgressBar}{'-'*(totalLen-filledProgressBar)}"
+                ]
+                responseMsg = "\n".join(lines)
+                responseMsg = f"```{responseMsg}```"
         else:
-            guild = await client.fetch_guild(interaction.guild_id,with_counts=True)
-            total = guild.approximate_member_count
-            online = guild.approximate_presence_count
-            offline = total - online
-            totalTxt, onlineTxt, offlineTxt = "Total", "Online", "Offline"
-            onlineProportion = online / total
-            onlinePercent = round(onlineProportion*100)
-            offlinePercent = 100-onlinePercent
-            onlinePercent, offlinePercent = f"{onlinePercent}%", f"{offlinePercent}%"
-            online, total, offline = [str(n) for n in (online,total,offline)]
-            totalMaxLen = max(len(s) for s in (total,totalTxt))
-            onlineMaxLen = max(len(s) for s in (online,onlinePercent,onlineTxt))
-            offlineMaxLen = max(len(s) for s in (offline,offlinePercent,offlineTxt))
-            numSpaces = 20
-            totalLen = onlineMaxLen + numSpaces + totalMaxLen + numSpaces + offlineMaxLen
-            spaces = " "*numSpaces
-            filledProgressBar = round(onlineProportion*totalLen)
-            lines = [
-                f"{fillText(onlineTxt,onlineMaxLen,'l')}{spaces}{fillText(totalTxt,totalMaxLen,'c')}{spaces}{fillText(offlineTxt,offlineMaxLen,'r')}",
-                f"{fillText(online,onlineMaxLen,'l')}{spaces}{fillText(total,totalMaxLen,'c')}{spaces}{fillText(offline,offlineMaxLen,'r')}",
-                f"{fillText(onlinePercent,onlineMaxLen,'l')}{spaces}{' '*totalMaxLen}{spaces}{fillText(offlinePercent,offlineMaxLen,'r')}",
-                f"{'#'*filledProgressBar}{'-'*(totalLen-filledProgressBar)}"
-            ]
-            responseMsg = "\n".join(lines)
-            responseMsg = f"```{responseMsg}```"
+            responseMsg = globalInfos.NO_PERMISSION_TEXT
         await interaction.response.send_message(responseMsg,ephemeral=True)
 
     @tree.command(name="operation-graph",description="See documentation on github")
@@ -526,36 +527,39 @@ def runDiscordBot() -> None:
             return
         await interaction.response.send_message("Please wait...",ephemeral=True)
         ogMsg = await interaction.original_response()
-        if len(instructions) > globalInfos.SEND_LOADING_GIF_FOR_NUM_CHARS_OP_GRAPH:
-            await ogMsg.edit(attachments=[discord.File(globalInfos.LOADING_GIF_PATH)])
         responseMsg = ""
         file = None
         hasErrors = False
-        try:
-            valid, instructionsOrError = operationGraph.getInstructionsFromText(instructions)
-            if valid:
-                valid, responseOrError = operationGraph.genOperationGraph(instructionsOrError,see_shape_vars)
+        if await hasPermission(PermissionLvls.PUBLIC_FEATURE if public else PermissionLvls.PRIVATE_FEATURE,interaction=interaction):
+            if len(instructions) > globalInfos.SEND_LOADING_GIF_FOR_NUM_CHARS_OP_GRAPH:
+                await ogMsg.edit(attachments=[discord.File(globalInfos.LOADING_GIF_PATH)])
+            try:
+                valid, instructionsOrError = operationGraph.getInstructionsFromText(instructions)
                 if valid:
-                    image, shapeVarValues = responseOrError
-                    file = discord.File(image,"graph.png")
-                    if see_shape_vars:
-                        responseMsg = "\n".join(f"- {k} : {{{v}}}" for k,v in shapeVarValues.items())
+                    valid, responseOrError = operationGraph.genOperationGraph(instructionsOrError,see_shape_vars)
+                    if valid:
+                        image, shapeVarValues = responseOrError
+                        file = discord.File(image,"graph.png")
+                        if see_shape_vars:
+                            responseMsg = "\n".join(f"- {k} : {{{v}}}" for k,v in shapeVarValues.items())
+                    else:
+                        responseMsg = responseOrError
+                        hasErrors = True
                 else:
-                    responseMsg = responseOrError
+                    responseMsg = instructionsOrError
                     hasErrors = True
-            else:
-                responseMsg = instructionsOrError
+            except Exception:
+                await globalLogError()
+                responseMsg = globalInfos.UNKNOWN_ERROR_TEXT
                 hasErrors = True
-        except Exception:
-            await globalLogError()
-            responseMsg = globalInfos.UNKNOWN_ERROR_TEXT
+        else:
+            responseMsg = globalInfos.NO_PERMISSION_TEXT
             hasErrors = True
         if hasErrors or (not public):
             await ogMsg.edit(content=responseMsg,**{"attachments":[] if file is None else [file]})
         else:
             await ogMsg.delete()
-            if await isAllowedToUsePublicFeature(interaction):
-                await interaction.channel.send(responseMsg,file=file)
+            await interaction.channel.send(responseMsg,file=file)
 
     with open(globalInfos.TOKEN_PATH) as f:
         token = f.read()
