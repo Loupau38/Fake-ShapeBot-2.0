@@ -5,7 +5,7 @@ BOT_ID = 1131514655404199936
 # owner only features
 OWNER_USERS = [579288989505421349]
 GLOBAL_LOG_CHANNEL = 1132693034673389659
-RESTRICT_TO_SERVERS = None
+RESTRICT_TO_SERVERS = None # 'None' alone : enable everywhere, 'None' in the list : enable in DMs
 
 # server settings
 ALL_SERVER_SETTINGS_PATH = "./allServerSettings.json"
@@ -46,3 +46,16 @@ INVALID_SHAPE_CODE_REACTION = "\u2753"
 LOADING_GIF_PATH = "./loading.gif"
 SEND_LOADING_GIF_FOR_NUM_CHARS_SHAPE_VIEWER = 1000
 SEND_LOADING_GIF_FOR_NUM_CHARS_OP_GRAPH = 50
+BP_VERSIONS = {
+    1005 : "3",
+    1008 : "4",
+    1009 : "5",
+    1013 : "6",
+    1015 : "6.2",
+    1018 : "7",
+    1019 : "7.3",
+    1022 : "7.4"
+}
+BP_VERSION_REACTIONS = {str(i) : f"{i}\ufe0f\u20e3" for i in range(10)}
+BP_VERSION_REACTIONS["a"] = "\U0001f1e6"
+BP_VERSION_REACTIONS["."] = "\u23fa"

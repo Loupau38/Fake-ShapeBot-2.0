@@ -97,3 +97,8 @@ Note : shapes with more than 4 layers and/or with more/less than 4 quadrants per
 - /global-pause : Pauses the bot globally
 - /global-unpause : Unpauses the bot globally
 - /stop : Stops the bot
+
+## Small additional features :
+
+- If the bot is mentioned, it should react with `:robot:`
+- If one (and only one) blueprint code is detected in a message, the bot will react with the alpha version of that blueprint

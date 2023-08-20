@@ -195,6 +195,45 @@ async def doSendReaction(message:discord.Message) -> bool:
 
     return True
 
+def detectBPVersion(message:str) -> str|None:
+
+    if blueprints.PREFIX not in message:
+        return None
+
+    bps = message.split(blueprints.PREFIX)[1:]
+
+    versions = []
+
+    for bp in bps:
+
+        if blueprints.SUFFIX not in bp:
+            continue
+
+        bp = bp.split(blueprints.SUFFIX)[0]
+
+        try:
+            bp,_ = blueprints.decodeBlueprint(blueprints.PREFIX+bp+blueprints.SUFFIX)
+        except Exception:
+            continue
+
+        if bp.get("V") is None:
+            continue
+
+        version = bp["V"]
+
+        if type(version) != int:
+            continue
+
+        if globalInfos.BP_VERSIONS.get(version) is None:
+            continue
+
+        versions.append(globalInfos.BP_VERSIONS[version])
+
+    if len(versions) != 1:
+        return None
+
+    return "a"+versions[0]
+
 def runDiscordBot() -> None:
 
     global client
@@ -232,16 +271,22 @@ def runDiscordBot() -> None:
         if messageAuthor == client.user:
             return
 
-        if globalInfos.BOT_ID in (user.id for user in message.mentions):
-            if await doSendReaction(message):
-                await message.add_reaction("\U0001F916")
-
         if await isAllowedToUsePublicFeature(message):
             hasErrors, responseMsg, file = await useShapeViewer(message.content,False)
             if hasErrors:
                 await message.add_reaction(globalInfos.INVALID_SHAPE_CODE_REACTION)
             if (responseMsg != "") or (file is not None):
                 await message.channel.send(responseMsg,**({} if file is None else {"file":file}))
+
+        if await doSendReaction(message):
+
+            if globalInfos.BOT_ID in (user.id for user in message.mentions):
+                await message.add_reaction("\U0001F916")
+
+            bpReactions = detectBPVersion(message.content)
+            if bpReactions is not None:
+                for reaction in bpReactions:
+                    await message.add_reaction(globalInfos.BP_VERSION_REACTIONS[reaction])
 
     class RegisterCommandType:
         SINGLE_CHANNEL = "singleChannel"
@@ -420,7 +465,7 @@ def runDiscordBot() -> None:
         await ogMsg.edit(content=responseMsg,**{"attachments":[] if file is None else [file]})
 
     @tree.command(name="change-blueprint-version",description="Change a blueprint's version")
-    @discord.app_commands.describe(blueprint="The full blueprint code",version="The blueprint version number (current latest is 1022)")
+    @discord.app_commands.describe(blueprint="The full blueprint code",version="The blueprint version number (latest public : 1015, latest patreon only : 1022)")
     async def changeBlueprintVersionCommand(interaction:discord.Interaction,blueprint:str,version:int) -> None:
         if exitCommandWithoutResponse(interaction):
             return
