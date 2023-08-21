@@ -136,6 +136,9 @@ async def hasPermission(requestedLvl:int,*,message:discord.Message|None=None,int
     if userId in globalInfos.OWNER_USERS:
         if requestedLvl <= PermissionLvls.OWNER:
             return True
+    else:
+        if requestedLvl == PermissionLvls.OWNER:
+            return False
 
     if globalPaused:
         return False
@@ -158,6 +161,9 @@ async def hasPermission(requestedLvl:int,*,message:discord.Message|None=None,int
     if isAdmin:
         if requestedLvl <= PermissionLvls.ADMIN:
             return True
+    else:
+        if requestedLvl == PermissionLvls.ADMIN:
+            return False
 
     if requestedLvl == PermissionLvls.PRIVATE_FEATURE:
         return True
