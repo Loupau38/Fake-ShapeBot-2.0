@@ -211,15 +211,12 @@ def detectBPVersion(message:str) -> str|None:
 
         try:
             bp,_ = blueprints.decodeBlueprint(blueprints.PREFIX+bp+blueprints.SUFFIX)
-        except Exception:
+        except ValueError:
             continue
 
-        if bp.get("V") is None:
-            continue
-
-        version = bp["V"]
-
-        if type(version) != int:
+        try:
+            version = blueprints.getBlueprintInfo(bp,version=True)["version"]
+        except ValueError:
             continue
 
         if globalInfos.BP_VERSIONS.get(version) is None:
@@ -280,7 +277,16 @@ def runDiscordBot() -> None:
             if globalInfos.BOT_ID in (user.id for user in message.mentions):
                 await message.add_reaction("\U0001F916")
 
-            bpReactions = detectBPVersion(message.content)
+            msgContent = message.content
+            for file in message.attachments:
+                try:
+                    fileContent = await file.read()
+                    fileContent = fileContent.decode()
+                except Exception:
+                    continue
+                msgContent += fileContent
+
+            bpReactions = detectBPVersion(msgContent)
             if bpReactions is not None:
                 for reaction in bpReactions:
                     await message.add_reaction(globalInfos.BP_VERSION_REACTIONS[reaction])
@@ -473,7 +479,7 @@ def runDiscordBot() -> None:
         if await hasPermission(PermissionLvls.PRIVATE_FEATURE,interaction=interaction):
             try:
                 responseMsg = f"```{blueprints.changeBlueprintVersion(blueprint,version)}```"
-            except Exception as e:
+            except ValueError as e:
                 responseMsg = f"Error happened : {e}"
         else:
             responseMsg = globalInfos.NO_PERMISSION_TEXT
@@ -566,6 +572,29 @@ def runDiscordBot() -> None:
         else:
             await ogMsg.delete()
             await interaction.channel.send(responseMsg,file=file)
+
+    @tree.command(name="blueprint-info",description="Get a blueprint's version, building count and size")
+    @discord.app_commands.describe(blueprint="The full blueprint code")
+    async def blueprintInfoCommand(interaction:discord.Interaction,blueprint:str) -> None:
+        if exitCommandWithoutResponse(interaction):
+            return
+        if await hasPermission(PermissionLvls.PRIVATE_FEATURE,interaction=interaction):
+            try:
+                bp,_ = blueprints.decodeBlueprint(blueprint)
+                infos = blueprints.getBlueprintInfo(bp,version=True,numBuildings=True,size=True)
+                versionTxt = globalInfos.BP_VERSIONS.get(infos["version"])
+                if versionTxt is None:
+                    versionTxt = "Unknown"
+                else:
+                    versionTxt = "Alpha "+versionTxt
+                sizeTxt = infos["size"]
+                sizeTxt = f"`{sizeTxt[0]}`x`{sizeTxt[1]}`x`{sizeTxt[2]}`"
+                responseMsg = f"Version : `{infos['version']}` / `{versionTxt}`, Building count : `{infos['numBuildings']}`, Size : {sizeTxt}"
+            except ValueError as e:
+                responseMsg = f"Error happened : {e}"
+        else:
+            responseMsg = globalInfos.NO_PERMISSION_TEXT
+        await interaction.response.send_message(responseMsg,ephemeral=True)
 
     with open(globalInfos.TOKEN_PATH) as f:
         token = f.read()

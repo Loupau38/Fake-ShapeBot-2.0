@@ -70,6 +70,7 @@ Note : shapes with more than 4 layers and/or with more/less than 4 quadrants per
 - /change-blueprint-version [blueprint] [version] : Changes a blueprint's version and returns the new code
 - /member-count : Displays the member count of the server it is executed in (with additional info such as online/offline count and percentage)
 - /operation-graph [instructions] [public] [see_shape_vars] : See the [/operation-graph documentation](https://github.com/Loupau38/Fake-ShapeBot-2.0/blob/main/operationGraphDoc.md)
+- /blueprint-info [blueprint] : Will give the version, building count and size of the given blueprint
 
 ### Admin commands :
 
@@ -101,4 +102,4 @@ Note : shapes with more than 4 layers and/or with more/less than 4 quadrants per
 ## Small additional features :
 
 - If the bot is mentioned, it should react with `:robot:`
-- If one (and only one) blueprint code is detected in a message, the bot will react with the alpha version of that blueprint
+- If one (and only one) blueprint code is detected in a message and its files attached, the bot will react with the alpha version of that blueprint
