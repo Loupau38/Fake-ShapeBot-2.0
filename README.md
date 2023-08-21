@@ -102,4 +102,4 @@ Note : shapes with more than 4 layers and/or with more/less than 4 quadrants per
 ## Small additional features :
 
 - If the bot is mentioned, it should react with `:robot:`
-- If one (and only one) blueprint code is detected in a message and its files attached, the bot will react with the alpha version of that blueprint
+- If one (and only one) blueprint code is detected in a message and its attached files, the bot will react with the alpha version of that blueprint

@@ -133,9 +133,11 @@ async def hasPermission(requestedLvl:int,*,message:discord.Message|None=None,int
     else:
         raise ValueError("No message or interaction in 'hasPermission'")
 
+    if (guildId is None) and (requestedLvl == PermissionLvls.ADMIN):
+        return False
+
     if userId in globalInfos.OWNER_USERS:
-        if requestedLvl <= PermissionLvls.OWNER:
-            return True
+        return True
     else:
         if requestedLvl == PermissionLvls.OWNER:
             return False
