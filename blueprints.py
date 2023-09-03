@@ -56,7 +56,7 @@ def decodeBlueprint(rawBlueprint:str) -> tuple[dict,int]:
     return rawBlueprint, majorVersion
 
 def encodeBlueprint(blueprint:dict,majorVersion:int) -> str:
-    blueprint = base64.b64encode(gzip.compress(json.dumps(blueprint).encode())).decode()
+    blueprint = base64.b64encode(gzip.compress(json.dumps(blueprint,separators=(",",":")).encode())).decode()
     blueprint = PREFIX + SEPARATOR + str(majorVersion) + SEPARATOR + blueprint + SUFFIX
     return blueprint
 

@@ -78,17 +78,13 @@ def exitCommandWithoutResponse(interaction:discord.Interaction) -> bool:
     return False
 
 async def setAllServerSettings(guildId:int,property:str,value) -> None:
-    global canSaveSettings
 
     if allServerSettings.get(guildId) is None:
         allServerSettings[guildId] = {}
     allServerSettings[guildId][property] = value
 
-    if canSaveSettings:
-        canSaveSettings = False
-        with open(globalInfos.ALL_SERVER_SETTINGS_PATH,"w") as f:
-            json.dump(allServerSettings,f)
-        canSaveSettings = True
+    with open(globalInfos.ALL_SERVER_SETTINGS_PATH,"w") as f:
+        json.dump(allServerSettings,f)
 
 async def getAllServerSettings(guildId:int,property:str):
 
@@ -385,14 +381,14 @@ def runDiscordBot() -> None:
 
     @tree.command(name="stop",description="Owner only, stops the bot")
     async def stopCommand(interaction:discord.Interaction) -> None:
-        allowedToStop = await hasPermission(PermissionLvls.OWNER,interaction=interaction)
-        if allowedToStop:
-            responseMsg = "Stopping bot"
-        else:
-            responseMsg = globalInfos.NO_PERMISSION_TEXT
-        await interaction.response.send_message(responseMsg,ephemeral=True)
-        if allowedToStop:
+        if await hasPermission(PermissionLvls.OWNER,interaction=interaction):
+            try:
+                await interaction.response.send_message("Stopping bot",ephemeral=True)
+            except Exception:
+                print("Error while attempting to comfirm bot stopping")
             await client.close()
+        else:
+            await interaction.response.send_message(globalInfos.NO_PERMISSION_TEXT,ephemeral=True)
 
     @tree.command(name="global-pause",description="Owner only, globally pauses the bot")
     async def globalPauseCommand(interaction:discord.Interaction) -> None:
@@ -492,14 +488,11 @@ def runDiscordBot() -> None:
         if exitCommandWithoutResponse(interaction):
             return
         def fillText(text:str,desiredLen:int,align:str) -> str:
-            toFill = desiredLen - len(text)
             if align == "l":
-                return text + (" "*toFill)
-            elif align == "r":
-                return (" "*toFill) + text
-            else:
-                num = int(toFill/2)
-                return (" "*num) + text + (" "*(toFill-num))
+                return text.ljust(desiredLen)
+            if align == "r":
+                return text.rjust(desiredLen)
+            return text.center(desiredLen)
         if await hasPermission(PermissionLvls.PRIVATE_FEATURE,interaction=interaction):
             if interaction.guild is None:
                 responseMsg = "Not in a server"
@@ -604,4 +597,3 @@ def runDiscordBot() -> None:
 
 executedOnReady = False
 globalPaused = False
-canSaveSettings = True
