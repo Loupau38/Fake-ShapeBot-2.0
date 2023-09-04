@@ -80,18 +80,20 @@ Note : shapes with more than 4 layers and/or with more/less than 4 quadrants per
   - /unpause : Unpauses the bot
 - Restrict to channel :\
   The bot will only send public messages on the channel it is restricted to
-  - /restrict-to-channel [channel] : Sets the channel ID to restrict the bot to, use 0 to clear this parameter and not restrict the bot to any channel
+  - /restrict-to-channel [channel] : Sets the channel to restrict the bot to, don't include this parameter to clear it and not restrict the bot to any channel
 - Restrict to roles :\
   If 'restrictToRolesInverted' is false, only users who have at least one role part of the 'restrictToRoles' list will be able to make the bot send public messages. If true, only users who have at least one role that isn't part of the list will be able to. In both cases, if the list is empty, every user will be able to.
-  - /restrict-to-roles-add [role] : Adds a role ID to the list
-  - /restrict-to-roles-remove [role] : Removes a role ID from the list
+  - /restrict-to-roles-add [role] : Adds a role to the list
+  - /restrict-to-roles-remove [role] : Removes a role from the list
   - /restrict-to-roles-view : View the 'restrictToRoles' list
+  - /restrict-to-roles-clear : Clear the 'restrictToRoles' list
   - /restrict-to-roles-set-inverted [inverted] : Sets the 'restrictToRolesInverted' parameter
 - Admin roles :\
   Only users who have a role part of the 'adminRoles' list or who have the administrator permission will be able to use admin commands
-  - /admin-roles-add [role] : Adds a role ID to the list
-  - /admin-roles-remove [role] : Removes a role ID from the list
+  - /admin-roles-add [role] : Adds a role to the list
+  - /admin-roles-remove [role] : Removes a role from the list
   - /admin-roles-view : View the 'adminRoles' list
+  - /admin-roles-clear : Clear the 'adminRoles' list
 
 ### Owner commands :
 
