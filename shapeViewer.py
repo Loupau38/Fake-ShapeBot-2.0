@@ -15,7 +15,7 @@ COLORS = {
     "w":(255,255,255),
     "k":(0,0,0)
 }
-SHAPE_BORDER_COLOR = (0,0,0)
+SHAPE_BORDER_COLOR = (42,28,42)
 BG_CIRCLE_COLOR = (31,41,61,25)
 SHADOW_COLOR = (50,50,50,127)
 
@@ -55,7 +55,7 @@ SHAPES_SHAPE = {
     "P" : {
         "type" : "circle",
         "pos" : (SHAPE_SIZE/6,SHAPE_SIZE/3,SHAPE_SIZE/12),
-        "color" : (122,148,166),
+        "color" : (135,164,185),
         "border" : False
     },
     "c" : {

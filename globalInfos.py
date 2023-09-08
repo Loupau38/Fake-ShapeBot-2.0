@@ -23,6 +23,7 @@ MAX_ROLES_PER_LIST = 10
 # texts
 NO_PERMISSION_TEXT = "You don't have the permission to do this"
 UNKNOWN_ERROR_TEXT = "Unknown error happened"
+MESSAGE_TOO_LONG_TEXT = "Message too long"
 
 # shape viewer
 INITIAL_SHAPE_SIZE = 500
@@ -54,7 +55,8 @@ BP_VERSIONS = {
     1015 : "6.2",
     1018 : "7",
     1019 : "7.3",
-    1022 : "7.4"
+    1022 : "7.4",
+    1024 : "8"
 }
 BP_VERSION_REACTIONS = {str(i) : f"{i}\ufe0f\u20e3" for i in range(10)}
 BP_VERSION_REACTIONS["a"] = "\U0001f1e6"

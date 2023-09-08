@@ -7,6 +7,7 @@ import discord
 import json
 import sys
 import traceback
+import io
 
 async def globalLogMessage(message:str) -> None:
     if globalInfos.GLOBAL_LOG_CHANNEL is None:
@@ -49,7 +50,7 @@ async def useShapeViewer(userMessage:str,sendErrors:bool) -> tuple[bool,str,disc
 
         responseMsg = "\n\n".join(msgParts)
         if len(responseMsg) > globalInfos.MESSAGE_MAX_LENGTH:
-            responseMsg = "Message too long"
+            responseMsg = globalInfos.MESSAGE_TOO_LONG_TEXT
 
         return hasErrors, responseMsg, file
 
@@ -226,6 +227,14 @@ def detectBPVersion(message:str) -> str|None:
         return None
 
     return "a"+versions[0]
+
+def handleMsgTooLong(msg:str) -> str:
+    if len(msg) > globalInfos.MESSAGE_MAX_LENGTH:
+        return globalInfos.MESSAGE_TOO_LONG_TEXT
+    return msg
+
+def msgToFile(msg:str,filename:str) -> discord.File:
+    return discord.File(io.BytesIO(msg.encode()),filename)
 
 def runDiscordBot() -> None:
 
@@ -470,18 +479,22 @@ def runDiscordBot() -> None:
         await ogMsg.edit(content=responseMsg,**{"attachments":[] if file is None else [file]})
 
     @tree.command(name="change-blueprint-version",description="Change a blueprint's version")
-    @discord.app_commands.describe(blueprint="The full blueprint code",version="The blueprint version number (latest public : 1015, latest patreon only : 1022)")
+    @discord.app_commands.describe(blueprint="The full blueprint code",version="The blueprint version number (latest public : 1015, latest patreon only : 1024)")
     async def changeBlueprintVersionCommand(interaction:discord.Interaction,blueprint:str,version:int) -> None:
         if exitCommandWithoutResponse(interaction):
             return
         if await hasPermission(PermissionLvls.PRIVATE_FEATURE,interaction=interaction):
             try:
-                responseMsg = f"```{blueprints.changeBlueprintVersion(blueprint,version)}```"
+                responseMsg = blueprints.changeBlueprintVersion(blueprint,version)
             except ValueError as e:
                 responseMsg = f"Error happened : {e}"
         else:
             responseMsg = globalInfos.NO_PERMISSION_TEXT
-        await interaction.response.send_message(responseMsg,ephemeral=True)
+        if len(responseMsg)+6 > globalInfos.MESSAGE_MAX_LENGTH:
+            kwargs = {"file" : msgToFile(responseMsg,"blueprint.txt")}
+        else:
+            kwargs = {"content" : f"```{responseMsg}```"}
+        await interaction.response.send_message(ephemeral=True,**kwargs)
 
     @tree.command(name="member-count",description="Display the number of members in this server")
     async def MemberCountCommand(interaction:discord.Interaction) -> None:
@@ -562,8 +575,9 @@ def runDiscordBot() -> None:
         else:
             responseMsg = globalInfos.NO_PERMISSION_TEXT
             hasErrors = True
+        responseMsg = handleMsgTooLong(responseMsg)
         if hasErrors or (not public):
-            await ogMsg.edit(content=responseMsg,**{"attachments":[] if file is None else [file]})
+            await ogMsg.edit(content=responseMsg,attachments=[] if file is None else [file])
         else:
             await ogMsg.delete()
             await interaction.channel.send(responseMsg,file=file)
@@ -576,20 +590,30 @@ def runDiscordBot() -> None:
         if await hasPermission(PermissionLvls.PRIVATE_FEATURE,interaction=interaction):
             try:
                 bp,_ = blueprints.decodeBlueprint(blueprint)
-                infos = blueprints.getBlueprintInfo(bp,version=True,numBuildings=True,size=True)
+                infos = blueprints.getBlueprintInfo(bp,version=True,buildingCount=True,size=True,islandCount=True,bpType=True)
                 versionTxt = globalInfos.BP_VERSIONS.get(infos["version"])
                 if versionTxt is None:
                     versionTxt = "Unknown"
                 else:
                     versionTxt = "Alpha "+versionTxt
-                sizeTxt = infos["size"]
-                sizeTxt = f"`{sizeTxt[0]}`x`{sizeTxt[1]}`x`{sizeTxt[2]}`"
-                responseMsg = f"Version : `{infos['version']}` / `{versionTxt}`, Building count : `{infos['numBuildings']}`, Size : {sizeTxt}"
+                sizeTxt = "x".join(f"`{v}`" for v in infos["size"])
+                responseParts = [
+                    f"Version : `{infos['version']}` / `{versionTxt}`",
+                    f"Blueprint type : `{infos['bpType']}`",
+                    f"Building count : `{infos['buildingCount']}`",
+                    f"Island count : `{infos['islandCount']}`",
+                    f"Size : {sizeTxt} (approximate)"
+                ]
+                responseMsg = ", ".join(responseParts)
             except ValueError as e:
                 responseMsg = f"Error happened : {e}"
         else:
             responseMsg = globalInfos.NO_PERMISSION_TEXT
-        await interaction.response.send_message(responseMsg,ephemeral=True)
+        if len(responseMsg) > globalInfos.MESSAGE_MAX_LENGTH:
+            kwargs = {"file" : msgToFile(responseMsg,"infos.txt")}
+        else:
+            kwargs = {"content" : responseMsg}
+        await interaction.response.send_message(ephemeral=True,**kwargs)
 
     with open(globalInfos.TOKEN_PATH) as f:
         token = f.read()

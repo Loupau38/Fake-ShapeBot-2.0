@@ -69,7 +69,8 @@ def changeBlueprintVersion(blueprint:str,version:int) -> str:
         raise ValueError("error while encoding blueprint")
     return blueprint
 
-def getBlueprintInfo(blueprint:dict,*,version:bool=False,numBuildings:bool=False,size:bool=False) -> dict[str]:
+def getBlueprintInfo(blueprint:dict,*,version:bool=False,buildingCount:bool=False,
+    size:bool=False,islandCount:bool=False,bpType:bool=False) -> dict[str]:
 
     if type(blueprint) != dict:
         raise ValueError("Given 'blueprint' argument not a dict")
@@ -88,7 +89,7 @@ def getBlueprintInfo(blueprint:dict,*,version:bool=False,numBuildings:bool=False
 
         toReturn["version"] = versionNum
 
-    if numBuildings or size:
+    if buildingCount or size or islandCount or bpType:
 
         blueprintBP = blueprint.get("BP")
 
@@ -98,6 +99,19 @@ def getBlueprintInfo(blueprint:dict,*,version:bool=False,numBuildings:bool=False
         if type(blueprintBP) != dict:
             raise ValueError("Blueprint not a dict")
 
+        blueprintBPType = blueprintBP.get("$type")
+
+        if blueprintBPType is None:
+            blueprintBPType = "Building"
+
+        if type(blueprintBPType) != str:
+            raise ValueError("Blueprint type not a string")
+
+        if blueprintBPType not in ("Building","Island"):
+            raise ValueError("Unknown blueprint type")
+
+        islandBP = blueprintBPType == "Island"
+
         blueprintBPEntries = blueprintBP.get("Entries")
 
         if blueprintBPEntries is None:
@@ -106,8 +120,49 @@ def getBlueprintInfo(blueprint:dict,*,version:bool=False,numBuildings:bool=False
         if type(blueprintBPEntries) != list:
             raise ValueError("Entries not a list")
 
-    if numBuildings:
-        toReturn["numBuildings"] = len(blueprintBPEntries)
+    if bpType:
+        toReturn["bpType"] = blueprintBPType
+
+    if islandCount:
+        if islandBP:
+            toReturn["islandCount"] = len(blueprintBPEntries)
+        else:
+            toReturn["islandCount"] = 0
+
+    if buildingCount:
+        if islandBP:
+
+            toReturnBuildingCount = 0
+
+            for islandEntryIndex,islandEntry in enumerate(blueprintBPEntries):
+
+                if type(islandEntry) != dict:
+                    raise ValueError(f"Entry {islandEntryIndex} not a dict")
+
+                entryBuildings = islandEntry.get("B")
+
+                if entryBuildings is None:
+                    continue
+
+                if type(entryBuildings) != dict:
+                    raise ValueError(f"Buildings entry of island entry {islandEntryIndex} not a dict")
+
+                entryBuildingsType = entryBuildings.get("$type")
+
+                if entryBuildingsType != "Building":
+                    raise ValueError(f"Buildings entry type of island entry {islandEntryIndex} not 'Building'")
+
+                entryBuildingsEntries = entryBuildings.get("Entries")
+
+                if type(entryBuildingsEntries) != list:
+                    raise ValueError(f"Buildings of island entry {islandEntryIndex} not a list")
+
+                toReturnBuildingCount += len(entryBuildingsEntries)
+
+            toReturn["buildingCount"] = toReturnBuildingCount
+
+        else:
+            toReturn["buildingCount"] = len(blueprintBPEntries)
 
     if size:
 
@@ -135,6 +190,8 @@ def getBlueprintInfo(blueprint:dict,*,version:bool=False,numBuildings:bool=False
             y = entry.get("Y")
             z = entry.get("L")
 
+            x, y, z = [0 if v is None else v for v in (x,y,z)]
+
             for value,text in zip((x,y,z),("x","y","z")):
                 if type(value) != int:
                     raise ValueError(f"{text} of entry {i} not an int")
@@ -143,8 +200,8 @@ def getBlueprintInfo(blueprint:dict,*,version:bool=False,numBuildings:bool=False
             maxX, maxY, maxZ = [specialMax(v1,v2) for v1,v2 in zip((maxX,maxY,maxZ),(x,y,z))]
 
         if minX is None:
-            toReturn["size"] = (0,0,0)
-        else:
-            toReturn["size"] = (maxX-minX+1,maxY-minY+1,maxZ-minZ+1)
+            raise ValueError("No valid entries")
+
+        toReturn["size"] = (maxX-minX+1,maxY-minY+1,maxZ-minZ+1)
 
     return toReturn
