@@ -69,7 +69,8 @@ OPERATIONS:dict[str,Operation] = {
     "r180" : Operation(1,1,"Rotate 180°",shapeOperations.rotate180),
     "sh" : Operation(2,2,"Swap halves",shapeOperations.swapHalves),
     "stack" : Operation(2,1,"Stack",shapeOperations.stack),
-    "paint" : Operation(2,1,"Paint",shapeOperations.topPaint,[1]),
+    "paint" : Operation(2,1,"Top paint",shapeOperations.topPaint,[1]),
+    "fpaint" : Operation(2,1,"Full paint",shapeOperations.fullPaint,[1]),
     "pin" : Operation(1,1,"Push pin",shapeOperations.pushPin),
     "crystal" : Operation(2,1,"Generate crystals",shapeOperations.genCrystal,[1]),
     "unstack" : Operation(1,2,"Unstack",shapeOperations.unstack)
@@ -164,7 +165,6 @@ def getInstructionsFromText(text:str) -> tuple[bool,list[Instruction]|str]:
 
         for e,g,t in zip((curOperation.numInputs,curOperation.numOutputs),(len(inputsInt)+len(colorInputs),len(outputsInt)),("inputs","outputs")):
             if e != g:
-                print(outputsInt)
                 return False,f"Number of operation {t} isn't the same as number of {t} given ({e} vs {g})"
 
         return True,Instruction(Instruction.OP,inputShapeVars=inputsInt,inputColorVars=colorInputs,

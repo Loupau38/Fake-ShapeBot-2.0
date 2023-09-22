@@ -56,8 +56,10 @@ BP_VERSIONS = {
     1018 : "7",
     1019 : "7.3",
     1022 : "7.4",
-    1024 : "8"
+    1024 : "8",
+    1027 : "9"
 }
 BP_VERSION_REACTIONS = {str(i) : f"{i}\ufe0f\u20e3" for i in range(10)}
 BP_VERSION_REACTIONS["a"] = "\U0001f1e6"
 BP_VERSION_REACTIONS["."] = "\u23fa"
+LATEST_GAME_VERSIONS = (1015,1027)

@@ -479,7 +479,7 @@ def runDiscordBot() -> None:
         await ogMsg.edit(content=responseMsg,**{"attachments":[] if file is None else [file]})
 
     @tree.command(name="change-blueprint-version",description="Change a blueprint's version")
-    @discord.app_commands.describe(blueprint="The full blueprint code",version="The blueprint version number (latest public : 1015, latest patreon only : 1024)")
+    @discord.app_commands.describe(blueprint="The full blueprint code",version="The blueprint version number (latest public : {}, latest patreon only : {})".format(*globalInfos.LATEST_GAME_VERSIONS))
     async def changeBlueprintVersionCommand(interaction:discord.Interaction,blueprint:str,version:int) -> None:
         if exitCommandWithoutResponse(interaction):
             return

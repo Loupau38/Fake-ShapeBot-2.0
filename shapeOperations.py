@@ -54,15 +54,15 @@ def getCorrectedIndex(list:list,index:int) -> int:
 def getConnected(layer:list[Quadrant],index:int,matchShape:bool=False) -> list[int]:
     def checkQuad(curQuad:Quadrant) -> bool:
         return ((curQuad.shape != quad.shape) if matchShape else (curQuad.shape in (NOTHING_CHAR,PIN_CHAR)))
-    connected = [index]
     quad = layer[index]
     if quad.shape == NOTHING_CHAR:
         return []
     if quad.shape == PIN_CHAR:
         return [index]
+    connected = [index]
     for i in range(index+1,len(layer)+index):
         curIndex = getCorrectedIndex(layer,i)
-        curQuad:Quadrant = layer[curIndex]
+        curQuad = layer[curIndex]
         if checkQuad(curQuad):
             break
         connected.append(curIndex)
@@ -70,11 +70,15 @@ def getConnected(layer:list[Quadrant],index:int,matchShape:bool=False) -> list[i
         curIndex = getCorrectedIndex(layer,i)
         if curIndex in connected:
             break
-        curQuad:Quadrant = layer[curIndex]
+        curQuad = layer[curIndex]
         if checkQuad(curQuad):
             break
         connected.append(curIndex)
     return connected
+
+#TODO : make crystals connected vertically
+def getConnectedMultiLayer(layers:list[list[Quadrant]],layerIndex:int,quadIndex:int) -> dict[int,list[int]]:
+    pass
 
 def makeLayersFall(layers:list[list[Quadrant]]) -> list[list[Quadrant]]:
     def sepInGroups(layer:list[Quadrant]) -> list[list[int]]:

@@ -55,6 +55,10 @@ Examples : `1:r90cw:2`, `3,7:stack:5`, `10,15:sh:4,21`, `6,r:paint:11`
   - 2 inputs : shape, color
   - 1 output
   - Paints the top layer of the given shape the given color
+- fpaint :
+  - 2 inputs : shape, color
+  - 1 ouput
+  - Paints the given shape the given color
 - pin :
   - 1 input
   - 1 output

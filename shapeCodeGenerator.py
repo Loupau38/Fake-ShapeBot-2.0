@@ -21,10 +21,28 @@ SHAPE_CODE_CLOSING = "}"
 INGNORE_CHARS_IN_SHAPE_CODE = ["`"]
 
 LEVEL_SHAPE_PREFIXES = ["level","lvl","m"]
-LEVEL_SHAPES = ["CuCuCuCu","----RuRu","Cu------","CuCuRuRu","CuCuCuRu",
-    "Cu----Ru","CuRuCuRu:Cu--Cu--","SuSuSuSu","WuCuWuCu:CuCuCuCu","RrCrRrCr",
-    "SgCrCrSg:--CuCu--","SgCrCrSg:CbCbCbCb","RuCrP-Cr:----Ru--","RgCrP-Cr:P-P-RgP-:CbCb--Cb","RuCwP-Cw:----Ru--",
-    "CwCrCwCr:CrCwCrCw:CwCrCwCr:CrCwCrCw","CucrCucr","P-"]
+LEVEL_SHAPES = [
+    "CuCuCuCu",
+    "RuRu----",
+    "Cu------",
+    "Cu------",
+    "RuRu----:CuCu----",
+
+    "CuRuRuRu",
+    "CuSuCuSu",
+    "SuSuSu--:CuCuCuRu",
+    "CuCuRuRu:CbCbSbSb",
+    "CbCuCbCu:RuRbRuRb:SbSuSbSu",
+
+    "SrRbRbRb:--SrCgSr:--CuCuCu",
+    "CgRgCgCu:Sr--SrSr:CrRrCrCr:SbSuSbSb",
+    "RrCrRrCr:RwCwRwCw:CpCpCpCp:--Sy--Sy",
+    "RpP-P-P-:--WrP-P-:----CyP-:------Sg",
+    "crcrcrcr:cwcwcwcw:crcrcrcr:cwcwcwcw",
+
+    "CrRpcwcw:cwRbCccw:cwcwCgRy:CpcwcwRr",
+    "CwRwcrcp:ccRwCwcb:cgcyCwRw:RwcrcpCw"
+]
 
 def getPotentialShapeCodesFromMessage(message:str) -> list[str]:
     if (message == "") or (SHAPE_CODE_OPENING not in message):
