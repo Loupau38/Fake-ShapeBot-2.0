@@ -13,7 +13,7 @@ async def globalLogMessage(message:str) -> None:
     if globalInfos.GLOBAL_LOG_CHANNEL is None:
         print(message)
     else:
-        logChannel = await client.fetch_channel(globalInfos.GLOBAL_LOG_CHANNEL)
+        logChannel = client.get_channel(globalInfos.GLOBAL_LOG_CHANNEL)
         await logChannel.send(message)
 
 async def globalLogError() -> None:
@@ -226,7 +226,7 @@ def detectBPVersion(message:str) -> str|None:
     if len(versions) != 1:
         return None
 
-    return "a"+versions[0]
+    return versions[0]
 
 def handleMsgTooLong(msg:str) -> str:
     if len(msg) > globalInfos.MESSAGE_MAX_LENGTH:
@@ -235,6 +235,20 @@ def handleMsgTooLong(msg:str) -> str:
 
 def msgToFile(msg:str,filename:str) -> discord.File:
     return discord.File(io.BytesIO(msg.encode()),filename)
+
+def alphaVersionToReactions(text:str) -> list[str]:
+    output = [globalInfos.BP_VERSION_REACTION_A]
+    split = text.split(".")
+
+    if len(split[0]) > 1:
+        output.append(client.get_emoji(globalInfos.BP_VERSION_REACTION_TENS[split[0][0]]))
+    output.append(globalInfos.BP_VERSION_REACTION_UNITS[split[0][-1]])
+
+    if len(split) > 1:
+        output.append(globalInfos.BP_VERSION_REACTION_DOT)
+        output.append(client.get_emoji(globalInfos.BP_VERSION_REACTION_TENTHS[split[1]]))
+
+    return output
 
 def runDiscordBot() -> None:
 
@@ -282,7 +296,7 @@ def runDiscordBot() -> None:
         if await hasPermission(PermissionLvls.REACTION,message=message):
 
             if globalInfos.BOT_ID in (user.id for user in message.mentions):
-                await message.add_reaction("\U0001F916")
+                await message.add_reaction(globalInfos.BOT_MENTIONED_REACTION)
 
             msgContent = message.content
             for file in message.attachments:
@@ -295,8 +309,8 @@ def runDiscordBot() -> None:
 
             bpReactions = detectBPVersion(msgContent)
             if bpReactions is not None:
-                for reaction in bpReactions:
-                    await message.add_reaction(globalInfos.BP_VERSION_REACTIONS[reaction])
+                for reaction in alphaVersionToReactions(bpReactions):
+                    await message.add_reaction(reaction)
 
     class RegisterCommandType:
         SINGLE_CHANNEL = "singleChannel"

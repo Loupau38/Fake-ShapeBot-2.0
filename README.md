@@ -70,7 +70,7 @@ Note : shapes with more than 4 layers and/or with more/less than 4 quadrants per
 - /change-blueprint-version [blueprint] [version] : Changes a blueprint's version and returns the new code
 - /member-count : Displays the member count of the server it is executed in (with additional info such as online/offline count and percentage)
 - /operation-graph [instructions] [public] [see_shape_vars] : See the [/operation-graph documentation](https://github.com/Loupau38/Fake-ShapeBot-2.0/blob/main/operationGraphDoc.md)
-- /blueprint-info [blueprint] : Will give the version, building count and size of the given blueprint
+- /blueprint-info [blueprint] : Will give the version, type, building count, island count and size of the given blueprint
 
 ### Admin commands :
 

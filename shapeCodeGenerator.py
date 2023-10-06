@@ -26,7 +26,7 @@ LEVEL_SHAPES = [
     "RuRu----",
     "Cu------",
     "Cu------",
-    "RuRu----:CuCu----",
+    "CuRuCuCu",
 
     "CuRuRuRu",
     "CuSuCuSu",
