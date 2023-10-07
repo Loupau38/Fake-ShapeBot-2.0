@@ -56,17 +56,17 @@ def decodeBlueprint(rawBlueprint:str) -> tuple[dict,int]:
     return rawBlueprint, majorVersion
 
 def encodeBlueprint(blueprint:dict,majorVersion:int) -> str:
-    blueprint = base64.b64encode(gzip.compress(json.dumps(blueprint,separators=(",",":")).encode())).decode()
-    blueprint = PREFIX + SEPARATOR + str(majorVersion) + SEPARATOR + blueprint + SUFFIX
+    try:
+        blueprint = base64.b64encode(gzip.compress(json.dumps(blueprint,separators=(",",":")).encode())).decode()
+        blueprint = PREFIX + SEPARATOR + str(majorVersion) + SEPARATOR + blueprint + SUFFIX
+    except Exception:
+        raise ValueError("error while encoding blueprint")
     return blueprint
 
 def changeBlueprintVersion(blueprint:str,version:int) -> str:
     blueprint, majorVersion = decodeBlueprint(blueprint)
     blueprint["V"] = version
-    try:
-        blueprint = encodeBlueprint(blueprint,majorVersion)
-    except Exception:
-        raise ValueError("error while encoding blueprint")
+    blueprint = encodeBlueprint(blueprint,majorVersion)
     return blueprint
 
 def getBlueprintInfo(blueprint:dict,*,version:bool=False,buildingCount:bool=False,
