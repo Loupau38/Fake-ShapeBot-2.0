@@ -21,28 +21,6 @@ SHAPE_CODE_CLOSING = "}"
 INGNORE_CHARS_IN_SHAPE_CODE = ["`"]
 
 LEVEL_SHAPE_PREFIXES = ["level","lvl","m"]
-LEVEL_SHAPES = [
-    "CuCuCuCu",
-    "RuRu----",
-    "Cu------",
-    "Cu------",
-    "CuRuCuCu",
-
-    "CuRuRuRu",
-    "CuSuCuSu",
-    "SuSuSu--:CuCuCuRu",
-    "CuCuRuRu:CbCbSbSb",
-    "CbCuCbCu:RuRbRuRb:SbSuSbSu",
-
-    "SrRbRbRb:--SrCgSr:--CuCuCu",
-    "CgRgCgCu:Sr--SrSr:CrRrCrCr:SbSuSbSb",
-    "RrCrRrCr:RwCwRwCw:CpCpCpCp:--Sy--Sy",
-    "RpP-P-P-:--WrP-P-:----CyP-:------Sg",
-    "crcrcrcr:cwcwcwcw:crcrcrcr:cwcwcwcw",
-
-    "CrRpcwcw:cwRbCccw:cwcwCgRy:CpcwcwRr",
-    "CwRwcrcp:ccRwCwcb:cgcyCwRw:RwcrcpCw"
-]
 
 def getPotentialShapeCodesFromMessage(message:str) -> list[str]:
     if (message == "") or (SHAPE_CODE_OPENING not in message):
@@ -97,13 +75,13 @@ def generateShapeCodes(potentialShapeCode:str) -> tuple[list[str]|str,bool]:
             level = potentialShapeCode[len(prefix):]
             try:
                 level = int(level)
-                if (level < 1) or (level > len(LEVEL_SHAPES)):
+                if (level < 1) or (level > len(globalInfos.LEVEL_SHAPES)):
                     invalidLvl = True
             except ValueError:
                 invalidLvl = True
             if invalidLvl:
                 return f"Invalid level/milestone number : '{level}'",False
-            potentialShapeCode = LEVEL_SHAPES[level-1]
+            potentialShapeCode = globalInfos.LEVEL_SHAPES[level-1]
             break
 
     # separate in layers

@@ -1,9 +1,6 @@
 import shapeCodeGenerator
 import shapeViewer
 import globalInfos
-import os
-os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = ""
-del os
 import pygame
 import io
 

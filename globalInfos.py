@@ -30,6 +30,31 @@ INITIAL_SHAPE_SIZE = 500
 SHAPE_COLORS = ["u","r","g","b","c","p","y","w","k"]
 SHAPE_LAYER_SEPARATOR = ":"
 SHAPE_NOTHING_CHAR = "-"
+LEVEL_SHAPES = [
+    "CuCuCuCu",
+    "RuRu----",
+    "Cu------",
+    "Cu------",
+    "CuRuCuCu",
+
+    "--RuRuRu:----Cu--",
+    "CuSuCuSu",
+    "SuSuSu--:CuCuCuRu",
+    "CuCuRuRu:CbCbSbSb",
+    "CbCuCbCu:RuRbRuRb:SbSuSbSu",
+
+    "SrRbRbRb:--SrCgSr:--CuCuCu",
+    "CgRgCgCu:Sr--SrSr:CrRrCrCr:SbSuSbSb",
+    "CuRuCuCu:CcCcCcCc",
+    "RrCrRrCr:RwCwRwCw:CpCpCpCp:--Sy--Sy",
+    "CwRwCwCw:P-P-P-P-:CcCcCcCc",
+
+    "RwCbCgCr:CyCcRwCp",
+    "cwCbCgCr:CyCccwCp",
+    "CrRpcwcw:cwRbCccw:cwcwCgRy:CpcwcwRr",
+    "CwRwcrcp:ccRwCwcb:cgcyCwRw:RwcrcpCw",
+    "P-P-P-P-:SrSrP-P-:crcrcrcr:P-P-cwcw",
+]
 
 # display parameters
 SHAPES_PER_ROW = 8
@@ -73,6 +98,7 @@ BP_VERSIONS = {
     1019 : "7.3",
     1022 : "7.4",
     1024 : "8",
-    1027 : "10.2"
+    1027 : "10.2",
+    1029 : "11"
 }
-LATEST_GAME_VERSIONS = (1015,1027)
+LATEST_GAME_VERSIONS = (1015,1029)
