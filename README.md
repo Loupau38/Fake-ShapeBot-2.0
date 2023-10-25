@@ -1,7 +1,5 @@
 # Fake ShapeBot 2.0
 
-v1.0
-
 ## Shape viewer :
 
 Put your shape code and parameters in `{}`

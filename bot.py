@@ -195,7 +195,7 @@ async def hasPermission(requestedLvl:int,*,message:discord.Message|None=None,int
 
     return False
 
-def detectBPVersion(message:str) -> str|None:
+def detectBPVersion(message:str) -> list[str]|None:
 
     if blueprints.PREFIX not in message:
         return None
@@ -221,10 +221,12 @@ def detectBPVersion(message:str) -> str|None:
         except ValueError:
             continue
 
-        if globalInfos.BP_VERSIONS.get(version) is None:
+        versionReaction = convertVersionNum(version,toReaction=True)
+
+        if versionReaction is None:
             continue
 
-        versions.append(globalInfos.BP_VERSIONS[version])
+        versions.append(versionReaction)
 
     if len(versions) != 1:
         return None
@@ -239,19 +241,31 @@ def handleMsgTooLong(msg:str) -> str:
 def msgToFile(msg:str,filename:str) -> discord.File:
     return discord.File(io.BytesIO(msg.encode()),filename)
 
-def alphaVersionToReactions(text:str) -> list[str]:
-    output = [globalInfos.BP_VERSION_REACTION_A]
-    split = text.split(".")
+def convertVersionNum(version:int,*,toText:bool=False,toReaction:bool=False) -> None|str|list[str]:
 
-    if len(split[0]) > 1:
-        output.append(client.get_emoji(globalInfos.BP_VERSION_REACTION_TENS[split[0][0]]))
-    output.append(globalInfos.BP_VERSION_REACTION_UNITS[split[0][-1]])
+    versionText = globalInfos.ALPHA_BP_VERSIONS.get(version)
 
-    if len(split) > 1:
-        output.append(globalInfos.BP_VERSION_REACTION_DOT)
-        output.append(client.get_emoji(globalInfos.BP_VERSION_REACTION_TENTHS[split[1]]))
+    if versionText is None:
+        return None
 
-    return output
+    if toText:
+
+        return "Alpha " + versionText
+
+    if toReaction:
+
+        output = [globalInfos.BP_VERSION_REACTION_A]
+        split = versionText.split(".")
+
+        if len(split[0]) > 1:
+            output.append(client.get_emoji(globalInfos.BP_VERSION_REACTION_TENS[split[0][0]]))
+        output.append(globalInfos.BP_VERSION_REACTION_UNITS[split[0][-1]])
+
+        if len(split) > 1:
+            output.append(globalInfos.BP_VERSION_REACTION_DOT)
+            output.append(client.get_emoji(globalInfos.BP_VERSION_REACTION_TENTHS[split[1]]))
+
+        return output
 
 def runDiscordBot() -> None:
 
@@ -312,7 +326,7 @@ def runDiscordBot() -> None:
 
             bpReactions = detectBPVersion(msgContent)
             if bpReactions is not None:
-                for reaction in alphaVersionToReactions(bpReactions):
+                for reaction in bpReactions:
                     await message.add_reaction(reaction)
 
     class RegisterCommandType:
@@ -341,7 +355,7 @@ def runDiscordBot() -> None:
 
         elif type_ == RegisterCommandType.ROLE_LIST:
 
-            @tree.command(name=f"{cmdName}-add",description=f"Admin only, adds a role to the '{serverSettingsKey}' list")
+            @tree.command(name=f"{cmdName}-add",description=f"{globalInfos.ADMIN_ONLY_BADGE} adds a role to the '{serverSettingsKey}' list")
             async def generatedCommand(interaction:discord.Interaction,role:discord.Role) -> None:
                 if exitCommandWithoutResponse(interaction):
                     return
@@ -360,7 +374,7 @@ def runDiscordBot() -> None:
                     responseMsg = globalInfos.NO_PERMISSION_TEXT
                 await interaction.response.send_message(responseMsg,ephemeral=True)
 
-            @tree.command(name=f"{cmdName}-remove",description=f"Admin only, removes a role from the '{serverSettingsKey}' list")
+            @tree.command(name=f"{cmdName}-remove",description=f"{globalInfos.ADMIN_ONLY_BADGE} removes a role from the '{serverSettingsKey}' list")
             async def generatedCommand(interaction:discord.Interaction,role:discord.Role) -> None:
                 if exitCommandWithoutResponse(interaction):
                     return
@@ -376,7 +390,7 @@ def runDiscordBot() -> None:
                     responseMsg = globalInfos.NO_PERMISSION_TEXT
                 await interaction.response.send_message(responseMsg,ephemeral=True)
 
-            @tree.command(name=f"{cmdName}-view",description=f"Admin only, see the '{serverSettingsKey}' list")
+            @tree.command(name=f"{cmdName}-view",description=f"{globalInfos.ADMIN_ONLY_BADGE} see the '{serverSettingsKey}' list")
             async def generatedCommand(interaction:discord.Interaction) -> None:
                 if exitCommandWithoutResponse(interaction):
                     return
@@ -391,7 +405,7 @@ def runDiscordBot() -> None:
                     responseMsg = globalInfos.NO_PERMISSION_TEXT
                 await interaction.response.send_message(responseMsg,ephemeral=True)
 
-            @tree.command(name=f"{cmdName}-clear",description=f"Admin only, clears the '{serverSettingsKey}' list")
+            @tree.command(name=f"{cmdName}-clear",description=f"{globalInfos.ADMIN_ONLY_BADGE} clears the '{serverSettingsKey}' list")
             async def generatedCommand(interaction:discord.Interaction) -> None:
                 if exitCommandWithoutResponse(interaction):
                     return
@@ -405,7 +419,7 @@ def runDiscordBot() -> None:
         else:
             print(f"Unknown type : {type_}")
 
-    @tree.command(name="stop",description="Owner only, stops the bot")
+    @tree.command(name="stop",description=f"{globalInfos.OWNER_ONLY_BADGE} stops the bot")
     async def stopCommand(interaction:discord.Interaction) -> None:
         if await hasPermission(PermissionLvls.OWNER,interaction=interaction):
             try:
@@ -416,7 +430,7 @@ def runDiscordBot() -> None:
         else:
             await interaction.response.send_message(globalInfos.NO_PERMISSION_TEXT,ephemeral=True)
 
-    @tree.command(name="global-pause",description="Owner only, globally pauses the bot")
+    @tree.command(name="global-pause",description=f"{globalInfos.OWNER_ONLY_BADGE} globally pauses the bot")
     async def globalPauseCommand(interaction:discord.Interaction) -> None:
         global globalPaused
         if await hasPermission(PermissionLvls.OWNER,interaction=interaction):
@@ -426,7 +440,7 @@ def runDiscordBot() -> None:
             responseMsg = globalInfos.NO_PERMISSION_TEXT
         await interaction.response.send_message(responseMsg,ephemeral=True)
 
-    @tree.command(name="global-unpause",description="Owner only, globally unpauses the bot")
+    @tree.command(name="global-unpause",description=f"{globalInfos.OWNER_ONLY_BADGE} globally unpauses the bot")
     async def globalUnpauseCommand(interaction:discord.Interaction) -> None:
         global globalPaused
         if await hasPermission(PermissionLvls.OWNER,interaction=interaction):
@@ -436,7 +450,7 @@ def runDiscordBot() -> None:
             responseMsg = globalInfos.NO_PERMISSION_TEXT
         await interaction.response.send_message(responseMsg,ephemeral=True)
 
-    @tree.command(name="pause",description="Admin only, pauses the bot on this server")
+    @tree.command(name="pause",description=f"{globalInfos.ADMIN_ONLY_BADGE} pauses the bot on this server")
     async def pauseCommand(interaction:discord.Interaction) -> None:
         if exitCommandWithoutResponse(interaction):
             return
@@ -447,7 +461,7 @@ def runDiscordBot() -> None:
             responseMsg = globalInfos.NO_PERMISSION_TEXT
         await interaction.response.send_message(responseMsg,ephemeral=True)
 
-    @tree.command(name="unpause",description="Admin only, unpauses the bot on this server")
+    @tree.command(name="unpause",description=f"{globalInfos.ADMIN_ONLY_BADGE} unpauses the bot on this server")
     async def unpauseCommand(interaction:discord.Interaction) -> None:
         if exitCommandWithoutResponse(interaction):
             return
@@ -461,13 +475,13 @@ def runDiscordBot() -> None:
     registerAdminCommand(RegisterCommandType.SINGLE_CHANNEL,
         "restrict-to-channel",
         "restrictToChannel",
-        "Admin only, restricts the use of the bot in public messages to one channel only")
+        f"{globalInfos.ADMIN_ONLY_BADGE} restricts the use of the bot in public messages to one channel only")
 
     registerAdminCommand(RegisterCommandType.ROLE_LIST,"admin-roles","adminRoles")
 
     registerAdminCommand(RegisterCommandType.ROLE_LIST,"restrict-to-roles","restrictToRoles")
 
-    @tree.command(name="restrict-to-roles-set-inverted",description="Admin only, sets if the restrict to roles list should be inverted")
+    @tree.command(name="restrict-to-roles-set-inverted",description=f"{globalInfos.ADMIN_ONLY_BADGE} sets if the restrict to roles list should be inverted")
     @discord.app_commands.describe(inverted="If True : only users who have at least one role that isn't part of the list will be able to use public message features, if False : only users who have at least one role that is part of the list will be able to use public message features")
     async def restrictToRolesSetInvertedCommand(interaction:discord.Interaction,inverted:bool) -> None:
         if exitCommandWithoutResponse(interaction):
@@ -493,7 +507,7 @@ def runDiscordBot() -> None:
         else:
             responseMsg = globalInfos.NO_PERMISSION_TEXT
             file = None
-        await ogMsg.edit(content=responseMsg,**{"attachments":[] if file is None else [file]})
+        await ogMsg.edit(content=responseMsg,attachments=[] if file is None else [file])
 
     @tree.command(name="change-blueprint-version",description="Change a blueprint's version")
     @discord.app_commands.describe(blueprint="The full blueprint code",version="The blueprint version number (latest public : {}, latest patreon only : {})".format(*globalInfos.LATEST_GAME_VERSIONS))
@@ -601,18 +615,17 @@ def runDiscordBot() -> None:
 
     @tree.command(name="blueprint-info",description="Get a blueprint's version, building count and size")
     @discord.app_commands.describe(blueprint="The full blueprint code")
-    async def blueprintInfoCommand(interaction:discord.Interaction,blueprint:str) -> None:
+    async def blueprintInfoCommand(interaction:discord.Interaction,blueprint:str,advanced:bool=False) -> None:
         if exitCommandWithoutResponse(interaction):
             return
         if await hasPermission(PermissionLvls.PRIVATE_FEATURE,interaction=interaction):
             try:
                 bp,_ = blueprints.decodeBlueprint(blueprint)
-                infos = blueprints.getBlueprintInfo(bp,version=True,buildingCount=True,size=True,islandCount=True,bpType=True)
-                versionTxt = globalInfos.BP_VERSIONS.get(infos["version"])
+                infos = blueprints.getBlueprintInfo(bp,version=True,buildingCount=True,size=True,islandCount=True,bpType=True,
+                    buildingCounts=advanced,islandCounts=advanced)
+                versionTxt = convertVersionNum(infos["version"],toText=True)
                 if versionTxt is None:
                     versionTxt = "Unknown"
-                else:
-                    versionTxt = "Alpha "+versionTxt
                 sizeTxt = "x".join(f"`{v}`" for v in infos["size"])
                 responseParts = [
                     f"Version : `{infos['version']}` / `{versionTxt}`",
@@ -622,6 +635,13 @@ def runDiscordBot() -> None:
                     f"Size : {sizeTxt} (approximate)"
                 ]
                 responseMsg = ", ".join(responseParts)
+                if advanced:
+                    for key,text in zip(("island","building"),("Island","Building")):
+                        responseMsg += f"\n**{text} counts :**\n"
+                        if infos[f"{key}Counts"] == {}:
+                            responseMsg += "None"
+                        else:
+                            responseMsg += "\n".join(f"- `{k}` : `{v}`" for k,v in infos[f"{key}Counts"].items())
             except ValueError as e:
                 responseMsg = f"Error happened : {e}"
         else:

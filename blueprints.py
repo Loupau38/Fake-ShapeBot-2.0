@@ -6,6 +6,9 @@ PREFIX = "SHAPEZ2"
 SEPARATOR = "-"
 SUFFIX = "$"
 
+BUILDING_BP_TYPE = "Building"
+ISLAND_BP_TYPE = "Island"
+
 def decodeBlueprint(rawBlueprint:str) -> tuple[dict,int]:
     if rawBlueprint.startswith(PREFIX):
         rawBlueprint = rawBlueprint[len(PREFIX):]
@@ -70,7 +73,8 @@ def changeBlueprintVersion(blueprint:str,version:int) -> str:
     return blueprint
 
 def getBlueprintInfo(blueprint:dict,*,version:bool=False,buildingCount:bool=False,
-    size:bool=False,islandCount:bool=False,bpType:bool=False) -> dict[str]:
+    size:bool=False,islandCount:bool=False,bpType:bool=False,
+    buildingCounts:bool=False,islandCounts:bool=False) -> dict[str]:
 
     if type(blueprint) != dict:
         raise ValueError("Given 'blueprint' argument not a dict")
@@ -89,7 +93,7 @@ def getBlueprintInfo(blueprint:dict,*,version:bool=False,buildingCount:bool=Fals
 
         toReturn["version"] = versionNum
 
-    if buildingCount or size or islandCount or bpType:
+    if buildingCount or size or islandCount or bpType or buildingCounts or islandCounts:
 
         blueprintBP = blueprint.get("BP")
 
@@ -102,15 +106,15 @@ def getBlueprintInfo(blueprint:dict,*,version:bool=False,buildingCount:bool=Fals
         blueprintBPType = blueprintBP.get("$type")
 
         if blueprintBPType is None:
-            blueprintBPType = "Building"
+            blueprintBPType = BUILDING_BP_TYPE
 
         if type(blueprintBPType) != str:
             raise ValueError("Blueprint type not a string")
 
-        if blueprintBPType not in ("Building","Island"):
+        if blueprintBPType not in (BUILDING_BP_TYPE,ISLAND_BP_TYPE):
             raise ValueError("Unknown blueprint type")
 
-        islandBP = blueprintBPType == "Island"
+        islandBP = blueprintBPType == ISLAND_BP_TYPE
 
         blueprintBPEntries = blueprintBP.get("Entries")
 
@@ -123,46 +127,87 @@ def getBlueprintInfo(blueprint:dict,*,version:bool=False,buildingCount:bool=Fals
     if bpType:
         toReturn["bpType"] = blueprintBPType
 
-    if islandCount:
-        if islandBP:
-            toReturn["islandCount"] = len(blueprintBPEntries)
+    def countsDictAdd(dict_:dict,addToKey:str) -> None:
+        if dict_.get(addToKey) is None:
+            dict_[addToKey] = 1
         else:
+            dict_[addToKey] += 1
+
+    if buildingCount or islandCount or buildingCounts or islandCounts:
+
+        if buildingCount:
+            toReturn["buildingCount"] = 0
+        if islandCount:
             toReturn["islandCount"] = 0
+        if buildingCounts:
+            toReturn["buildingCounts"] = {}
+        if islandCounts:
+            toReturn["islandCounts"] = {}
 
-    if buildingCount:
-        if islandBP:
+        for entryIndex,entry in enumerate(blueprintBPEntries):
 
-            toReturnBuildingCount = 0
+            if (buildingCounts and (not islandBP)) or (islandCounts and islandBP):
 
-            for islandEntryIndex,islandEntry in enumerate(blueprintBPEntries):
+                if type(entry) != dict:
+                    raise ValueError(f"Entry {entryIndex} not a dict")
 
-                if type(islandEntry) != dict:
-                    raise ValueError(f"Entry {islandEntryIndex} not a dict")
+                entryType = entry.get("T")
 
-                entryBuildings = islandEntry.get("B")
+                if entryType is None:
+                    raise ValueError(f"No type key for entry {entryIndex}")
 
-                if entryBuildings is None:
-                    continue
+            if islandBP:
 
-                if type(entryBuildings) != dict:
-                    raise ValueError(f"Buildings entry of island entry {islandEntryIndex} not a dict")
+                if islandCount:
+                    toReturn["islandCount"] += 1
 
-                entryBuildingsType = entryBuildings.get("$type")
+                if islandCounts:
+                    countsDictAdd(toReturn["islandCounts"],entryType)
 
-                if entryBuildingsType != "Building":
-                    raise ValueError(f"Buildings entry type of island entry {islandEntryIndex} not 'Building'")
+                if buildingCount or buildingCounts:
 
-                entryBuildingsEntries = entryBuildings.get("Entries")
+                    entryBuildings = entry.get("B")
 
-                if type(entryBuildingsEntries) != list:
-                    raise ValueError(f"Buildings of island entry {islandEntryIndex} not a list")
+                    if entryBuildings is None:
+                        continue
 
-                toReturnBuildingCount += len(entryBuildingsEntries)
+                    if type(entryBuildings) != dict:
+                        raise ValueError(f"Buildings entry of island entry {entryIndex} not a dict")
 
-            toReturn["buildingCount"] = toReturnBuildingCount
+                    entryBuildingsType = entryBuildings.get("$type")
 
-        else:
-            toReturn["buildingCount"] = len(blueprintBPEntries)
+                    if entryBuildingsType != BUILDING_BP_TYPE:
+                        raise ValueError(f"Buildings entry type of island entry {entryIndex} not '{BUILDING_BP_TYPE}'")
+
+                    entryBuildingsEntries = entryBuildings.get("Entries")
+
+                    if type(entryBuildingsEntries) != list:
+                        raise ValueError(f"Buildings of island entry {entryIndex} not a list")
+
+                    for buildingEntryIndex,buildingEntry in enumerate(entryBuildingsEntries):
+
+                        if buildingCount:
+                            toReturn["buildingCount"] += 1
+
+                        if buildingCounts:
+
+                            if type(buildingEntry) != dict:
+                                raise ValueError(f"Building entry {buildingEntryIndex} of island entry {entryIndex} not a dict")
+
+                            buildingEntryType = buildingEntry.get("T")
+
+                            if buildingEntryType is None:
+                                raise ValueError(f"No type key for building entry {buildingEntryIndex} of island entry {entryIndex}")
+
+                            countsDictAdd(toReturn["buildingCounts"],buildingEntryType)
+
+            else:
+
+                if buildingCount:
+                    toReturn["buildingCount"] += 1
+
+                if buildingCounts:
+                    countsDictAdd(toReturn["buildingCounts"],entryType)
 
     if size:
 

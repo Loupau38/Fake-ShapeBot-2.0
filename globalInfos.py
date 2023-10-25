@@ -21,9 +21,11 @@ ROLE_ID_LEN = 19
 MAX_ROLES_PER_LIST = 10
 
 # texts
-NO_PERMISSION_TEXT = "You don't have the permission to do this"
+NO_PERMISSION_TEXT = "You don't have permission to do this"
 UNKNOWN_ERROR_TEXT = "Unknown error happened"
 MESSAGE_TOO_LONG_TEXT = "Message too long"
+OWNER_ONLY_BADGE = "[Owner only]"
+ADMIN_ONLY_BADGE = "[Admin only]"
 
 # shape viewer
 INITIAL_SHAPE_SIZE = 500
@@ -88,7 +90,7 @@ BP_VERSION_REACTION_TENTHS = {str(i) : v for i,v in enumerate([
 LOADING_GIF_PATH = "./loading.gif"
 SEND_LOADING_GIF_FOR_NUM_CHARS_SHAPE_VIEWER = 1000
 SEND_LOADING_GIF_FOR_NUM_CHARS_OP_GRAPH = 50
-BP_VERSIONS = {
+ALPHA_BP_VERSIONS = {
     1005 : "3",
     1008 : "4",
     1009 : "5",
