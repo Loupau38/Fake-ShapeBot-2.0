@@ -9,52 +9,54 @@ SUFFIX = "$"
 BUILDING_BP_TYPE = "Building"
 ISLAND_BP_TYPE = "Island"
 
+class BlueprintError(Exception): ...
+
 def decodeBlueprint(rawBlueprint:str) -> tuple[dict,int]:
     if rawBlueprint.startswith(PREFIX):
         rawBlueprint = rawBlueprint[len(PREFIX):]
     else:
-        raise ValueError("doesn't start with prefix")
+        raise BlueprintError("doesn't start with prefix")
 
     if rawBlueprint.startswith(SEPARATOR):
         rawBlueprint = rawBlueprint[len(SEPARATOR):]
     else:
-        raise ValueError("no separator after prefix")
+        raise BlueprintError("no separator after prefix")
 
     rawBlueprint = rawBlueprint.split(SEPARATOR)
     if len(rawBlueprint) == 0:
-        raise ValueError("nothing after first separator")
+        raise BlueprintError("nothing after first separator")
     if len(rawBlueprint) == 1:
-        raise ValueError("no separator after version number")
+        raise BlueprintError("no separator after version number")
     if len(rawBlueprint) > 2:
-        raise ValueError("more separators than expected")
+        raise BlueprintError("more separators than expected")
 
     try:
         majorVersion = int(rawBlueprint[0])
     except ValueError:
-        raise ValueError("version number not a number")
+        raise BlueprintError("version number not a number")
 
     rawBlueprint = rawBlueprint[1]
     if rawBlueprint.endswith(SUFFIX):
         rawBlueprint = rawBlueprint[:-len(SUFFIX)]
     else:
-        raise ValueError("doesn't end with suffix")
+        raise BlueprintError("doesn't end with suffix")
 
     try:
         rawBlueprint = rawBlueprint.encode()
     except Exception:
-        raise ValueError("can't encode in bytes")
+        raise BlueprintError("can't encode in bytes")
     try:
         rawBlueprint = base64.b64decode(rawBlueprint)
     except Exception:
-        raise ValueError("can't decode from base64")
+        raise BlueprintError("can't decode from base64")
     try:
         rawBlueprint = gzip.decompress(rawBlueprint)
     except Exception:
-        raise ValueError("can't gzip decompress")
+        raise BlueprintError("can't gzip decompress")
     try:
         rawBlueprint = json.loads(rawBlueprint)
     except Exception:
-        raise ValueError("can't parse json")
+        raise BlueprintError("can't parse json")
 
     return rawBlueprint, majorVersion
 
@@ -63,7 +65,7 @@ def encodeBlueprint(blueprint:dict,majorVersion:int) -> str:
         blueprint = base64.b64encode(gzip.compress(json.dumps(blueprint,separators=(",",":")).encode())).decode()
         blueprint = PREFIX + SEPARATOR + str(majorVersion) + SEPARATOR + blueprint + SUFFIX
     except Exception:
-        raise ValueError("error while encoding blueprint")
+        raise BlueprintError("error while encoding blueprint")
     return blueprint
 
 def changeBlueprintVersion(blueprint:str,version:int) -> str:
@@ -77,7 +79,7 @@ def getBlueprintInfo(blueprint:dict,*,version:bool=False,buildingCount:bool=Fals
     buildingCounts:bool=False,islandCounts:bool=False) -> dict[str]:
 
     if type(blueprint) != dict:
-        raise ValueError("Given 'blueprint' argument not a dict")
+        raise BlueprintError("Given 'blueprint' argument not a dict")
 
     toReturn = {}
 
@@ -86,10 +88,10 @@ def getBlueprintInfo(blueprint:dict,*,version:bool=False,buildingCount:bool=Fals
         versionNum = blueprint.get("V")
 
         if versionNum is None:
-            raise ValueError("No version key")
+            raise BlueprintError("No version key")
 
         if type(versionNum) != int:
-            raise ValueError("Version not an int")
+            raise BlueprintError("Version not an int")
 
         toReturn["version"] = versionNum
 
@@ -98,10 +100,10 @@ def getBlueprintInfo(blueprint:dict,*,version:bool=False,buildingCount:bool=Fals
         blueprintBP = blueprint.get("BP")
 
         if blueprintBP is None:
-            raise ValueError("No blueprint key")
+            raise BlueprintError("No blueprint key")
 
         if type(blueprintBP) != dict:
-            raise ValueError("Blueprint not a dict")
+            raise BlueprintError("Blueprint not a dict")
 
         blueprintBPType = blueprintBP.get("$type")
 
@@ -109,20 +111,20 @@ def getBlueprintInfo(blueprint:dict,*,version:bool=False,buildingCount:bool=Fals
             blueprintBPType = BUILDING_BP_TYPE
 
         if type(blueprintBPType) != str:
-            raise ValueError("Blueprint type not a string")
+            raise BlueprintError("Blueprint type not a string")
 
         if blueprintBPType not in (BUILDING_BP_TYPE,ISLAND_BP_TYPE):
-            raise ValueError("Unknown blueprint type")
+            raise BlueprintError("Unknown blueprint type")
 
         islandBP = blueprintBPType == ISLAND_BP_TYPE
 
         blueprintBPEntries = blueprintBP.get("Entries")
 
         if blueprintBPEntries is None:
-            raise ValueError("No entries key")
+            raise BlueprintError("No entries key")
 
         if type(blueprintBPEntries) != list:
-            raise ValueError("Entries not a list")
+            raise BlueprintError("Entries not a list")
 
     if bpType:
         toReturn["bpType"] = blueprintBPType
@@ -149,12 +151,12 @@ def getBlueprintInfo(blueprint:dict,*,version:bool=False,buildingCount:bool=Fals
             if (buildingCounts and (not islandBP)) or (islandCounts and islandBP):
 
                 if type(entry) != dict:
-                    raise ValueError(f"Entry {entryIndex} not a dict")
+                    raise BlueprintError(f"Entry {entryIndex} not a dict")
 
                 entryType = entry.get("T")
 
                 if entryType is None:
-                    raise ValueError(f"No type key for entry {entryIndex}")
+                    raise BlueprintError(f"No type key for entry {entryIndex}")
 
             if islandBP:
 
@@ -172,17 +174,17 @@ def getBlueprintInfo(blueprint:dict,*,version:bool=False,buildingCount:bool=Fals
                         continue
 
                     if type(entryBuildings) != dict:
-                        raise ValueError(f"Buildings entry of island entry {entryIndex} not a dict")
+                        raise BlueprintError(f"Buildings entry of island entry {entryIndex} not a dict")
 
                     entryBuildingsType = entryBuildings.get("$type")
 
                     if entryBuildingsType != BUILDING_BP_TYPE:
-                        raise ValueError(f"Buildings entry type of island entry {entryIndex} not '{BUILDING_BP_TYPE}'")
+                        raise BlueprintError(f"Buildings entry type of island entry {entryIndex} not '{BUILDING_BP_TYPE}'")
 
                     entryBuildingsEntries = entryBuildings.get("Entries")
 
                     if type(entryBuildingsEntries) != list:
-                        raise ValueError(f"Buildings of island entry {entryIndex} not a list")
+                        raise BlueprintError(f"Buildings of island entry {entryIndex} not a list")
 
                     for buildingEntryIndex,buildingEntry in enumerate(entryBuildingsEntries):
 
@@ -192,12 +194,12 @@ def getBlueprintInfo(blueprint:dict,*,version:bool=False,buildingCount:bool=Fals
                         if buildingCounts:
 
                             if type(buildingEntry) != dict:
-                                raise ValueError(f"Building entry {buildingEntryIndex} of island entry {entryIndex} not a dict")
+                                raise BlueprintError(f"Building entry {buildingEntryIndex} of island entry {entryIndex} not a dict")
 
                             buildingEntryType = buildingEntry.get("T")
 
                             if buildingEntryType is None:
-                                raise ValueError(f"No type key for building entry {buildingEntryIndex} of island entry {entryIndex}")
+                                raise BlueprintError(f"No type key for building entry {buildingEntryIndex} of island entry {entryIndex}")
 
                             countsDictAdd(toReturn["buildingCounts"],buildingEntryType)
 
@@ -229,7 +231,7 @@ def getBlueprintInfo(blueprint:dict,*,version:bool=False,buildingCount:bool=Fals
         for i,entry in enumerate(blueprintBPEntries):
 
             if type(entry) != dict:
-                raise ValueError(f"Entry {i} not a dict")
+                raise BlueprintError(f"Entry {i} not a dict")
 
             x = entry.get("X")
             y = entry.get("Y")
@@ -239,13 +241,13 @@ def getBlueprintInfo(blueprint:dict,*,version:bool=False,buildingCount:bool=Fals
 
             for value,text in zip((x,y,z),("x","y","z")):
                 if type(value) != int:
-                    raise ValueError(f"{text} of entry {i} not an int")
+                    raise BlueprintError(f"{text} of entry {i} not an int")
 
             minX, minY, minZ = [specialMin(v1,v2) for v1,v2 in zip((minX,minY,minZ),(x,y,z))]
             maxX, maxY, maxZ = [specialMax(v1,v2) for v1,v2 in zip((maxX,maxY,maxZ),(x,y,z))]
 
         if minX is None:
-            raise ValueError("No valid entries")
+            raise BlueprintError("No valid entries")
 
         toReturn["size"] = (maxX-minX+1,maxY-minY+1,maxZ-minZ+1)
 

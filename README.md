@@ -67,8 +67,8 @@ Note : shapes with more than 4 layers and/or with more/less than 4 quadrants per
 - /view-shapes [message] : Will trigger the shape viewer like a regular message but will send the response back only to you and will also include any error messages
 - /change-blueprint-version [blueprint] [version] : Changes a blueprint's version and returns the new code
 - /member-count : Displays the member count of the server it is executed in (with additional info such as online/offline count and percentage)
-- /operation-graph [instructions] [public] [see_shape_vars] : See the [/operation-graph documentation](https://github.com/Loupau38/Fake-ShapeBot-2.0/blob/main/operationGraphDoc.md)
-- /blueprint-info [blueprint] : Will give the version, type, building count, island count and size of the given blueprint
+- /operation-graph [instructions] [public=False] [see_shape_vars=False] : See the [/operation-graph documentation](https://github.com/Loupau38/Fake-ShapeBot-2.0/blob/main/operationGraphDoc.md)
+- /blueprint-info [blueprint] [advanced=False] : Will give the version, type, building count, island count and size of the given blueprint. If 'advanced' is set to True, will also give the individual counts for every building and islands
 
 ### Admin commands :
 

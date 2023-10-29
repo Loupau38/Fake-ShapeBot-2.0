@@ -131,7 +131,7 @@ async def hasPermission(requestedLvl:int,*,message:discord.Message|None=None,int
             adminPerm = interaction.user.guild_permissions.administrator
 
     else:
-        raise ValueError("No message or interaction in 'hasPermission'")
+        raise ValueError("No message or interaction in 'hasPermission' function")
 
     if (guildId is None) and (requestedLvl == PermissionLvls.ADMIN):
         return False
@@ -213,12 +213,12 @@ def detectBPVersion(message:str) -> list[str]|None:
 
         try:
             bp,_ = blueprints.decodeBlueprint(blueprints.PREFIX+bp+blueprints.SUFFIX)
-        except ValueError:
+        except blueprints.BlueprintError:
             continue
 
         try:
             version = blueprints.getBlueprintInfo(bp,version=True)["version"]
-        except ValueError:
+        except blueprints.BlueprintError:
             continue
 
         versionReaction = convertVersionNum(version,toReaction=True)
@@ -517,7 +517,7 @@ def runDiscordBot() -> None:
         if await hasPermission(PermissionLvls.PRIVATE_FEATURE,interaction=interaction):
             try:
                 responseMsg = blueprints.changeBlueprintVersion(blueprint,version)
-            except ValueError as e:
+            except blueprints.BlueprintError as e:
                 responseMsg = f"Error happened : {e}"
         else:
             responseMsg = globalInfos.NO_PERMISSION_TEXT
@@ -642,7 +642,7 @@ def runDiscordBot() -> None:
                             responseMsg += "None"
                         else:
                             responseMsg += "\n".join(f"- `{k}` : `{v}`" for k,v in infos[f"{key}Counts"].items())
-            except ValueError as e:
+            except blueprints.BlueprintError as e:
                 responseMsg = f"Error happened : {e}"
         else:
             responseMsg = globalInfos.NO_PERMISSION_TEXT

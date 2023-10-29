@@ -191,8 +191,8 @@ def swapHalves(shapeA:Shape,shapeB:Shape) -> list[Shape]:
     returnShapeA = []
     returnShapeB = []
     for layerA0,layerA1,layerB0,layerB1 in zip(*shapeACut,*shapeBCut):
-        returnShapeA.append([*(layerB1[:-takeQuads]),*(layerA0[-takeQuads:])])
-        returnShapeB.append([*(layerA1[:-takeQuads]),*(layerB0[-takeQuads:])])
+        returnShapeA.append([*(layerA1[:-takeQuads]),*(layerB0[-takeQuads:])])
+        returnShapeB.append([*(layerB1[:-takeQuads]),*(layerA0[-takeQuads:])])
     returnShapeA, returnShapeB = cleanUpEmptyUpperLayers(returnShapeA),cleanUpEmptyUpperLayers(returnShapeB)
     return [Shape(returnShapeA),Shape(returnShapeB)]
 

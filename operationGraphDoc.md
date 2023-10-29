@@ -46,7 +46,7 @@ Examples : `1:r90cw:2`, `3,7:stack:5`, `10,15:sh:4,21`, `6,r:paint:11`
 - sh :
   - 2 inputs
   - 2 outputs
-  - Swaps the right halves of both shapes
+  - Swaps the left halves of both shapes
 - stack :
   - 2 inputs : bottom shape, top shape
   - 1 output
