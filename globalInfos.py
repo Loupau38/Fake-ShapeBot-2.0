@@ -32,7 +32,7 @@ INITIAL_SHAPE_SIZE = 500
 SHAPE_COLORS = ["u","r","g","b","c","p","y","w","k"]
 SHAPE_LAYER_SEPARATOR = ":"
 SHAPE_NOTHING_CHAR = "-"
-LEVEL_SHAPES = [
+LEVEL_SHAPES = [ # different shapes between full and demo + too lazy to update every version
     "CuCuCuCu",
     "RuRu----",
     "Cu------",
@@ -101,6 +101,7 @@ ALPHA_BP_VERSIONS = {
     1022 : "7.4",
     1024 : "8",
     1027 : "10.2",
-    1029 : "11"
+    1029 : "11",
+    1030 : "12"
 }
-LATEST_GAME_VERSIONS = (1015,1029)
+LATEST_GAME_VERSIONS = (1015,1030)
