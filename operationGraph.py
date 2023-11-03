@@ -184,7 +184,7 @@ def getInstructionsFromText(text:str) -> tuple[bool,list[Instruction]|str]:
 
     return True,decodedInstructions
 
-def genOperationGraph(instructions:list[Instruction],showShapeVars:bool) -> tuple[bool,str|tuple[io.BytesIO,dict[int,str]]]:
+def genOperationGraph(instructions:list[Instruction],showShapeVars:bool) -> tuple[bool,str|tuple[tuple[io.BytesIO,int],dict[int,str]]]:
 
     seenInputVars = []
     seenOutputVars = []
@@ -392,6 +392,8 @@ def genOperationGraph(instructions:list[Instruction],showShapeVars:bool) -> tupl
 
     with io.BytesIO() as buffer:
         pygame.image.save(graphSurface,buffer,"png")
-        graphImage = io.BytesIO(buffer.getvalue())
+        bufferValue = buffer.getvalue()
+        graphImageSize = len(bufferValue)
+        graphImage = io.BytesIO(bufferValue)
 
-    return True,(graphImage,shapeVarValues)
+    return True,((graphImage,graphImageSize),shapeVarValues)

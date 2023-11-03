@@ -33,7 +33,7 @@ DISPLAY_PARAMS:dict[str,DisplayParam] = {
     "3d" : DisplayParam("bool",False)
 }
 
-def handleResponse(message:str) -> None|tuple[None|tuple[io.BytesIO,bool,None|list[str],None|list[str]],bool,list[str]]:
+def handleResponse(message:str) -> None|tuple[None|tuple[tuple[io.BytesIO,int],bool,None|list[str],None|list[str]],bool,list[str]]:
 
     potentialShapeCodes = shapeCodeGenerator.getPotentialShapeCodesFromMessage(message)
 
@@ -88,11 +88,13 @@ def handleResponse(message:str) -> None|tuple[None|tuple[io.BytesIO,bool,None|li
 
     with io.BytesIO() as buffer:
         pygame.image.save(finalImage,buffer,"png")
-        finalImageBytes = io.BytesIO(buffer.getvalue())
+        bufferValue = buffer.getvalue()
+        finalImageBytesLen = len(bufferValue)
+        finalImageBytes = io.BytesIO(bufferValue)
 
     return (
         (
-            finalImageBytes,
+            (finalImageBytes,finalImageBytesLen),
             curDisplayParams["spoiler"],
             shapeCodes if curDisplayParams["result"] else None,
             viewer3dLinks

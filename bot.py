@@ -11,6 +11,7 @@ import json
 import sys
 import traceback
 import io
+import typing
 
 async def globalLogMessage(message:str) -> None:
     if globalInfos.GLOBAL_LOG_CHANNEL is None:
@@ -22,7 +23,7 @@ async def globalLogMessage(message:str) -> None:
 async def globalLogError() -> None:
     await globalLogMessage(("".join(traceback.format_exception(*sys.exc_info())))[:-1])
 
-async def useShapeViewer(userMessage:str,sendErrors:bool) -> tuple[bool,str,discord.File|None]:
+async def useShapeViewer(userMessage:str,sendErrors:bool) -> tuple[bool,str,tuple[discord.File,int]|None]:
     try:
 
         response = responses.handleResponse(userMessage)
@@ -44,7 +45,7 @@ async def useShapeViewer(userMessage:str,sendErrors:bool) -> tuple[bool,str,disc
 
             if response is not None:
 
-                image, spoiler, resultingShapeCodes, viewer3dLinks = response
+                (image, imageSize), spoiler, resultingShapeCodes, viewer3dLinks = response
                 file = discord.File(image,"shapes.png",spoiler=spoiler)
                 if resultingShapeCodes is not None:
                     msgParts.append(" ".join(f"{{{code}}}" for code in resultingShapeCodes))
@@ -55,7 +56,7 @@ async def useShapeViewer(userMessage:str,sendErrors:bool) -> tuple[bool,str,disc
         if len(responseMsg) > globalInfos.MESSAGE_MAX_LENGTH:
             responseMsg = globalInfos.MESSAGE_TOO_LONG_TEXT
 
-        return hasErrors, responseMsg, file
+        return hasErrors, responseMsg, (file, imageSize)
 
     except Exception:
         await globalLogError()
@@ -238,8 +239,11 @@ def handleMsgTooLong(msg:str) -> str:
         return globalInfos.MESSAGE_TOO_LONG_TEXT
     return msg
 
-def msgToFile(msg:str,filename:str) -> discord.File:
-    return discord.File(io.BytesIO(msg.encode()),filename)
+def msgToFile(msg:str,filename:str,guild:discord.Guild) -> discord.File|None:
+    msgBytes = msg.encode()
+    if len(msgBytes) > guild.filesize_limit:
+        return None
+    return discord.File(io.BytesIO(msgBytes),filename)
 
 def convertVersionNum(version:int,*,toText:bool=False,toReaction:bool=False) -> None|str|list[str]:
 
@@ -266,6 +270,14 @@ def convertVersionNum(version:int,*,toText:bool=False,toReaction:bool=False) -> 
             output.append(client.get_emoji(globalInfos.BP_VERSION_REACTION_TENTHS[split[1]]))
 
         return output
+
+async def decodeAttachment(file:discord.Attachment) -> str|None:
+    try:
+        fileBytes = await file.read()
+        fileStr = fileBytes.decode()
+    except Exception:
+        return None
+    return fileStr
 
 def runDiscordBot() -> None:
 
@@ -308,6 +320,10 @@ def runDiscordBot() -> None:
             if hasErrors:
                 await message.add_reaction(globalInfos.INVALID_SHAPE_CODE_REACTION)
             if (responseMsg != "") or (file is not None):
+                if file is not None:
+                    file, fileSize = file
+                    if fileSize > message.guild.filesize_limit:
+                        file = discord.File(globalInfos.IMAGE_FILE_TOO_BIG_PATH)
                 await message.channel.send(responseMsg,**({} if file is None else {"file":file}))
 
         if await hasPermission(PermissionLvls.REACTION,message=message):
@@ -317,10 +333,8 @@ def runDiscordBot() -> None:
 
             msgContent = message.content
             for file in message.attachments:
-                try:
-                    fileContent = await file.read()
-                    fileContent = fileContent.decode()
-                except Exception:
+                fileContent = await decodeAttachment(file)
+                if fileContent is None:
                     continue
                 msgContent += fileContent
 
@@ -355,69 +369,59 @@ def runDiscordBot() -> None:
 
         elif type_ == RegisterCommandType.ROLE_LIST:
 
-            @tree.command(name=f"{cmdName}-add",description=f"{globalInfos.ADMIN_ONLY_BADGE} adds a role to the '{serverSettingsKey}' list")
-            async def generatedCommand(interaction:discord.Interaction,role:discord.Role) -> None:
+            @tree.command(name=cmdName,description=f"{globalInfos.ADMIN_ONLY_BADGE} modifys the '{serverSettingsKey}' list")
+            @discord.app_commands.describe(role="Only provide this if using 'add' or 'remove' subcommand")
+            async def generatedCommand(interaction:discord.Interaction,
+                operation:typing.Literal["add","remove","view","clear"],role:discord.Role=None) -> None:
                 if exitCommandWithoutResponse(interaction):
                     return
                 if await hasPermission(PermissionLvls.ADMIN,interaction=interaction):
-                    roleList = await getAllServerSettings(interaction.guild_id,serverSettingsKey)
-                    if len(roleList) >= globalInfos.MAX_ROLES_PER_LIST:
-                        responseMsg = f"Can't have more than {globalInfos.MAX_ROLES_PER_LIST} roles per list"
-                    else:
-                        if role.id in roleList:
-                            responseMsg = f"{role.mention} is already in the list"
+
+                    if operation == "add":
+
+                        roleList = await getAllServerSettings(interaction.guild_id,serverSettingsKey)
+                        if len(roleList) >= globalInfos.MAX_ROLES_PER_LIST:
+                            responseMsg = f"Can't have more than {globalInfos.MAX_ROLES_PER_LIST} roles per list"
                         else:
-                            roleList.append(role.id)
+                            if role.id in roleList:
+                                responseMsg = f"{role.mention} is already in the list"
+                            else:
+                                roleList.append(role.id)
+                                await setAllServerSettings(interaction.guild_id,serverSettingsKey,roleList)
+                                responseMsg = f"Added {role.mention} to the '{serverSettingsKey}' list"
+
+                    elif operation == "remove":
+
+                        roleList = await getAllServerSettings(interaction.guild_id,serverSettingsKey)
+                        if role.id in roleList:
+                            roleList.remove(role.id)
                             await setAllServerSettings(interaction.guild_id,serverSettingsKey,roleList)
-                            responseMsg = f"Added {role.mention} to the '{serverSettingsKey}' list"
-                else:
-                    responseMsg = globalInfos.NO_PERMISSION_TEXT
-                await interaction.response.send_message(responseMsg,ephemeral=True)
+                            responseMsg = f"Removed {role.mention} from the '{serverSettingsKey}' list"
+                        else:
+                            responseMsg = "Role is not present in the list"
 
-            @tree.command(name=f"{cmdName}-remove",description=f"{globalInfos.ADMIN_ONLY_BADGE} removes a role from the '{serverSettingsKey}' list")
-            async def generatedCommand(interaction:discord.Interaction,role:discord.Role) -> None:
-                if exitCommandWithoutResponse(interaction):
-                    return
-                if await hasPermission(PermissionLvls.ADMIN,interaction=interaction):
-                    roleList = await getAllServerSettings(interaction.guild_id,serverSettingsKey)
-                    if role.id in roleList:
-                        roleList.remove(role.id)
-                        await setAllServerSettings(interaction.guild_id,serverSettingsKey,roleList)
-                        responseMsg = f"Removed {role.mention} from the '{serverSettingsKey}' list"
+                    elif operation == "view":
+
+                        roleList = await getAllServerSettings(interaction.guild_id,serverSettingsKey)
+                        roleList = [interaction.guild.get_role(r) for r in roleList]
+                        if roleList== []:
+                            responseMsg = "Empty list"
+                        else:
+                            responseMsg = "\n".join(f"- {role.mention} : {role.id}" for role in roleList)
+
+                    elif operation == "clear":
+
+                        await setAllServerSettings(interaction.guild_id,serverSettingsKey,[])
+                        responseMsg = f"'{serverSettingsKey}' list cleared"
+
                     else:
-                        responseMsg = "Role is not present in the list"
-                else:
-                    responseMsg = globalInfos.NO_PERMISSION_TEXT
-                await interaction.response.send_message(responseMsg,ephemeral=True)
-
-            @tree.command(name=f"{cmdName}-view",description=f"{globalInfos.ADMIN_ONLY_BADGE} see the '{serverSettingsKey}' list")
-            async def generatedCommand(interaction:discord.Interaction) -> None:
-                if exitCommandWithoutResponse(interaction):
-                    return
-                if await hasPermission(PermissionLvls.ADMIN,interaction=interaction):
-                    roleList = await getAllServerSettings(interaction.guild_id,serverSettingsKey)
-                    roleList = [interaction.guild.get_role(r) for r in roleList]
-                    if roleList== []:
-                        responseMsg = "Empty list"
-                    else:
-                        responseMsg = "\n".join(f"- {role.mention} : {role.id}" for role in roleList)
-                else:
-                    responseMsg = globalInfos.NO_PERMISSION_TEXT
-                await interaction.response.send_message(responseMsg,ephemeral=True)
-
-            @tree.command(name=f"{cmdName}-clear",description=f"{globalInfos.ADMIN_ONLY_BADGE} clears the '{serverSettingsKey}' list")
-            async def generatedCommand(interaction:discord.Interaction) -> None:
-                if exitCommandWithoutResponse(interaction):
-                    return
-                if await hasPermission(PermissionLvls.ADMIN,interaction=interaction):
-                    await setAllServerSettings(interaction.guild_id,serverSettingsKey,[])
-                    responseMsg = f"'{serverSettingsKey}' list cleared"
+                        responseMsg = "Unknown operation"
                 else:
                     responseMsg = globalInfos.NO_PERMISSION_TEXT
                 await interaction.response.send_message(responseMsg,ephemeral=True)
 
         else:
-            print(f"Unknown type : {type_}")
+            print(f"Unknown type : '{type_}' in 'registerAdminCommand' function")
 
     @tree.command(name="stop",description=f"{globalInfos.OWNER_ONLY_BADGE} stops the bot")
     async def stopCommand(interaction:discord.Interaction) -> None:
@@ -507,22 +511,39 @@ def runDiscordBot() -> None:
         else:
             responseMsg = globalInfos.NO_PERMISSION_TEXT
             file = None
+        if file is not None:
+            file, fileSize = file
+            if fileSize > interaction.guild.filesize_limit:
+                file = discord.File(globalInfos.IMAGE_FILE_TOO_BIG_PATH)
         await ogMsg.edit(content=responseMsg,attachments=[] if file is None else [file])
 
     @tree.command(name="change-blueprint-version",description="Change a blueprint's version")
-    @discord.app_commands.describe(blueprint="The full blueprint code",version="The blueprint version number (latest public : {}, latest patreon only : {})".format(*globalInfos.LATEST_GAME_VERSIONS))
-    async def changeBlueprintVersionCommand(interaction:discord.Interaction,blueprint:str,version:int) -> None:
+    @discord.app_commands.describe(blueprint="The full blueprint code",
+        version="The blueprint version number (latest public : {}, latest patreon only : {})".format(*globalInfos.LATEST_GAME_VERSIONS),
+        blueprint_file="A file containing a blueprint code if it's too big to paste it directly (fill in the 'blueprint' parameter with dummy character(s))")
+    async def changeBlueprintVersionCommand(interaction:discord.Interaction,blueprint:str,version:int,blueprint_file:discord.Attachment=None) -> None:
         if exitCommandWithoutResponse(interaction):
             return
         if await hasPermission(PermissionLvls.PRIVATE_FEATURE,interaction=interaction):
-            try:
-                responseMsg = blueprints.changeBlueprintVersion(blueprint,version)
-            except blueprints.BlueprintError as e:
-                responseMsg = f"Error happened : {e}"
+            if blueprint_file is None:
+                toProcessBlueprint = blueprint
+            else:
+                toProcessBlueprint = await decodeAttachment(blueprint_file)
+            if toProcessBlueprint is None:
+                responseMsg = "Error while processing file"
+            else:
+                try:
+                    responseMsg = blueprints.changeBlueprintVersion(toProcessBlueprint,version)
+                except blueprints.BlueprintError as e:
+                    responseMsg = f"Error happened : {e}"
         else:
             responseMsg = globalInfos.NO_PERMISSION_TEXT
         if len(responseMsg)+6 > globalInfos.MESSAGE_MAX_LENGTH:
-            kwargs = {"file" : msgToFile(responseMsg,"blueprint.txt")}
+            file = msgToFile(responseMsg,"blueprint.txt",interaction.guild)
+            if file is None:
+                kwargs = {"content" : "Response too big"}
+            else:
+                kwargs = {"file" : file}
         else:
             kwargs = {"content" : f"```{responseMsg}```"}
         await interaction.response.send_message(ephemeral=True,**kwargs)
@@ -589,7 +610,7 @@ def runDiscordBot() -> None:
                 if valid:
                     valid, responseOrError = operationGraph.genOperationGraph(instructionsOrError,see_shape_vars)
                     if valid:
-                        image, shapeVarValues = responseOrError
+                        (image, imageSize), shapeVarValues = responseOrError
                         file = discord.File(image,"graph.png")
                         if see_shape_vars:
                             responseMsg = "\n".join(f"- {k} : {{{v}}}" for k,v in shapeVarValues.items())
@@ -607,6 +628,8 @@ def runDiscordBot() -> None:
             responseMsg = globalInfos.NO_PERMISSION_TEXT
             hasErrors = True
         responseMsg = handleMsgTooLong(responseMsg)
+        if (file is not None) and (imageSize > interaction.guild.filesize_limit):
+            file = discord.File(globalInfos.IMAGE_FILE_TOO_BIG_PATH)
         if hasErrors or (not public):
             await ogMsg.edit(content=responseMsg,attachments=[] if file is None else [file])
         else:
@@ -614,40 +637,52 @@ def runDiscordBot() -> None:
             await interaction.channel.send(responseMsg,file=file)
 
     @tree.command(name="blueprint-info",description="Get a blueprint's version, building count and size")
-    @discord.app_commands.describe(blueprint="The full blueprint code")
-    async def blueprintInfoCommand(interaction:discord.Interaction,blueprint:str,advanced:bool=False) -> None:
+    @discord.app_commands.describe(blueprint="The full blueprint code",
+        blueprint_file="A file containing a blueprint code if it's too big to paste it directly (fill in the 'blueprint' parameter with dummy character(s))")
+    async def blueprintInfoCommand(interaction:discord.Interaction,blueprint:str,advanced:bool=False,blueprint_file:discord.Attachment=None) -> None:
         if exitCommandWithoutResponse(interaction):
             return
         if await hasPermission(PermissionLvls.PRIVATE_FEATURE,interaction=interaction):
-            try:
-                bp,_ = blueprints.decodeBlueprint(blueprint)
-                infos = blueprints.getBlueprintInfo(bp,version=True,buildingCount=True,size=True,islandCount=True,bpType=True,
-                    buildingCounts=advanced,islandCounts=advanced)
-                versionTxt = convertVersionNum(infos["version"],toText=True)
-                if versionTxt is None:
-                    versionTxt = "Unknown"
-                sizeTxt = "x".join(f"`{v}`" for v in infos["size"])
-                responseParts = [
-                    f"Version : `{infos['version']}` / `{versionTxt}`",
-                    f"Blueprint type : `{infos['bpType']}`",
-                    f"Building count : `{infos['buildingCount']}`",
-                    f"Island count : `{infos['islandCount']}`",
-                    f"Size : {sizeTxt} (approximate)"
-                ]
-                responseMsg = ", ".join(responseParts)
-                if advanced:
-                    for key,text in zip(("island","building"),("Island","Building")):
-                        responseMsg += f"\n**{text} counts :**\n"
-                        if infos[f"{key}Counts"] == {}:
-                            responseMsg += "None"
-                        else:
-                            responseMsg += "\n".join(f"- `{k}` : `{v}`" for k,v in infos[f"{key}Counts"].items())
-            except blueprints.BlueprintError as e:
-                responseMsg = f"Error happened : {e}"
+            if blueprint_file is None:
+                toProcessBlueprint = blueprint
+            else:
+                toProcessBlueprint = await decodeAttachment(blueprint_file)
+            if toProcessBlueprint is None:
+                responseMsg = "Error while processing file"
+            else:
+                try:
+                    bp,_ = blueprints.decodeBlueprint(toProcessBlueprint)
+                    infos = blueprints.getBlueprintInfo(bp,version=True,buildingCount=True,size=True,islandCount=True,bpType=True,
+                        buildingCounts=advanced,islandCounts=advanced)
+                    versionTxt = convertVersionNum(infos["version"],toText=True)
+                    if versionTxt is None:
+                        versionTxt = "Unknown"
+                    sizeTxt = "x".join(f"`{v}`" for v in infos["size"])
+                    responseParts = [
+                        f"Version : `{infos['version']}` / `{versionTxt}`",
+                        f"Blueprint type : `{infos['bpType']}`",
+                        f"Building count : `{infos['buildingCount']}`",
+                        f"Island count : `{infos['islandCount']}`",
+                        f"Size : {sizeTxt} (approximate)"
+                    ]
+                    responseMsg = ", ".join(responseParts)
+                    if advanced:
+                        for key,text in zip(("island","building"),("Island","Building")):
+                            responseMsg += f"\n**{text} counts :**\n"
+                            if infos[f"{key}Counts"] == {}:
+                                responseMsg += "None"
+                            else:
+                                responseMsg += "\n".join(f"- `{k}` : `{v}`" for k,v in infos[f"{key}Counts"].items())
+                except blueprints.BlueprintError as e:
+                    responseMsg = f"Error happened : {e}"
         else:
             responseMsg = globalInfos.NO_PERMISSION_TEXT
         if len(responseMsg) > globalInfos.MESSAGE_MAX_LENGTH:
-            kwargs = {"file" : msgToFile(responseMsg,"infos.txt")}
+            file = msgToFile(responseMsg,"infos.txt",interaction.guild)
+            if file is None:
+                kwargs = {"content" : "Response too big"}
+            else:
+                kwargs = {"file" : file}
         else:
             kwargs = {"content" : responseMsg}
         await interaction.response.send_message(ephemeral=True,**kwargs)
