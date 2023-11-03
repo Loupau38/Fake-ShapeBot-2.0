@@ -65,10 +65,10 @@ Note : shapes with more than 4 layers and/or with more/less than 4 quadrants per
 ### Public commands :
 
 - /view-shapes [message] : Will trigger the shape viewer like a regular message but will send the response back only to you and will also include any error messages
-- /change-blueprint-version [blueprint] [version] : Changes a blueprint's version and returns the new code
+- /change-blueprint-version [blueprint] [version] [blueprint_file=None] : Changes a blueprint's version and returns the new code. If the blueprint code is too big to be pasted, provide a file containing it in the 'blueprint_file' parameter and fill in the 'blueprint' parameter with dummy character(s)
 - /member-count : Displays the member count of the server it is executed in (with additional info such as online/offline count and percentage)
 - /operation-graph [instructions] [public=False] [see_shape_vars=False] : See the [/operation-graph documentation](https://github.com/Loupau38/Fake-ShapeBot-2.0/blob/main/operationGraphDoc.md)
-- /blueprint-info [blueprint] [advanced=False] : Will give the version, type, building count, island count and size of the given blueprint. If 'advanced' is set to True, will also give the individual counts for every building and islands
+- /blueprint-info [blueprint] [advanced=False] [blueprint_file=None] : Will give the version, type, building count, island count and size of the given blueprint. If 'advanced' is set to True, will also give the individual counts for every building and islands. If the blueprint code is too big to be pasted, provide a file containing it in the 'blueprint_file' parameter and fill in the 'blueprint' parameter with dummy character(s)
 
 ### Admin commands :
 
@@ -81,17 +81,19 @@ Note : shapes with more than 4 layers and/or with more/less than 4 quadrants per
   - /restrict-to-channel [channel] : Sets the channel to restrict the bot to, don't include this parameter to clear it and not restrict the bot to any channel
 - Restrict to roles :\
   If 'restrictToRolesInverted' is false, only users who have at least one role part of the 'restrictToRoles' list will be able to make the bot send public messages. If true, only users who have at least one role that isn't part of the list will be able to. In both cases, if the list is empty, every user will be able to.
-  - /restrict-to-roles-add [role] : Adds a role to the list
-  - /restrict-to-roles-remove [role] : Removes a role from the list
-  - /restrict-to-roles-view : View the 'restrictToRoles' list
-  - /restrict-to-roles-clear : Clear the 'restrictToRoles' list
+  - /restrict-to-roles [operation] [role=None] : Modifys the 'restrictToRoles' list depending on the 'operation' parameter value :
+    - add : Adds a role to the list
+    - remove : Removes a role from the list
+    - view : View the list
+    - clear : Clears the list
   - /restrict-to-roles-set-inverted [inverted] : Sets the 'restrictToRolesInverted' parameter
 - Admin roles :\
   Only users who have a role part of the 'adminRoles' list or who have the administrator permission will be able to use admin commands
-  - /admin-roles-add [role] : Adds a role to the list
-  - /admin-roles-remove [role] : Removes a role from the list
-  - /admin-roles-view : View the 'adminRoles' list
-  - /admin-roles-clear : Clear the 'adminRoles' list
+  - /admin-roles : Modifys the 'adminRoles' list depending on the 'operation' parameter value :
+    - add : Adds a role to the list
+    - remove : Removes a role from the list
+    - view : View the list
+    - clear : Clears the list
 
 ### Owner commands :
 
