@@ -2,6 +2,7 @@ import shapeOperations
 import shapeCodeGenerator
 import globalInfos
 import shapeViewer
+from utils import OutputString
 import pygame
 import io
 
@@ -77,18 +78,15 @@ OPERATIONS:dict[str,Operation] = {
 }
 
 for k,v in OPERATIONS.items():
-    try:
-        v.image = pygame.image.load(f"{IMAGES_START_PATH}{k}.png")
-    except FileNotFoundError:
-        pass
+    v.image = pygame.image.load(f"{IMAGES_START_PATH}{k}.png")
 
 pygame.font.init()
 SHAPE_VAR_FONT = pygame.font.SysFont("arial",30)
 SHAPE_VAR_COLOR = (255,255,255)
 
-def getInstructionsFromText(text:str) -> tuple[bool,list[Instruction]|str]:
+def getInstructionsFromText(text:str) -> tuple[bool,list[Instruction]|str|OutputString]:
 
-    def decodeInstruction(instruction:str) -> tuple[bool,str|Instruction]:
+    def decodeInstruction(instruction:str) -> tuple[bool,str|OutputString|Instruction]:
 
         if DEFINITION_SEPARATOR in instruction:
 
@@ -107,18 +105,17 @@ def getInstructionsFromText(text:str) -> tuple[bool,list[Instruction]|str]:
                 try:
                     curVar = int(sv)
                 except ValueError:
-                    return False,f"Shape variable {i+1} not an integer"
+                    return False,OutputString("Shape variable ",OutputString.Number(i,True)," not an integer")
                 if curVar < 0:
-                    return False,f"Shape variable {i+1} can't be negative"
+                    return False,OutputString("Shape variable ",OutputString.Number(i,True)," can't be negative")
                 shapeVarsInt.append(curVar)
 
             shapeCodesOrError, isShapeCodeValid = shapeCodeGenerator.generateShapeCodes(shapeCode)
             if not isShapeCodeValid:
-                return False,f"Error decoding shape code : {shapeCodesOrError}"
+                return False,OutputString("Error while decoding shape code : ",OutputString.UnsafeString(shapeCodesOrError))
 
             if len(shapeCodesOrError) != len(shapeVarsInt):
-                return False, f"Number of shape codes outputed isn't the same as number of shape variables given \
-                    ({len(shapeCodesOrError)} vs {len(shapeVarsInt)})"
+                return False,f"Number of shape codes outputed isn't the same as number of shape variables given ({len(shapeCodesOrError)} vs {len(shapeVarsInt)})"
 
             return True,Instruction(Instruction.DEF,shapeVars=shapeVarsInt,shapeCodes=shapeCodesOrError)
 
@@ -131,7 +128,7 @@ def getInstructionsFromText(text:str) -> tuple[bool,list[Instruction]|str]:
                 return False,f"Empty {k} section"
 
         if OPERATIONS.get(op) is None:
-            return False,f"Unknown operation '{op}'"
+            return False,OutputString("Unknown operation '",OutputString.UnsafeString(op),"'")
 
         inputs = [i.replace("m","p") for i in inputs.split(VALUE_SEPARATOR)]
         outputs = outputs.split(VALUE_SEPARATOR)
@@ -143,24 +140,24 @@ def getInstructionsFromText(text:str) -> tuple[bool,list[Instruction]|str]:
         for i,input in enumerate(inputs):
             if i in curOperation.colorInputindexes:
                 if input not in globalInfos.SHAPE_COLORS:
-                    return False,f"Input {i+1} must be a color"
+                    return False,OutputString("Input ",OutputString.Number(i,True)," must be a color")
                 colorInputs.append(input)
             else:
                 try:
                     curVar = int(input)
                 except ValueError:
-                    return False,f"Input {i+1} not an integer"
+                    return False,OutputString("Input ",OutputString.Number(i,True)," not an integer")
                 if curVar < 0:
-                    return False,f"Input {i+1} can't be negative"
+                    return False,OutputString("Input ",OutputString.Number(i,True)," can't be negative")
                 inputsInt.append(curVar)
 
         for i,output in enumerate(outputs):
             try:
                 curVar = int(output)
             except ValueError:
-                return False,f"Output {i+1} not an integer"
+                return False,OutputString("Output ",OutputString.Number(i,True)," not an integer")
             if curVar < 0:
-                return False,f"Output {i+1} can't be negative"
+                return False,OutputString("Output ",OutputString.Number(i,True)," can't be negative")
             outputsInt.append(curVar)
 
         for e,g,t in zip((curOperation.numInputs,curOperation.numOutputs),(len(inputsInt)+len(colorInputs),len(outputsInt)),("inputs","outputs")):
@@ -179,44 +176,44 @@ def getInstructionsFromText(text:str) -> tuple[bool,list[Instruction]|str]:
     for i,instruction in enumerate(instructions):
         valid, decodedInstructionOrError = decodeInstruction(instruction)
         if not valid:
-            return False,f"Error in instruction {i+1} : {decodedInstructionOrError}"
+            return False,OutputString("Error in instruction ",OutputString.Number(i,True)," : ",decodedInstructionOrError)
         decodedInstructions.append(decodedInstructionOrError)
 
     return True,decodedInstructions
 
-def genOperationGraph(instructions:list[Instruction],showShapeVars:bool) -> tuple[bool,str|tuple[tuple[io.BytesIO,int],dict[int,str]]]:
+def genOperationGraph(instructions:list[Instruction],showShapeVars:bool) -> tuple[bool,str|OutputString|tuple[tuple[io.BytesIO,int],dict[int,str]]]:
 
     seenInputVars = []
     seenOutputVars = []
 
     for i,instruction in enumerate(instructions):
 
-        errMsgStart = f"Error in instruction {i+1} : "
+        errMsgStart = OutputString("Error in instruction ",OutputString.Number(i,True)," : ")
 
         if instruction.type == Instruction.DEF:
 
             for var in instruction.vars:
                 if var in seenOutputVars:
-                    return False,f"{errMsgStart}Variable '{var}' cannot be used as output/defined to multiple times"
+                    return False,OutputString(errMsgStart,"Variable '",OutputString.UnsafeNumber(var),"' cannot be used as output/defined to multiple times")
                 seenOutputVars.append(var)
 
         else:
 
             for var in instruction.inputs:
                 if var in instruction.outputs:
-                    return False,f"{errMsgStart}Variable '{var}' cannot be used as input and output in the same instruction"
+                    return False,OutputString(errMsgStart,"Variable '",OutputString.UnsafeNumber(var),"' cannot be used as input and output in the same instruction")
                 if var in seenInputVars:
-                    return False,f"{errMsgStart}Variable '{var}' cannot be used as input multiple times"
+                    return False,OutputString(errMsgStart,"Variable '",OutputString.UnsafeNumber(var),"' cannot be used as input multiple times")
                 seenInputVars.append(var)
 
             for var in instruction.outputs:
                 if var in seenOutputVars:
-                    return False,f"{errMsgStart}Variable '{var}' cannot be used as output/defined to multiple times"
+                    return False,OutputString(errMsgStart,"Variable '",OutputString.UnsafeNumber(var),"' cannot be used as output/defined to multiple times")
                 seenOutputVars.append(var)
 
     for siv in seenInputVars:
         if siv not in seenOutputVars:
-            return False,f"Variable '{siv}' is not used as output"
+            return False,OutputString("Variable '",OutputString.UnsafeNumber(siv),"' is not used as output")
 
     newInstructions = []
     for instruction in instructions:
@@ -332,7 +329,7 @@ def genOperationGraph(instructions:list[Instruction],showShapeVars:bool) -> tupl
         for i,instruction in enumerate(instructions):
             genGraphNode(instruction,i)
     except shapeOperations.InvalidOperationInputs as e:
-        return False,f"Error happened in instruction {wasProcessingInstructionIndex+1} : {e}"
+        return False,OutputString("Error happened in instruction ",OutputString.Number(wasProcessingInstructionIndex,True)," : ",e)
     except RecursionError:
         return False,f"Too many connected instructions"
 

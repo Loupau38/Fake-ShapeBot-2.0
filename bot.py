@@ -6,6 +6,7 @@ import globalInfos
 import blueprints
 import shapeViewer
 import operationGraph
+import utils
 import discord
 import json
 import sys
@@ -56,7 +57,7 @@ async def useShapeViewer(userMessage:str,sendErrors:bool) -> tuple[bool,str,tupl
         if len(responseMsg) > globalInfos.MESSAGE_MAX_LENGTH:
             responseMsg = globalInfos.MESSAGE_TOO_LONG_TEXT
 
-        return hasErrors, responseMsg, (file, imageSize)
+        return hasErrors, responseMsg, (None if file is None else (file, imageSize))
 
     except Exception:
         await globalLogError()
@@ -196,49 +197,6 @@ async def hasPermission(requestedLvl:int,*,message:discord.Message|None=None,int
 
     return False
 
-def detectBPVersion(message:str) -> list[str]|None:
-
-    if blueprints.PREFIX not in message:
-        return None
-
-    bps = message.split(blueprints.PREFIX)[1:]
-
-    versions = []
-
-    for bp in bps:
-
-        if blueprints.SUFFIX not in bp:
-            continue
-
-        bp = bp.split(blueprints.SUFFIX)[0]
-
-        try:
-            bp,_ = blueprints.decodeBlueprint(blueprints.PREFIX+bp+blueprints.SUFFIX)
-        except blueprints.BlueprintError:
-            continue
-
-        try:
-            version = blueprints.getBlueprintInfo(bp,version=True)["version"]
-        except blueprints.BlueprintError:
-            continue
-
-        versionReaction = convertVersionNum(version,toReaction=True)
-
-        if versionReaction is None:
-            continue
-
-        versions.append(versionReaction)
-
-    if len(versions) != 1:
-        return None
-
-    return versions[0]
-
-def handleMsgTooLong(msg:str) -> str:
-    if len(msg) > globalInfos.MESSAGE_MAX_LENGTH:
-        return globalInfos.MESSAGE_TOO_LONG_TEXT
-    return msg
-
 def msgToFile(msg:str,filename:str,guild:discord.Guild) -> discord.File|None:
     msgBytes = msg.encode()
     if len(msgBytes) > guild.filesize_limit:
@@ -278,6 +236,8 @@ async def decodeAttachment(file:discord.Attachment) -> str|None:
     except Exception:
         return None
     return fileStr
+
+##################################################
 
 def runDiscordBot() -> None:
 
@@ -324,6 +284,7 @@ def runDiscordBot() -> None:
                     file, fileSize = file
                     if fileSize > message.guild.filesize_limit:
                         file = discord.File(globalInfos.IMAGE_FILE_TOO_BIG_PATH)
+                responseMsg = discord.utils.escape_mentions(responseMsg)
                 await message.channel.send(responseMsg,**({} if file is None else {"file":file}))
 
         if await hasPermission(PermissionLvls.REACTION,message=message):
@@ -338,7 +299,7 @@ def runDiscordBot() -> None:
                     continue
                 msgContent += fileContent
 
-            bpReactions = detectBPVersion(msgContent)
+            bpReactions = utils.detectBPVersion(msgContent)
             if bpReactions is not None:
                 for reaction in bpReactions:
                     await message.add_reaction(reaction)
@@ -502,20 +463,19 @@ def runDiscordBot() -> None:
     async def viewShapesCommand(interaction:discord.Interaction,message:str) -> None:
         if exitCommandWithoutResponse(interaction):
             return
-        await interaction.response.send_message("Please wait...",ephemeral=True)
-        ogMsg = await interaction.original_response()
+        await interaction.response.defer(ephemeral=True)
         if await hasPermission(PermissionLvls.PRIVATE_FEATURE,interaction=interaction):
-            if len(message) > globalInfos.SEND_LOADING_GIF_FOR_NUM_CHARS_SHAPE_VIEWER:
-                await ogMsg.edit(attachments=[discord.File(globalInfos.LOADING_GIF_PATH)])
             _, responseMsg, file = await useShapeViewer(message,True)
         else:
             responseMsg = globalInfos.NO_PERMISSION_TEXT
             file = None
+        kwargs = {}
         if file is not None:
             file, fileSize = file
             if fileSize > interaction.guild.filesize_limit:
                 file = discord.File(globalInfos.IMAGE_FILE_TOO_BIG_PATH)
-        await ogMsg.edit(content=responseMsg,attachments=[] if file is None else [file])
+            kwargs["file"] = file
+        await interaction.followup.send(responseMsg,**kwargs)
 
     @tree.command(name="change-blueprint-version",description="Change a blueprint's version")
     @discord.app_commands.describe(blueprint="The full blueprint code",
@@ -592,19 +552,15 @@ def runDiscordBot() -> None:
         await interaction.response.send_message(responseMsg,ephemeral=True)
 
     @tree.command(name="operation-graph",description="See documentation on github")
-    @discord.app_commands.describe(public="Wether to send the result publicly in the channel or only to you (errors are always sent privately)",
+    @discord.app_commands.describe(public="Errors will be sent publicly if this is True! Sets if the result is sent publicly in the channel",
         see_shape_vars="Wether or not to send the shape codes that were affected to every shape variable")
     async def operationGraphCommand(interaction:discord.Interaction,instructions:str,public:bool=False,see_shape_vars:bool=False) -> None:
         if exitCommandWithoutResponse(interaction):
             return
-        await interaction.response.send_message("Please wait...",ephemeral=True)
-        ogMsg = await interaction.original_response()
-        responseMsg = ""
         file = None
-        hasErrors = False
+        hasErrors = False # unused but kept just in case
         if await hasPermission(PermissionLvls.PUBLIC_FEATURE if public else PermissionLvls.PRIVATE_FEATURE,interaction=interaction):
-            if len(instructions) > globalInfos.SEND_LOADING_GIF_FOR_NUM_CHARS_OP_GRAPH:
-                await ogMsg.edit(attachments=[discord.File(globalInfos.LOADING_GIF_PATH)])
+            await interaction.response.defer(ephemeral=not public)
             try:
                 valid, instructionsOrError = operationGraph.getInstructionsFromText(instructions)
                 if valid:
@@ -614,6 +570,8 @@ def runDiscordBot() -> None:
                         file = discord.File(image,"graph.png")
                         if see_shape_vars:
                             responseMsg = "\n".join(f"- {k} : {{{v}}}" for k,v in shapeVarValues.items())
+                        else:
+                            responseMsg = ""
                     else:
                         responseMsg = responseOrError
                         hasErrors = True
@@ -625,16 +583,18 @@ def runDiscordBot() -> None:
                 responseMsg = globalInfos.UNKNOWN_ERROR_TEXT
                 hasErrors = True
         else:
+            await interaction.response.defer(ephemeral=True)
             responseMsg = globalInfos.NO_PERMISSION_TEXT
             hasErrors = True
-        responseMsg = handleMsgTooLong(responseMsg)
-        if (file is not None) and (imageSize > interaction.guild.filesize_limit):
-            file = discord.File(globalInfos.IMAGE_FILE_TOO_BIG_PATH)
-        if hasErrors or (not public):
-            await ogMsg.edit(content=responseMsg,attachments=[] if file is None else [file])
-        else:
-            await ogMsg.delete()
-            await interaction.channel.send(responseMsg,file=file)
+        responseMsg = utils.handleMsgTooLong(responseMsg.render(public) if type(responseMsg) == utils.OutputString else responseMsg)
+        kwargs = {}
+        if file is not None:
+            if imageSize > interaction.guild.filesize_limit:
+                file = discord.File(globalInfos.IMAGE_FILE_TOO_BIG_PATH)
+            kwargs["file"] = file
+        if public:
+            responseMsg = discord.utils.escape_mentions(responseMsg)
+        await interaction.followup.send(responseMsg,**kwargs)
 
     @tree.command(name="blueprint-info",description="Get a blueprint's version, building count and size")
     @discord.app_commands.describe(blueprint="The full blueprint code",

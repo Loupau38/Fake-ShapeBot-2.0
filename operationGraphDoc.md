@@ -74,5 +74,5 @@ Examples : `1:r90cw:2`, `3,7:stack:5`, `10,15:sh:4,21`, `6,r:paint:11`
 
 ## Additional parameters
 
-- `public` (default : false) : When true, the resulting graph will be sent publicly in the channel the command was executed in. Error messages are always sent privately regardless of this parameter.
+- `public` (default : false) : When true, the resulting graph will be sent publicly in the channel the command was executed in. Error messages will also be sent publicly if this parameter is set to true.
 - `see_shape_vars` (default : false) : For every shape on the graph, it will display the corresponding shape variable number and will also send via text the shape codes associated with every shape variable.
