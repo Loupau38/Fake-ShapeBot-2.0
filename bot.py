@@ -237,6 +237,11 @@ async def decodeAttachment(file:discord.Attachment) -> str|None:
         return None
     return fileStr
 
+def isFileTooBig(fileSize:int,guild:discord.Guild|None) -> bool:
+    if guild is None:
+        return fileSize > globalInfos.DEFAULT_MAX_FILE_SIZE
+    return fileSize > guild.filesize_limit
+
 ##################################################
 
 def runDiscordBot() -> None:
@@ -282,7 +287,7 @@ def runDiscordBot() -> None:
             if (responseMsg != "") or (file is not None):
                 if file is not None:
                     file, fileSize = file
-                    if fileSize > message.guild.filesize_limit:
+                    if isFileTooBig(fileSize,message.guild):
                         file = discord.File(globalInfos.IMAGE_FILE_TOO_BIG_PATH)
                 responseMsg = discord.utils.escape_mentions(responseMsg)
                 await message.channel.send(responseMsg,**({} if file is None else {"file":file}))
@@ -472,7 +477,7 @@ def runDiscordBot() -> None:
         kwargs = {}
         if file is not None:
             file, fileSize = file
-            if fileSize > interaction.guild.filesize_limit:
+            if isFileTooBig(fileSize,interaction.guild):
                 file = discord.File(globalInfos.IMAGE_FILE_TOO_BIG_PATH)
             kwargs["file"] = file
         await interaction.followup.send(responseMsg,**kwargs)
@@ -589,7 +594,7 @@ def runDiscordBot() -> None:
         responseMsg = utils.handleMsgTooLong(responseMsg.render(public) if type(responseMsg) == utils.OutputString else responseMsg)
         kwargs = {}
         if file is not None:
-            if imageSize > interaction.guild.filesize_limit:
+            if isFileTooBig(imageSize,interaction.guild):
                 file = discord.File(globalInfos.IMAGE_FILE_TOO_BIG_PATH)
             kwargs["file"] = file
         if public:
