@@ -135,7 +135,7 @@ def getInstructionsFromText(text:str) -> tuple[bool,list[Instruction]|str|Output
         inputsInt = []
         colorInputs = []
         outputsInt = []
-        curOperation = OPERATIONS.get(op)
+        curOperation = OPERATIONS[op]
 
         for i,input in enumerate(inputs):
             if i in curOperation.colorInputindexes:
@@ -329,7 +329,7 @@ def genOperationGraph(instructions:list[Instruction],showShapeVars:bool) -> tupl
         for i,instruction in enumerate(instructions):
             genGraphNode(instruction,i)
     except shapeOperations.InvalidOperationInputs as e:
-        return False,OutputString("Error happened in instruction ",OutputString.Number(wasProcessingInstructionIndex,True)," : ",e)
+        return False,OutputString("Error happened in instruction ",OutputString.Number(wasProcessingInstructionIndex,True)," : ",str(e))
     except RecursionError:
         return False,f"Too many connected instructions"
 

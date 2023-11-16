@@ -197,13 +197,13 @@ async def hasPermission(requestedLvl:int,*,message:discord.Message|None=None,int
 
     return False
 
-def msgToFile(msg:str,filename:str,guild:discord.Guild) -> discord.File|None:
+def msgToFile(msg:str,filename:str,guild:discord.Guild|None) -> discord.File|None:
     msgBytes = msg.encode()
-    if len(msgBytes) > guild.filesize_limit:
+    if isFileTooBig(len(msgBytes),guild):
         return None
     return discord.File(io.BytesIO(msgBytes),filename)
 
-def convertVersionNum(version:int,*,toText:bool=False,toReaction:bool=False) -> None|str|list[str]:
+def convertVersionNum(version:int,*,toText:bool=False,toReaction:bool=False) -> None|str|list[str|discord.Emoji]:
 
     versionText = globalInfos.ALPHA_BP_VERSIONS.get(version)
 
@@ -486,7 +486,7 @@ def runDiscordBot() -> None:
     @discord.app_commands.describe(blueprint="The full blueprint code",
         version="The blueprint version number (latest public : {}, latest patreon only : {})".format(*globalInfos.LATEST_GAME_VERSIONS),
         blueprint_file="A file containing a blueprint code if it's too big to paste it directly (fill in the 'blueprint' parameter with dummy character(s))")
-    async def changeBlueprintVersionCommand(interaction:discord.Interaction,blueprint:str,version:int,blueprint_file:discord.Attachment=None) -> None:
+    async def changeBlueprintVersionCommand(interaction:discord.Interaction,blueprint:str,version:int,blueprint_file:discord.Attachment|None=None) -> None:
         if exitCommandWithoutResponse(interaction):
             return
         if await hasPermission(PermissionLvls.PRIVATE_FEATURE,interaction=interaction):
@@ -604,7 +604,7 @@ def runDiscordBot() -> None:
     @tree.command(name="blueprint-info",description="Get a blueprint's version, building count and size")
     @discord.app_commands.describe(blueprint="The full blueprint code",
         blueprint_file="A file containing a blueprint code if it's too big to paste it directly (fill in the 'blueprint' parameter with dummy character(s))")
-    async def blueprintInfoCommand(interaction:discord.Interaction,blueprint:str,advanced:bool=False,blueprint_file:discord.Attachment=None) -> None:
+    async def blueprintInfoCommand(interaction:discord.Interaction,blueprint:str,advanced:bool=False,blueprint_file:discord.Attachment|None=None) -> None:
         if exitCommandWithoutResponse(interaction):
             return
         if await hasPermission(PermissionLvls.PRIVATE_FEATURE,interaction=interaction):

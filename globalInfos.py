@@ -101,6 +101,7 @@ ALPHA_BP_VERSIONS = {
     1024 : "8",
     1027 : "10.2",
     1029 : "11",
-    1030 : "12"
+    1030 : "12",
+    1031 : "13"
 }
-LATEST_GAME_VERSIONS = (1015,1030)
+LATEST_GAME_VERSIONS = (1015,1031)

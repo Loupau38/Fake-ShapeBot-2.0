@@ -229,5 +229,5 @@ def genCrystal(shape:Shape,color:str) -> list[Shape]:
 
 def unstack(shape:Shape) -> list[Shape]:
     if shape.numLayers == 1:
-        return Shape([[Quadrant(NOTHING_CHAR,NOTHING_CHAR)]*shape.numQuads]),shape.layers[0]
+        return [Shape([[Quadrant(NOTHING_CHAR,NOTHING_CHAR)]*shape.numQuads]),Shape(shape.layers)]
     return [Shape(shape.layers[:-1]),Shape([shape.layers[-1]])]
