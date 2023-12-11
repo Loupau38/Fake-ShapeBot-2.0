@@ -1,4 +1,5 @@
 import globalInfos
+import gameInfos
 import math
 
 COLOR_SHAPES = ["C","R","S","W","c"]
@@ -8,9 +9,7 @@ NOTHING_CHAR = globalInfos.SHAPE_NOTHING_CHAR
 COLOR_SHAPES_DEFAULT_COLOR = COLORS[0]
 NO_COLOR_SHAPES_DEFAULT_COLOR = NOTHING_CHAR
 STRUCT_COLORS = ["r","g","b","w"]
-CHAR_REPLACEMENT = {
-    "m" : "p" # change magenta to purple
-}
+STRUCT_SHAPE = "C"
 
 PARAM_PREFIX = "+"
 DISPLAY_PARAM_PREFIX = "/"
@@ -75,13 +74,14 @@ def generateShapeCodes(potentialShapeCode:str) -> tuple[list[str]|str,bool]:
             level = potentialShapeCode[len(prefix):]
             try:
                 level = int(level)
-                if (level < 1) or (level > len(globalInfos.LEVEL_SHAPES)):
+                if (level < 1) or (level > len(gameInfos.research.reserachTree)):
                     invalidLvl = True
             except ValueError:
                 invalidLvl = True
             if invalidLvl:
                 return f"Invalid level/milestone number : '{level}'",False
-            potentialShapeCode = globalInfos.LEVEL_SHAPES[level-1]
+            level:int
+            potentialShapeCode = gameInfos.research.reserachTree[level-1].milestone.goalShape
             break
 
     # separate in layers
@@ -106,18 +106,19 @@ def generateShapeCodes(potentialShapeCode:str) -> tuple[list[str]|str,bool]:
     # handle struct
     if "struct" in params:
         for i,layer in enumerate(layers):
-            for char in layer:
-                if char not in ("0","1"):
-                    return f"Use of 'struct' parameter but layer {i+1} doesn't contain only '0' or '1'",False
-        for i,layer in enumerate(layers):
             newLayer = ""
             color = STRUCT_COLORS[min(i,len(STRUCT_COLORS)-1)]
             for char in layer:
-                newLayer += f"C{color}" if char == "1" else NOTHING_CHAR*2
+                if char == "1":
+                    newLayer += STRUCT_SHAPE+color
+                elif char == "0":
+                    newLayer += NOTHING_CHAR*2
+                else:
+                    newLayer += char
             layers[i] = newLayer
 
     # replace some characters
-    for old,new in CHAR_REPLACEMENT.items():
+    for old,new in globalInfos.SHAPE_CHAR_REPLACEMENT.items():
         for layerIndex,layer in enumerate(layers):
             layers[layerIndex] = layer.replace(old,new)
 

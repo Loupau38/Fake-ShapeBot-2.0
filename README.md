@@ -18,6 +18,7 @@ Put your shape code and parameters in `{}`
 
 ### Colors :
 
+- u : Uncolored
 - r : Red
 - g : Green
 - b : Blue
@@ -65,10 +66,16 @@ Note : shapes with more than 4 layers and/or with more/less than 4 quadrants per
 ### Public commands :
 
 - /view-shapes [message] : Will trigger the shape viewer like a regular message but will send the response back only to you and will also include any error messages
+
 - /change-blueprint-version [blueprint] [version] [blueprint_file=None] : Changes a blueprint's version and returns the new code. If the blueprint code is too big to be pasted, provide a file containing it in the 'blueprint_file' parameter and fill in the 'blueprint' parameter with dummy character(s)
+
 - /member-count : Displays the member count of the server it is executed in (with additional info such as online/offline count and percentage)
+
 - /operation-graph [instructions] [public=False] [see_shape_vars=False] : See the [/operation-graph documentation](https://github.com/Loupau38/Fake-ShapeBot-2.0/blob/main/operationGraphDoc.md)
-- /blueprint-info [blueprint] [advanced=False] [blueprint_file=None] : Will give the version, type, building count, island count and size of the given blueprint. If 'advanced' is set to True, will also give the individual counts for every building and islands. If the blueprint code is too big to be pasted, provide a file containing it in the 'blueprint_file' parameter and fill in the 'blueprint' parameter with dummy character(s)
+
+- /blueprint-info [blueprint] [advanced=False] [blueprint_file=None] : Will give the version, type, building count, island count, building scale and island scale size of the given blueprint. If 'advanced' is set to True, will also give the individual counts for every building and islands. If the blueprint code is too big to be pasted, provide a file containing it in the 'blueprint_file' parameter and fill in the 'blueprint' parameter with dummy character(s)
+
+- /research-viewer [level=0] [node=0] [public=False] : Without the 'level' or 'node' parameters set, displays the entire research tree. With the 'level' parameter set to a number starting from 1, displays the corresponding level (milestone + side goals). With the 'level' and 'node' parameter set to a number starting from 1, displays the corresponding node of the corresponding level (1 for the milestone then starting from 2 for the side goals). If 'public' is set to true, the result will be sent publicly in the channel the command was executed in. Error messages will also be sent publicly if this parameter is set to true. When viewing a single node, will display via text the node's name, id, description, goal shape, goal amount, unlocks, lock/unlock commands. Note : the version of the research tree is included in the bottom left of the images created by this command
 
 ### Admin commands :
 
@@ -76,9 +83,11 @@ Note : shapes with more than 4 layers and/or with more/less than 4 quadrants per
   While paused, the bot will not send any public messages on the server
   - /pause : Pauses the bot
   - /unpause : Unpauses the bot
+
 - Restrict to channel :\
   The bot will only send public messages on the channel it is restricted to
   - /restrict-to-channel [channel] : Sets the channel to restrict the bot to, don't include this parameter to clear it and not restrict the bot to any channel
+
 - Restrict to roles :\
   If 'restrictToRolesInverted' is false, only users who have at least one role part of the 'restrictToRoles' list will be able to make the bot send public messages. If true, only users who have at least one role that isn't part of the list will be able to. In both cases, if the list is empty, every user will be able to.
   - /restrict-to-roles [operation] [role=None] : Modifys the 'restrictToRoles' list depending on the 'operation' parameter value :
@@ -87,6 +96,7 @@ Note : shapes with more than 4 layers and/or with more/less than 4 quadrants per
     - view : View the list
     - clear : Clears the list
   - /restrict-to-roles-set-inverted [inverted] : Sets the 'restrictToRolesInverted' parameter
+
 - Admin roles :\
   Only users who have a role part of the 'adminRoles' list or who have the administrator permission will be able to use admin commands
   - /admin-roles : Modifys the 'adminRoles' list depending on the 'operation' parameter value :

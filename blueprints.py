@@ -1,6 +1,10 @@
+import utils
+from utils import Rotation, Pos, Size
+import gameInfos
 import gzip
 import base64
 import json
+import typing
 
 PREFIX = "SHAPEZ2"
 SEPARATOR = "-"
@@ -9,246 +13,473 @@ SUFFIX = "$"
 BUILDING_BP_TYPE = "Building"
 ISLAND_BP_TYPE = "Island"
 
+NUM_LAYERS = 3
+ISLAND_ROTATION_CENTER = utils.FloatPos(*([(gameInfos.islands.ISLAND_SIZE/2)-.5]*2))
+
 class BlueprintError(Exception): ...
 
-def decodeBlueprint(rawBlueprint:str) -> tuple[dict,int]:
-    if rawBlueprint.startswith(PREFIX):
-        rawBlueprint = rawBlueprint[len(PREFIX):]
-    else:
-        raise BlueprintError("doesn't start with prefix")
+class TileEntry:
+    def __init__(self,referTo:int) -> None:
+        self.referTo = referTo
 
-    if rawBlueprint.startswith(SEPARATOR):
-        rawBlueprint = rawBlueprint[len(SEPARATOR):]
-    else:
-        raise BlueprintError("no separator after prefix")
+class BuildingEntry:
+    def __init__(self,pos:Pos,rotation:Rotation,type:gameInfos.buildings.Building,extra:bytes) -> None:
+        self.pos = pos
+        self.rotation = rotation
+        self.type = type
+        self.extra = extra
 
-    rawBlueprint = rawBlueprint.split(SEPARATOR)
-    if len(rawBlueprint) == 0:
-        raise BlueprintError("nothing after first separator")
-    if len(rawBlueprint) == 1:
-        raise BlueprintError("no separator after version number")
-    if len(rawBlueprint) > 2:
-        raise BlueprintError("more separators than expected")
+    def toJSON(self) -> dict:
+        return {
+            "X" : self.pos.x,
+            "Y" : self.pos.y,
+            "L" : self.pos.z,
+            "R" : self.rotation.value,
+            "T" : self.type.id,
+            "C" : base64.b64encode(self.extra).decode()
+        }
+
+class BuildingBlueprint:
+    def __init__(self,asEntryList:list[BuildingEntry],asTileDict:dict[Pos,TileEntry]) -> None:
+        self.asEntryList = asEntryList
+        self.asTileDict = asTileDict
+
+    def getSize(self) -> Size:
+        return _genericGetSize(self)
+
+    def getBuildingCount(self) -> int:
+        return len(self.asEntryList)
+
+    def getBuildingCounts(self) -> dict[str,int]:
+        return _genericGetCounts(self)
+
+    def toJSON(self) -> dict:
+        return {
+            "$type" : BUILDING_BP_TYPE,
+            "Entries" : [e.toJSON() for e in self.asEntryList]
+        }
+
+class IslandEntry:
+    def __init__(self,pos:Pos,rotation:Rotation,type:gameInfos.islands.Island,buildingBP:BuildingBlueprint|None) -> None:
+        self.pos = pos
+        self.rotation = rotation
+        self.type = type
+        self.buildingBP = buildingBP
+
+    def toJSON(self) -> dict:
+        toReturn = {
+            "X" : self.pos.x,
+            "Y" : self.pos.y,
+            "R" : self.rotation.value,
+            "T" : self.type.id
+        }
+        if self.buildingBP is not None:
+            toReturn["B"] = self.buildingBP.toJSON()
+        return toReturn
+
+class IslandBlueprint:
+    def __init__(self,asEntryList:list[IslandEntry],asTileDict:dict[Pos,TileEntry]) -> None:
+        self.asEntryList = asEntryList
+        self.asTileDict = asTileDict
+
+    def getSize(self) -> Size:
+        return _genericGetSize(self)
+
+    def getIslandCount(self) -> int:
+        return len(self.asEntryList)
+
+    def getIslandCounts(self) -> dict[str,int]:
+        return _genericGetCounts(self)
+
+    def toJSON(self) -> dict:
+        return {
+            "$type" : ISLAND_BP_TYPE,
+            "Entries" : [e.toJSON() for e in self.asEntryList]
+        }
+
+class Blueprint:
+    def __init__(self,majorVersion:int,version:int,type:str,islandBP:IslandBlueprint|None,buildingBP:BuildingBlueprint|None) -> None:
+        self.majorVersion = majorVersion
+        self.version = version
+        self.type = type
+        self.islandBP = islandBP
+        self.buildingBP = buildingBP
+
+    def toJSON(self) -> tuple[dict,int]:
+        return {
+            "V" : self.version,
+            "BP" : (self.buildingBP if self.islandBP is None else self.islandBP).toJSON()
+        }, self.majorVersion
+
+def _genericGetSize(bp:BuildingBlueprint|IslandBlueprint) -> Size:
+    (minX,minY,minZ), (maxX,maxY,maxZ) = [[func(e.__dict__[k] for e in bp.asTileDict.keys()) for k in ("x","y","z")] for func in (min,max)]
+    return Size(
+        maxX - minX + 1,
+        maxY - minY + 1,
+        maxZ - minZ + 1
+    )
+
+def _genericGetCounts(bp:BuildingBlueprint|IslandBlueprint) -> dict[str,int]:
+    output = {}
+    for entry in bp.asEntryList:
+        entryType = entry.type.id
+        if output.get(entryType) is None:
+            output[entryType] = 1
+        else:
+            output[entryType] += 1
+    return output
+
+
+
+
+
+_ERR_MSG_PATH_SEP = ">"
+_ERR_MSG_PATH_START = "'"
+_ERR_MSG_PATH_END = "' : "
+_defaultObj = object()
+
+def _getKeyValue(dict:dict,key:str,expectedValueType:type,default:typing.Any=_defaultObj) -> typing.Any:
+
+    value = dict.get(key,_defaultObj)
+
+    if value is _defaultObj:
+        if default is _defaultObj:
+            raise BlueprintError(f"{_ERR_MSG_PATH_END}Missing '{key}' key")
+        return default
+
+    valueType = type(value)
+    if valueType != expectedValueType:
+        raise BlueprintError(
+            f"{_ERR_MSG_PATH_SEP}{key}{_ERR_MSG_PATH_END}Incorrect value type, expected '{expectedValueType.__name__}', got '{valueType.__name__}'")
+
+    return value
+
+def _decodeBlueprintFirstPart(rawBlueprint:str) -> tuple[dict,int]:
 
     try:
-        majorVersion = int(rawBlueprint[0])
-    except ValueError:
-        raise BlueprintError("version number not a number")
 
-    rawBlueprint = rawBlueprint[1]
-    if rawBlueprint.endswith(SUFFIX):
-        rawBlueprint = rawBlueprint[:-len(SUFFIX)]
-    else:
-        raise BlueprintError("doesn't end with suffix")
+        sepCount = rawBlueprint.count(SEPARATOR)
+        if sepCount != 2:
+            raise BlueprintError(f"Expected 2 separators, got {sepCount}")
 
-    try:
-        rawBlueprint = rawBlueprint.encode()
-    except Exception:
-        raise BlueprintError("can't encode in bytes")
-    try:
-        rawBlueprint = base64.b64decode(rawBlueprint)
-    except Exception:
-        raise BlueprintError("can't decode from base64")
-    try:
-        rawBlueprint = gzip.decompress(rawBlueprint)
-    except Exception:
-        raise BlueprintError("can't gzip decompress")
-    try:
-        rawBlueprint = json.loads(rawBlueprint)
-    except Exception:
-        raise BlueprintError("can't parse json")
+        prefix, majorVersion, codeAndSuffix = rawBlueprint.split(SEPARATOR)
 
-    return rawBlueprint, majorVersion
+        if prefix != PREFIX:
+            raise BlueprintError("Incorrect prefix")
 
-def encodeBlueprint(blueprint:dict,majorVersion:int) -> str:
+        if not utils.isNumber(majorVersion):
+            raise BlueprintError("Version not a number")
+        majorVersion = int(majorVersion)
+
+        if codeAndSuffix[-len(SUFFIX):] != SUFFIX:
+            raise BlueprintError("Doesn't end with suffix")
+
+        encodedBP = codeAndSuffix[:-len(SUFFIX)]
+
+        if encodedBP == "":
+            raise BlueprintError("Empty encoded section")
+
+        try:
+            encodedBP = encodedBP.encode()
+        except Exception:
+            raise BlueprintError("Can't encode in bytes")
+        try:
+            encodedBP = base64.b64decode(encodedBP)
+        except Exception:
+            raise BlueprintError("Can't decode from base64")
+        try:
+            encodedBP = gzip.decompress(encodedBP)
+        except Exception:
+            raise BlueprintError("Can't gzip decompress")
+        try:
+            decodedBP = json.loads(encodedBP)
+        except Exception:
+            raise BlueprintError("Can't parse json")
+
+        try:
+            _getKeyValue(decodedBP,"V",int)
+            _getKeyValue(decodedBP,"BP",dict)
+        except BlueprintError as e:
+            raise BlueprintError(f"Error in {_ERR_MSG_PATH_START}blueprint json object{e}")
+
+    except BlueprintError as e:
+        raise BlueprintError(f"Error while decoding blueprint string : {e}")
+
+    return decodedBP, majorVersion
+
+def _encodeBlueprintLastPart(blueprint:dict,majorVersion:int) -> str:
     try:
-        blueprint = base64.b64encode(gzip.compress(json.dumps(blueprint,separators=(",",":")).encode())).decode()
+        blueprint = base64.b64encode(gzip.compress(json.dumps(blueprint,indent=4).encode())).decode()
         blueprint = PREFIX + SEPARATOR + str(majorVersion) + SEPARATOR + blueprint + SUFFIX
     except Exception:
-        raise BlueprintError("error while encoding blueprint")
+        raise BlueprintError("Error while encoding blueprint")
     return blueprint
+
+def _getValidBlueprint(blueprint:dict,mustBeBuildingBP:bool=False) -> dict:
+
+    validBP = {}
+
+    bpType = _getKeyValue(blueprint,"$type",str,BUILDING_BP_TYPE)
+
+    if bpType not in (BUILDING_BP_TYPE,ISLAND_BP_TYPE):
+        raise BlueprintError(f"{_ERR_MSG_PATH_SEP}$type{_ERR_MSG_PATH_END}Unknown blueprint type : '{bpType}'")
+
+    if mustBeBuildingBP and (bpType != BUILDING_BP_TYPE):
+        raise BlueprintError(f"{_ERR_MSG_PATH_SEP}$type{_ERR_MSG_PATH_END}Must be a building blueprint")
+
+    validBP["$type"] = bpType
+
+    allowedEntryTypes = (
+        gameInfos.buildings.allBuildings.keys()
+        if bpType == BUILDING_BP_TYPE else
+        gameInfos.islands.allIslands.keys()
+    )
+
+    bpEntries = _getKeyValue(blueprint,"Entries",list)
+
+    if bpEntries == []:
+        raise BlueprintError(f"{_ERR_MSG_PATH_SEP}Entries{_ERR_MSG_PATH_END}Empty list")
+
+    validBPEntries = []
+
+    for i,entry in enumerate(bpEntries):
+        try:
+
+            entryType = type(entry)
+            if entryType != dict:
+                raise BlueprintError(f"{_ERR_MSG_PATH_END}Incorrect value type, expected 'dict', got '{entryType.__name__}'")
+
+            x, y, l, r = (_getKeyValue(entry,k,int,0) for k in ("X","Y","L","R"))
+
+            if (r < 0) or (r > 3):
+                raise BlueprintError(f"{_ERR_MSG_PATH_SEP}R{_ERR_MSG_PATH_END}Rotation must be in range from 0 to 3")
+
+            t = _getKeyValue(entry,"T",str)
+
+            if t not in allowedEntryTypes:
+                raise BlueprintError(f"{_ERR_MSG_PATH_SEP}T{_ERR_MSG_PATH_END}Unknown entry type '{t}'")
+
+            validEntry = {
+                "X" : x,
+                "Y" : y,
+                "L" : l,
+                "R" : r,
+                "T" : t
+            }
+
+            if bpType == ISLAND_BP_TYPE:
+                b = entry.get("B",_defaultObj)
+                if b is not _defaultObj:
+                    b = _getKeyValue(entry,"B",dict)
+                    try:
+                        validB = _getValidBlueprint(b,True)
+                    except BlueprintError as e:
+                        raise BlueprintError(f"{_ERR_MSG_PATH_SEP}B{e}")
+                    validEntry["B"] = validB
+            else:
+                c = _getKeyValue(entry,"C",str,"")
+                try:
+                    c = base64.b64decode(c)
+                except Exception:
+                    raise BlueprintError(f"{_ERR_MSG_PATH_SEP}C{_ERR_MSG_PATH_END}Can't decode from base64")
+                validEntry["C"] = c
+
+            validBPEntries.append(validEntry)
+
+        except BlueprintError as e:
+            raise BlueprintError(f"{_ERR_MSG_PATH_SEP}Entries{_ERR_MSG_PATH_SEP}{i}{e}")
+
+    validBP["Entries"] = validBPEntries
+
+    return validBP
+
+def _decodeBuildingBP(buildings:list[dict[str,int|str|bytes]],moveBPCenter:bool=True) -> BuildingBlueprint:
+
+    tileDict:dict[Pos,TileEntry] = {}
+    entryList:list[BuildingEntry] = []
+
+    for buildingIndex,building in enumerate(buildings):
+
+        curTiles = [t.rotateCW(building["R"]) for t in gameInfos.buildings.allBuildings[building["T"]].tiles]
+        curTiles = [Pos(building["X"]+t.x,building["Y"]+t.y,building["L"]+t.z) for t in curTiles]
+
+        for curTile in curTiles:
+
+            if tileDict.get(curTile) is not None:
+                raise BlueprintError(f"Error while placing tile of '{building['T']}' at {curTile} : another tile is already placed there")
+
+            tileDict[curTile] = TileEntry(buildingIndex)
+
+    minX, minY, minZ = [min(e.__dict__[k] for e in tileDict.keys()) for k in ("x","y","z")]
+    maxZ = max(e.z for e in tileDict.keys())
+
+    if maxZ-minZ+1 > NUM_LAYERS:
+        raise BlueprintError(f"Cannot have more than {NUM_LAYERS} layers")
+
+    if moveBPCenter:
+        tileDict = {Pos(p.x-minX,p.y-minY,p.z-minZ) : t for p,t in tileDict.items()}
+
+    for b in buildings:
+        if moveBPCenter:
+            b["X"] -= minX
+            b["Y"] -= minY
+            b["L"] -= minZ
+        entryList.append(BuildingEntry(Pos(
+            b["X"],b["Y"],b["L"]),
+            b["R"],
+            gameInfos.buildings.allBuildings[b["T"]],
+            b["C"]
+        ))
+
+    return BuildingBlueprint(entryList,tileDict)
+
+def _decodeIslandBP(islands:list[dict[str,int|str|dict]]) -> tuple[IslandBlueprint,BuildingBlueprint|None]:
+
+    tileDict:dict[Pos,TileEntry] = {}
+    entryList:list[IslandEntry] = []
+
+    for islandIndex,island in enumerate(islands):
+
+        curTiles = [t.pos.rotateCW(island["R"]) for t in gameInfos.islands.allIslands[island["T"]].tiles]
+        curTiles = [Pos(island["X"]+t.x,island["Y"]+t.y) for t in curTiles]
+
+        for curTile in curTiles:
+
+            if tileDict.get(curTile) is not None:
+                raise BlueprintError(f"Error while placing tile of '{island['T']}' at {curTile} : another tile is already placed there")
+
+            tileDict[curTile] = TileEntry(islandIndex)
+
+    minX, minY = [min(e.__dict__[k] for e in tileDict.keys()) for k in ("x","y")]
+
+    tileDict = {Pos(p.x-minX,p.y-minY) : t for p,t in tileDict.items()}
+
+    for i in islands:
+        i["X"] -= minX
+        i["Y"] -= minY
+
+    globalBuildingList:list[BuildingEntry] = []
+    globalBuildingDict:dict[Pos,TileEntry] = {}
+
+    for island in islands:
+
+        if island.get("B") is None:
+            entryList.append(IslandEntry(
+                Pos(island["X"],island["Y"]),
+                island["R"],
+                gameInfos.islands.allIslands[island["T"]],
+                None
+            ))
+            continue
+
+        try:
+            curBuildingBP = _decodeBuildingBP(island["B"]["Entries"],False)
+        except BlueprintError as e:
+            raise BlueprintError(
+                f"Error while creating representation of building blueprint of '{island['T']}' at {Pos(island['X'],island['Y'])} : {e}")
+
+        curIslandBuildArea = [a.rotateCW(island["R"],ISLAND_ROTATION_CENTER) for a in gameInfos.islands.allIslands[island["T"]].totalBuildArea]
+
+        for pos,b in curBuildingBP.asTileDict.items():
+
+            curBuilding = curBuildingBP.asEntryList[b.referTo]
+
+            inArea = False
+            for area in curIslandBuildArea:
+                if area.containsPos(pos):
+                    inArea = True
+                    break
+            if not inArea:
+                raise BlueprintError(
+                    f"Error in island '{island['T']}' at {Pos(island['X'],island['Y'])} : tile of building '{curBuilding.type.id}' at {pos} is not inside it's island build area")
+
+            globalBuildingDict[
+                Pos(
+                    (island["X"]*gameInfos.islands.ISLAND_SIZE) + curBuilding.pos.x,
+                    (island["Y"]*gameInfos.islands.ISLAND_SIZE) + curBuilding.pos.y,
+                    curBuilding.pos.z
+                )
+            ] = TileEntry(len(globalBuildingList)+b.referTo)
+
+        for b in curBuildingBP.asEntryList:
+            globalBuildingList.append(BuildingEntry(
+                Pos(
+                    (island["X"]*gameInfos.islands.ISLAND_SIZE) + b.pos.x,
+                    (island["Y"]*gameInfos.islands.ISLAND_SIZE) + b.pos.y,
+                    b.pos.z
+                ),
+                b.rotation,
+                b.type,
+                b.extra
+            ))
+
+        entryList.append(IslandEntry(
+            Pos(island["X"],island["Y"]),
+            island["R"],
+            gameInfos.islands.allIslands[island["T"]],
+            curBuildingBP
+        ))
+
+    return IslandBlueprint(entryList,tileDict), (BuildingBlueprint(globalBuildingList,globalBuildingDict) if globalBuildingList != [] else None)
+
+
 
 def changeBlueprintVersion(blueprint:str,version:int) -> str:
-    blueprint, majorVersion = decodeBlueprint(blueprint)
+    blueprint, majorVersion = _decodeBlueprintFirstPart(blueprint)
     blueprint["V"] = version
-    blueprint = encodeBlueprint(blueprint,majorVersion)
+    blueprint = _encodeBlueprintLastPart(blueprint,majorVersion)
     return blueprint
 
-def getBlueprintInfo(blueprint:dict,*,version:bool=False,buildingCount:bool=False,
-    size:bool=False,islandCount:bool=False,bpType:bool=False,
-    buildingCounts:bool=False,islandCounts:bool=False) -> dict[str]:
+def getBlueprintVersion(blueprint:str) -> int:
+    return _decodeBlueprintFirstPart(blueprint)[0]["V"]
 
-    if type(blueprint) != dict:
-        raise BlueprintError("Given 'blueprint' argument not a dict")
+def decodeBlueprint(rawBlueprint:str) -> Blueprint:
+    decodedBP, majorVersion = _decodeBlueprintFirstPart(rawBlueprint)
+    version = decodedBP["V"]
 
-    toReturn = {}
+    try:
+        validBP = _getValidBlueprint(decodedBP["BP"])
+    except BlueprintError as e:
+        raise BlueprintError(f"Error in {_ERR_MSG_PATH_START}blueprint json object{_ERR_MSG_PATH_SEP}BP{e}")
 
-    if version:
+    bpType = validBP["$type"]
 
-        versionNum = blueprint.get("V")
+    if bpType == BUILDING_BP_TYPE:
+        try:
+            buildingBP = _decodeBuildingBP(validBP["Entries"])
+        except BlueprintError as e:
+            raise BlueprintError(f"Error while creating building blueprint representation : {e}")
+        return Blueprint(majorVersion,version,bpType,None,buildingBP)
 
-        if versionNum is None:
-            raise BlueprintError("No version key")
+    try:
+        islandBP, buildingBP = _decodeIslandBP(validBP["Entries"])
+    except BlueprintError as e:
+        raise BlueprintError(f"Error while creating island blueprint representation : {e}")
+    return Blueprint(majorVersion,version,bpType,islandBP,buildingBP)
 
-        if type(versionNum) != int:
-            raise BlueprintError("Version not an int")
+def encodeBlueprint(blueprint:Blueprint) -> str:
+    try:
+        encodedBP, majorVersion = blueprint.toJSON()
+    except Exception:
+        raise BlueprintError("Error while encoding blueprint")
+    return _encodeBlueprintLastPart(encodedBP,majorVersion)
 
-        toReturn["version"] = versionNum
+def getPotentialBPCodesInString(string:str) -> list[str]:
 
-    if buildingCount or size or islandCount or bpType or buildingCounts or islandCounts:
+    if PREFIX not in string:
+        return []
 
-        blueprintBP = blueprint.get("BP")
+    bps = string.split(PREFIX)[1:]
 
-        if blueprintBP is None:
-            raise BlueprintError("No blueprint key")
+    bpCodes = []
 
-        if type(blueprintBP) != dict:
-            raise BlueprintError("Blueprint not a dict")
+    for bp in bps:
 
-        blueprintBPType = blueprintBP.get("$type")
+        if SUFFIX not in bp:
+            continue
 
-        if blueprintBPType is None:
-            blueprintBPType = BUILDING_BP_TYPE
+        bp = bp.split(SUFFIX)[0]
 
-        if type(blueprintBPType) != str:
-            raise BlueprintError("Blueprint type not a string")
+        bpCodes.append(PREFIX+bp+SUFFIX)
 
-        if blueprintBPType not in (BUILDING_BP_TYPE,ISLAND_BP_TYPE):
-            raise BlueprintError("Unknown blueprint type")
-
-        islandBP = blueprintBPType == ISLAND_BP_TYPE
-
-        blueprintBPEntries = blueprintBP.get("Entries")
-
-        if blueprintBPEntries is None:
-            raise BlueprintError("No entries key")
-
-        if type(blueprintBPEntries) != list:
-            raise BlueprintError("Entries not a list")
-
-    if bpType:
-        toReturn["bpType"] = blueprintBPType
-
-    def countsDictAdd(dict_:dict,addToKey:str) -> None:
-        if dict_.get(addToKey) is None:
-            dict_[addToKey] = 1
-        else:
-            dict_[addToKey] += 1
-
-    if buildingCount or islandCount or buildingCounts or islandCounts:
-
-        if buildingCount:
-            toReturn["buildingCount"] = 0
-        if islandCount:
-            toReturn["islandCount"] = 0
-        if buildingCounts:
-            toReturn["buildingCounts"] = {}
-        if islandCounts:
-            toReturn["islandCounts"] = {}
-
-        for entryIndex,entry in enumerate(blueprintBPEntries):
-
-            if (buildingCounts and (not islandBP)) or (islandCounts and islandBP):
-
-                if type(entry) != dict:
-                    raise BlueprintError(f"Entry {entryIndex} not a dict")
-
-                entryType = entry.get("T")
-
-                if entryType is None:
-                    raise BlueprintError(f"No type key for entry {entryIndex}")
-
-            if islandBP:
-
-                if islandCount:
-                    toReturn["islandCount"] += 1
-
-                if islandCounts:
-                    countsDictAdd(toReturn["islandCounts"],entryType)
-
-                if buildingCount or buildingCounts:
-
-                    entryBuildings = entry.get("B")
-
-                    if entryBuildings is None:
-                        continue
-
-                    if type(entryBuildings) != dict:
-                        raise BlueprintError(f"Buildings entry of island entry {entryIndex} not a dict")
-
-                    entryBuildingsType = entryBuildings.get("$type")
-
-                    if entryBuildingsType != BUILDING_BP_TYPE:
-                        raise BlueprintError(f"Buildings entry type of island entry {entryIndex} not '{BUILDING_BP_TYPE}'")
-
-                    entryBuildingsEntries = entryBuildings.get("Entries")
-
-                    if type(entryBuildingsEntries) != list:
-                        raise BlueprintError(f"Buildings of island entry {entryIndex} not a list")
-
-                    for buildingEntryIndex,buildingEntry in enumerate(entryBuildingsEntries):
-
-                        if buildingCount:
-                            toReturn["buildingCount"] += 1
-
-                        if buildingCounts:
-
-                            if type(buildingEntry) != dict:
-                                raise BlueprintError(f"Building entry {buildingEntryIndex} of island entry {entryIndex} not a dict")
-
-                            buildingEntryType = buildingEntry.get("T")
-
-                            if buildingEntryType is None:
-                                raise BlueprintError(f"No type key for building entry {buildingEntryIndex} of island entry {entryIndex}")
-
-                            countsDictAdd(toReturn["buildingCounts"],buildingEntryType)
-
-            else:
-
-                if buildingCount:
-                    toReturn["buildingCount"] += 1
-
-                if buildingCounts:
-                    countsDictAdd(toReturn["buildingCounts"],entryType)
-
-    if size:
-
-        def specialMin(num1:int|None,num2:int|None) -> int:
-            if num1 is None:
-                return num2
-            if num2 is None:
-                return num1
-            return min(num1,num2)
-        def specialMax(num1:int|None,num2:int|None) -> int:
-            if num1 is None:
-                return num2
-            if num2 is None:
-                return num1
-            return max(num1,num2)
-
-        minX = minY = minZ = maxX = maxY = maxZ = None
-
-        for i,entry in enumerate(blueprintBPEntries):
-
-            if type(entry) != dict:
-                raise BlueprintError(f"Entry {i} not a dict")
-
-            x = entry.get("X")
-            y = entry.get("Y")
-            z = entry.get("L")
-
-            x, y, z = [0 if v is None else v for v in (x,y,z)]
-
-            for value,text in zip((x,y,z),("x","y","z")):
-                if type(value) != int:
-                    raise BlueprintError(f"{text} of entry {i} not an int")
-
-            minX, minY, minZ = [specialMin(v1,v2) for v1,v2 in zip((minX,minY,minZ),(x,y,z))]
-            maxX, maxY, maxZ = [specialMax(v1,v2) for v1,v2 in zip((maxX,maxY,maxZ),(x,y,z))]
-
-        if minX is None:
-            raise BlueprintError("No valid entries")
-
-        toReturn["size"] = (maxX-minX+1,maxY-minY+1,maxZ-minZ+1)
-
-    return toReturn
+    return bpCodes

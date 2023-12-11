@@ -1,6 +1,7 @@
 import shapeCodeGenerator
 import shapeViewer
 import globalInfos
+import utils
 import pygame
 import io
 
@@ -53,7 +54,9 @@ def handleResponse(message:str) -> None|tuple[None|tuple[tuple[io.BytesIO,int],b
             hasAtLeastOneInvalidShapeCode = True
 
     if shapeCodes == []:
-        return None,hasAtLeastOneInvalidShapeCode,errorMsgs
+        if hasAtLeastOneInvalidShapeCode:
+            return None,hasAtLeastOneInvalidShapeCode,errorMsgs
+        return None,True,["No non-empty shapes generated"]
 
     potentialDisplayParams = shapeCodeGenerator.getPotentialDisplayParamsFromMessage(message)
     curDisplayParams = {k:v.default for k,v in DISPLAY_PARAMS.items()}
@@ -86,15 +89,9 @@ def handleResponse(message:str) -> None|tuple[None|tuple[tuple[io.BytesIO,int],b
                 link.replace(old,new)
             viewer3dLinks.append(link)
 
-    with io.BytesIO() as buffer:
-        pygame.image.save(finalImage,buffer,"png")
-        bufferValue = buffer.getvalue()
-        finalImageBytesLen = len(bufferValue)
-        finalImageBytes = io.BytesIO(bufferValue)
-
     return (
         (
-            (finalImageBytes,finalImageBytesLen),
+            utils.pygameSurfToBytes(finalImage),
             curDisplayParams["spoiler"],
             shapeCodes if curDisplayParams["result"] else None,
             viewer3dLinks

@@ -1,12 +1,16 @@
 import os
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = ""
 del os
+
 import responses
 import globalInfos
 import blueprints
 import shapeViewer
 import operationGraph
 import utils
+import gameInfos
+import researchViewer
+
 import discord
 import json
 import sys
@@ -89,7 +93,7 @@ async def setAllServerSettings(guildId:int,property:str,value) -> None:
         allServerSettings[guildId] = {}
     allServerSettings[guildId][property] = value
 
-    with open(globalInfos.ALL_SERVER_SETTINGS_PATH,"w") as f:
+    with open(globalInfos.ALL_SERVER_SETTINGS_PATH,"w",encoding="utf-8") as f:
         json.dump(allServerSettings,f)
 
 async def getAllServerSettings(guildId:int,property:str):
@@ -203,32 +207,6 @@ def msgToFile(msg:str,filename:str,guild:discord.Guild|None) -> discord.File|Non
         return None
     return discord.File(io.BytesIO(msgBytes),filename)
 
-def convertVersionNum(version:int,*,toText:bool=False,toReaction:bool=False) -> None|str|list[str|discord.Emoji]:
-
-    versionText = globalInfos.ALPHA_BP_VERSIONS.get(version)
-
-    if versionText is None:
-        return None
-
-    if toText:
-
-        return "Alpha " + versionText
-
-    if toReaction:
-
-        output = [globalInfos.BP_VERSION_REACTION_A]
-        split = versionText.split(".")
-
-        if len(split[0]) > 1:
-            output.append(client.get_emoji(globalInfos.BP_VERSION_REACTION_TENS[split[0][0]]))
-        output.append(globalInfos.BP_VERSION_REACTION_UNITS[split[0][-1]])
-
-        if len(split) > 1:
-            output.append(globalInfos.BP_VERSION_REACTION_DOT)
-            output.append(client.get_emoji(globalInfos.BP_VERSION_REACTION_TENTHS[split[1]]))
-
-        return output
-
 async def decodeAttachment(file:discord.Attachment) -> str|None:
     try:
         fileBytes = await file.read()
@@ -241,6 +219,29 @@ def isFileTooBig(fileSize:int,guild:discord.Guild|None) -> bool:
     if guild is None:
         return fileSize > globalInfos.DEFAULT_MAX_FILE_SIZE
     return fileSize > guild.filesize_limit
+
+def detectBPVersion(potentialBPCodes:list[str]) -> list[str|int]|None:
+
+    versions = []
+
+    for bp in potentialBPCodes:
+
+        try:
+            version = blueprints.getBlueprintVersion(bp)
+        except blueprints.BlueprintError:
+            continue
+
+        versionReaction = gameInfos.versions.versionNumToReactions(version)
+
+        if versionReaction is None:
+            continue
+
+        versions.append(versionReaction)
+
+    if len(versions) != 1:
+        return None
+
+    return versions[0]
 
 ##################################################
 
@@ -258,11 +259,11 @@ def runDiscordBot() -> None:
             await tree.sync()
 
             try:
-                with open(globalInfos.ALL_SERVER_SETTINGS_PATH) as f:
+                with open(globalInfos.ALL_SERVER_SETTINGS_PATH,encoding="utf-8") as f:
                     allServerSettings = json.load(f)
             except FileNotFoundError:
                 allServerSettings = {}
-                with open(globalInfos.ALL_SERVER_SETTINGS_PATH,"w") as f:
+                with open(globalInfos.ALL_SERVER_SETTINGS_PATH,"w",encoding="utf-8") as f:
                     json.dump(allServerSettings,f)
             newAllServerSettings = {}
             for k,v in allServerSettings.items():
@@ -304,9 +305,11 @@ def runDiscordBot() -> None:
                     continue
                 msgContent += fileContent
 
-            bpReactions = utils.detectBPVersion(msgContent)
+            bpReactions = detectBPVersion(blueprints.getPotentialBPCodesInString(msgContent))
             if bpReactions is not None:
                 for reaction in bpReactions:
+                    if type(reaction) == int:
+                        reaction = client.get_emoji(reaction)
                     await message.add_reaction(reaction)
 
     class RegisterCommandType:
@@ -484,7 +487,7 @@ def runDiscordBot() -> None:
 
     @tree.command(name="change-blueprint-version",description="Change a blueprint's version")
     @discord.app_commands.describe(blueprint="The full blueprint code",
-        version="The blueprint version number (latest public : {}, latest patreon only : {})".format(*globalInfos.LATEST_GAME_VERSIONS),
+        version="The blueprint version number (latest public : {}, latest patreon only : {})".format(*gameInfos.versions.LATEST_GAME_VERSIONS),
         blueprint_file="A file containing a blueprint code if it's too big to paste it directly (fill in the 'blueprint' parameter with dummy character(s))")
     async def changeBlueprintVersionCommand(interaction:discord.Interaction,blueprint:str,version:int,blueprint_file:discord.Attachment|None=None) -> None:
         if exitCommandWithoutResponse(interaction):
@@ -605,43 +608,83 @@ def runDiscordBot() -> None:
     @discord.app_commands.describe(blueprint="The full blueprint code",
         blueprint_file="A file containing a blueprint code if it's too big to paste it directly (fill in the 'blueprint' parameter with dummy character(s))")
     async def blueprintInfoCommand(interaction:discord.Interaction,blueprint:str,advanced:bool=False,blueprint_file:discord.Attachment|None=None) -> None:
+
+        def formatCounts(bp:blueprints.BuildingBlueprint|blueprints.IslandBlueprint|None,name:str) -> str:
+            output = f"\n**{name} counts :**\n"
+            if bp is None:
+                output += "None"
+            else:
+                if type(bp) == blueprints.BuildingBlueprint:
+                    counts = bp.getBuildingCounts()
+                    lines = []
+                    for v,ivc in gameInfos.buildings.getCategorizedBuildingCounts(counts).items():
+                        lines.append(f"- `{gameInfos.buildings.allVariantLists[v].title}` : `{utils.sepInGroupsNumber(sum(sum(iv.values()) for iv in ivc.values()))}`")
+                        for iv,bc in ivc.items():
+                            lines.append(f"  - `{gameInfos.buildings.allInternalVariantLists[iv].title}` : `{utils.sepInGroupsNumber(sum(bc.values()))}`")
+                            for b,c in bc.items():
+                                lines.append(f"    - `{b}` : `{utils.sepInGroupsNumber(c)}`")
+                    output += "\n".join(lines)
+                else:
+                    counts = bp.getIslandCounts()
+                    output += "\n".join(f"- `{k}` : `{utils.sepInGroupsNumber(v)}`" for k,v in counts.items())
+            return output
+
         if exitCommandWithoutResponse(interaction):
             return
+
         if await hasPermission(PermissionLvls.PRIVATE_FEATURE,interaction=interaction):
+
             if blueprint_file is None:
                 toProcessBlueprint = blueprint
             else:
                 toProcessBlueprint = await decodeAttachment(blueprint_file)
             if toProcessBlueprint is None:
                 responseMsg = "Error while processing file"
+
             else:
                 try:
-                    bp,_ = blueprints.decodeBlueprint(toProcessBlueprint)
-                    infos = blueprints.getBlueprintInfo(bp,version=True,buildingCount=True,size=True,islandCount=True,bpType=True,
-                        buildingCounts=advanced,islandCounts=advanced)
-                    versionTxt = convertVersionNum(infos["version"],toText=True)
+
+                    bp = blueprints.decodeBlueprint(toProcessBlueprint)
+
+                    versionTxt = gameInfos.versions.versionNumToText(bp.version,advanced)
                     if versionTxt is None:
                         versionTxt = "Unknown"
-                    sizeTxt = "x".join(f"`{v}`" for v in infos["size"])
+                    elif advanced:
+                        versionTxt = f"[{', '.join(f'`{txt}`' for txt in versionTxt)}]"
+                    else:
+                        versionTxt = f"`{versionTxt}`"
+
                     responseParts = [
-                        f"Version : `{infos['version']}` / `{versionTxt}`",
-                        f"Blueprint type : `{infos['bpType']}`",
-                        f"Building count : `{infos['buildingCount']}`",
-                        f"Island count : `{infos['islandCount']}`",
-                        f"Size : {sizeTxt} (approximate)"
+                        f"Version : `{bp.version}` / {versionTxt}",
+                        f"Blueprint type : `{bp.type}`"
                     ]
+
+                    sizes = []
+
+                    if bp.buildingBP is not None:
+                        buildingCount = bp.buildingBP.getBuildingCount()
+                        buildingSize = bp.buildingBP.getSize()
+                        sizes.append(f"Building size : `{buildingSize.width}`x`{buildingSize.height}`x`{buildingSize.depth}`")
+                        responseParts.append(f"Building count : `{utils.sepInGroupsNumber(buildingCount)}`")
+
+                    if bp.islandBP is not None:
+                        islandCount = bp.islandBP.getIslandCount()
+                        islandSize = bp.islandBP.getSize()
+                        sizes.append(f"Island size : `{islandSize.width}`x`{islandSize.height}`")
+                        responseParts.append(f"Island count : `{utils.sepInGroupsNumber(islandCount)}`")
+
+                    responseParts.extend(sizes)
                     responseMsg = ", ".join(responseParts)
+
                     if advanced:
-                        for key,text in zip(("island","building"),("Island","Building")):
-                            responseMsg += f"\n**{text} counts :**\n"
-                            if infos[f"{key}Counts"] == {}:
-                                responseMsg += "None"
-                            else:
-                                responseMsg += "\n".join(f"- `{k}` : `{v}`" for k,v in infos[f"{key}Counts"].items())
+                        responseMsg += formatCounts(bp.buildingBP,"Buildings")
+                        responseMsg += formatCounts(bp.islandBP,"Islands")
+
                 except blueprints.BlueprintError as e:
                     responseMsg = f"Error happened : {e}"
         else:
             responseMsg = globalInfos.NO_PERMISSION_TEXT
+
         if len(responseMsg) > globalInfos.MESSAGE_MAX_LENGTH:
             file = msgToFile(responseMsg,"infos.txt",interaction.guild)
             if file is None:
@@ -650,7 +693,74 @@ def runDiscordBot() -> None:
                 kwargs = {"file" : file}
         else:
             kwargs = {"content" : responseMsg}
+
         await interaction.response.send_message(ephemeral=True,**kwargs)
+
+    @tree.command(name="research-viewer",description="View the research tree")
+    @discord.app_commands.describe(
+        level="The level to view, starting from 1",
+        node="The node to view, starting from 1. The 'level' parameter must be set to a value",
+        public="Errors will be sent publicly if this is True! Sets if the result is sent publicly in the channel")
+    async def researchViewerCommand(interaction:discord.Interaction,level:int=0,node:int=0,public:bool=False) -> None:
+        if exitCommandWithoutResponse(interaction):
+            return
+        file = None
+        responseMsg = ""
+        if await hasPermission(PermissionLvls.PUBLIC_FEATURE if public else PermissionLvls.PRIVATE_FEATURE,interaction=interaction):
+            await interaction.response.defer(ephemeral=not public)
+            try:
+                if node != 0:
+                    if level == 0:
+                        responseMsg = "Error : 'node' parameter provided but not 'level' parameter"
+                    elif level < 1 or level > len(gameInfos.research.reserachTree):
+                        responseMsg = "Error : invalid level"
+                    else:
+                        curLevel = gameInfos.research.reserachTree[level-1]
+                        if node < 1 or node > len(curLevel.sideGoals)+1:
+                            responseMsg = "Error : invalid node"
+                        else:
+                            file, fileSize = researchViewer.renderNode(level-1,node-1)
+                            curNode = curLevel.milestone if node == 1 else curLevel.sideGoals[node-2]
+                            desc = utils.decodedFormatToDiscordFormat(utils.decodeUnityFormat(curNode.desc))
+                            desc = "\n".join(f"> {l}" for l in desc.split("\n"))
+                            if curNode.unlocks == []:
+                                unlocks = "<Nothing>"
+                            else:
+                                unlocks = ", ".join(f"`{u}`" for u in curNode.unlocks)
+                            lines = [
+                                f"- **Name** : {utils.decodedFormatToDiscordFormat(utils.decodeUnityFormat(curNode.title))}",
+                                f"- **Id** : `{curNode.id}`",
+                                f"- **Description** :\n{desc}",
+                                f"- **Goal Shape** : `{curNode.goalShape}` x{utils.sepInGroupsNumber(curNode.goalAmount)}",
+                                f"- **Unlocks** :\n> {unlocks}",
+                                f"- **Lock/Unlock commands** :",
+                                f"> ```research.set {curNode.id} 0```",
+                                f"> ```research.set {curNode.id} 1```"
+                            ]
+                            responseMsg = "\n".join(lines)
+                elif level != 0:
+                    if level < 1 or level > len(gameInfos.research.reserachTree):
+                        responseMsg = "Error : invalid level"
+                    else:
+                        file, fileSize = researchViewer.renderLevel(level-1)
+                else:
+                    file, fileSize = researchViewer.renderTree()
+            except Exception:
+                await globalLogError()
+                responseMsg = globalInfos.UNKNOWN_ERROR_TEXT
+        else:
+            await interaction.response.defer(ephemeral=True)
+            responseMsg = globalInfos.NO_PERMISSION_TEXT
+        kwargs = {}
+        if file is not None:
+            if isFileTooBig(fileSize,interaction.guild):
+                file = discord.File(globalInfos.IMAGE_FILE_TOO_BIG_PATH)
+            else:
+                file = discord.File(file,"researchTree.png")
+            kwargs["file"] = file
+        if public:
+            responseMsg = discord.utils.escape_mentions(responseMsg)
+        await interaction.followup.send(responseMsg,**kwargs)
 
     with open(globalInfos.TOKEN_PATH) as f:
         token = f.read()

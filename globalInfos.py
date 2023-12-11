@@ -32,31 +32,9 @@ INITIAL_SHAPE_SIZE = 500
 SHAPE_COLORS = ["u","r","g","b","c","p","y","w","k"]
 SHAPE_LAYER_SEPARATOR = ":"
 SHAPE_NOTHING_CHAR = "-"
-LEVEL_SHAPES = [ # different shapes between full and demo + too lazy to update every version
-    "CuCuCuCu",
-    "RuRu----",
-    "Cu------",
-    "Cu------",
-    "CuRuCuCu",
-
-    "--RuRuRu:----Cu--",
-    "CuSuCuSu",
-    "SuSuSu--:CuCuCuRu",
-    "CuCuRuRu:CbCbSbSb",
-    "CbCuCbCu:RuRbRuRb:SbSuSbSu",
-
-    "SrRbRbRb:--SrCgSr:--CuCuCu",
-    "CgRgCgCu:Sr--SrSr:CrRrCrCr:SbSuSbSb",
-    "CuRuCuCu:CcCcCcCc",
-    "RrCrRrCr:RwCwRwCw:CpCpCpCp:--Sy--Sy",
-    "CwRwCwCw:P-P-P-P-:CcCcCcCc",
-
-    "RwCbCgCr:CyCcRwCp",
-    "cwCbCgCr:CyCccwCp",
-    "CrRpcwcw:cwRbCccw:cwcwCgRy:CpcwcwRr",
-    "CwRwcrcp:ccRwCwcb:cgcyCwRw:RwcrcpCw",
-    "P-P-P-P-:SrSrP-P-:crcrcrcr:P-P-cwcw",
-]
+SHAPE_CHAR_REPLACEMENT = {
+    "m" : "p" # change magenta to purple
+}
 
 # display parameters
 SHAPES_PER_ROW = 8
@@ -68,40 +46,14 @@ VIEWER_3D_CHAR_REPLACEMENT = {
     ":" : "%3A"
 }
 
+# game infos
+GI_RESEARCH_PATH = "./gameInfos/research.json"
+GI_BUILDINGS_PATH = "./gameInfos/buildings.json"
+GI_ISLANDS_PATH = "./gameInfos/islands.json"
+
 # other
 MESSAGE_MAX_LENGTH = 2000
 DEFAULT_MAX_FILE_SIZE = 26_214_400 # 25 mebibytes
 INVALID_SHAPE_CODE_REACTION = "\u2753"
 BOT_MENTIONED_REACTION = "\U0001F916"
-BP_VERSION_REACTION_A = "\U0001f1e6"
-BP_VERSION_REACTION_DOT = "\u23fa"
-BP_VERSION_REACTION_UNITS = {str(i) : f"{i}\ufe0f\u20e3" for i in range(10)}
-BP_VERSION_REACTION_TENS = {str(i) : v for i,v in enumerate([
-    1159909533074866286,1159909535872471162,1159909537944457226,
-    1159909542193270824,1159909546735702108,1159909549323587757,
-    1159909551697576056,1159909554532913203,1159909556336468008,
-    1159909559066964110
-])}
-BP_VERSION_REACTION_TENTHS = {str(i) : v for i,v in enumerate([
-    1159909769876877352,1159909772133400707,1159909773643358228,
-    1159909775526592512,1159909784305283133,1159909786956087326,
-    1159909788130476124,1159909789741105282,1159909792106676405,
-    1159909793578877028
-])}
 IMAGE_FILE_TOO_BIG_PATH = "./imageFileTooBig.png"
-ALPHA_BP_VERSIONS = {
-    1005 : "3",
-    1008 : "4",
-    1009 : "5",
-    1013 : "6",
-    1015 : "6.2",
-    1018 : "7",
-    1019 : "7.3",
-    1022 : "7.4",
-    1024 : "8",
-    1027 : "10.2",
-    1029 : "11",
-    1030 : "12",
-    1031 : "13"
-}
-LATEST_GAME_VERSIONS = (1015,1031)

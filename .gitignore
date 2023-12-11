@@ -1,4 +1,5 @@
-__pycache__/
-token.txt
+__pycache__
 allServerSettings.json
+extractGameInfos.py
 todo.txt
+token.txt

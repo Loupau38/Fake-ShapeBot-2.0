@@ -2,6 +2,7 @@ import shapeOperations
 import shapeCodeGenerator
 import globalInfos
 import shapeViewer
+import utils
 from utils import OutputString
 import pygame
 import io
@@ -130,7 +131,9 @@ def getInstructionsFromText(text:str) -> tuple[bool,list[Instruction]|str|Output
         if OPERATIONS.get(op) is None:
             return False,OutputString("Unknown operation '",OutputString.UnsafeString(op),"'")
 
-        inputs = [i.replace("m","p") for i in inputs.split(VALUE_SEPARATOR)]
+        inputs = inputs.split(VALUE_SEPARATOR)
+        for old,new in globalInfos.SHAPE_CHAR_REPLACEMENT.items():
+            inputs = [i.replace(old,new) for i in inputs]
         outputs = outputs.split(VALUE_SEPARATOR)
         inputsInt = []
         colorInputs = []
@@ -387,10 +390,4 @@ def genOperationGraph(instructions:list[Instruction],showShapeVars:bool) -> tupl
                 graphSurface.blit(varText,(node.pos[0]+GRAPH_NODE_SIZE-varText.get_width(),
                     node.pos[1]+GRAPH_NODE_SIZE-varText.get_height()))
 
-    with io.BytesIO() as buffer:
-        pygame.image.save(graphSurface,buffer,"png")
-        bufferValue = buffer.getvalue()
-        graphImageSize = len(bufferValue)
-        graphImage = io.BytesIO(bufferValue)
-
-    return True,((graphImage,graphImageSize),shapeVarValues)
+    return True,(utils.pygameSurfToBytes(graphSurface),shapeVarValues)
