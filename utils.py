@@ -114,7 +114,7 @@ def decodedFormatToPygameSurf(decoded:list[dict[str,str|dict[str,bool|str]]],fon
     surf = pygame.Surface((sum(t.get_width() for t in texts),max(t.get_height() for t in texts)),pygame.SRCALPHA)
     curX = 0
     for text in texts:
-        surf.blit(text,(curX,0))
+        surf.blit(text,(curX,(surf.get_height()/2)-(text.get_height()/2)))
         curX += text.get_width()
     return surf
 

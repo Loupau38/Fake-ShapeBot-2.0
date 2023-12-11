@@ -10,9 +10,9 @@ NODE_COLOR = (29,54,74)
 TEXT_COLOR = (255,255,255)
 
 pygame.font.init()
-VERSION_FONT = pygame.font.SysFont("arial",10)
+VERSION_FONT = pygame.font.SysFont("arial",10,True)
 NODE_FONT = pygame.font.SysFont("arial",30)
-NODE_FONT_BOLD = pygame.font.SysFont("arial-bold",50)
+NODE_FONT_BOLD = pygame.font.SysFont("arial",30,True)
 
 SHAPE_SIZE = 100
 RECT_BORDER_RADIUS = 30
