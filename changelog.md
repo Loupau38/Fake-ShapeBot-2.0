@@ -1,6 +1,9 @@
+## 12 Dec 23
+- Update for alpha 15 demo : add version in game infos
+
 ## 11 Dec 23
 - Reintroduce changelog to better see progress on this project
-- Update for alphas : 12 demo, 13 demo, 13.5 demo, 13.6 demo, 13.7 demo, 14 demo, 14.1 demo, 14.2 demo, 14.3 demo
+- Update for alphas : 12 demo, 13 demo, 13.5 demo, 13.6 demo, 13.7 demo, 14 demo, 14.1 demo, 14.2 demo, 14.3 demo : add versions in game infos
 - Added filtered game infos for extra features and easier updating between game versions
 - Big overhaul to the blueprints module, only user visible changes should be:
   - Better error messages
