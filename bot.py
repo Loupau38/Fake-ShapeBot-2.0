@@ -243,6 +243,9 @@ def detectBPVersion(potentialBPCodes:list[str]) -> list[str|int]|None:
 
     return versions[0]
 
+def safenString(string:str) -> str:
+    return discord.utils.escape_mentions(string)
+
 ##################################################
 
 def runDiscordBot() -> None:
@@ -290,7 +293,7 @@ def runDiscordBot() -> None:
                     file, fileSize = file
                     if isFileTooBig(fileSize,message.guild):
                         file = discord.File(globalInfos.IMAGE_FILE_TOO_BIG_PATH)
-                responseMsg = discord.utils.escape_mentions(responseMsg)
+                responseMsg = safenString(responseMsg)
                 await message.channel.send(responseMsg,**({} if file is None else {"file":file}))
 
         if await hasPermission(PermissionLvls.REACTION,message=message):
@@ -601,7 +604,7 @@ def runDiscordBot() -> None:
                 file = discord.File(globalInfos.IMAGE_FILE_TOO_BIG_PATH)
             kwargs["file"] = file
         if public:
-            responseMsg = discord.utils.escape_mentions(responseMsg)
+            responseMsg = safenString(responseMsg)
         await interaction.followup.send(responseMsg,**kwargs)
 
     @tree.command(name="blueprint-info",description="Get a blueprint's version, building count and size")
@@ -759,7 +762,7 @@ def runDiscordBot() -> None:
                 file = discord.File(file,"researchTree.png")
             kwargs["file"] = file
         if public:
-            responseMsg = discord.utils.escape_mentions(responseMsg)
+            responseMsg = safenString(responseMsg)
         await interaction.followup.send(responseMsg,**kwargs)
 
     with open(globalInfos.TOKEN_PATH) as f:

@@ -1,3 +1,7 @@
+## 16 Dec 23
+- Update for alpha 15.1 demo : add version in game infos
+- Regroup the `discord.utils.escape_mentions()` used in public shape viewer, /operation-graph and /research-viewer into a `safenString()` function
+
 ## 12 Dec 23
 - Update for alpha 15 demo : add version in game infos
 
