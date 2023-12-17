@@ -22,7 +22,7 @@ class Building:
         self.tiles = tiles
         self.fromInternalVariantList = fromInternalVariantList
 
-def loadBuildings() -> tuple[dict[str,VariantList],dict[str,InternalVariantList],dict[str,Building]]:
+def _loadBuildings() -> tuple[dict[str,VariantList],dict[str,InternalVariantList],dict[str,Building]]:
 
     with open(globalInfos.GI_BUILDINGS_PATH,encoding="utf-8") as f:
         buildingsRaw = json.load(f)
@@ -49,7 +49,7 @@ def loadBuildings() -> tuple[dict[str,VariantList],dict[str,InternalVariantList]
 
     return allVariantLists, allInternalVariantLists, allBuildings
 
-allVariantLists, allInternalVariantLists, allBuildings = loadBuildings()
+allVariantLists, allInternalVariantLists, allBuildings = _loadBuildings()
 
 def getCategorizedBuildingCounts(counts:dict[str,int]) -> dict[str,dict[str,dict[str,int]]]:
 

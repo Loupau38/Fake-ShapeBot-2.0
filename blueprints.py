@@ -171,10 +171,10 @@ def _decodeBlueprintFirstPart(rawBlueprint:str) -> tuple[dict,int]:
             raise BlueprintError("Version not a number")
         majorVersion = int(majorVersion)
 
-        if codeAndSuffix[-len(SUFFIX):] != SUFFIX:
+        if not codeAndSuffix.endswith(SUFFIX):
             raise BlueprintError("Doesn't end with suffix")
 
-        encodedBP = codeAndSuffix[:-len(SUFFIX)]
+        encodedBP = codeAndSuffix.removesuffix(SUFFIX)
 
         if encodedBP == "":
             raise BlueprintError("Empty encoded section")

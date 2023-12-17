@@ -26,7 +26,7 @@ class Island:
                     area.size
                 ))
 
-def loadIslands() -> dict[str,Island]:
+def _loadIslands() -> dict[str,Island]:
 
     with open(globalInfos.GI_ISLANDS_PATH,encoding="utf-8") as f:
         islandsRaw = json.load(f)
@@ -200,4 +200,4 @@ def loadIslands() -> dict[str,Island]:
 
     return allIslands
 
-allIslands = loadIslands()
+allIslands = _loadIslands()

@@ -10,6 +10,7 @@ import operationGraph
 import utils
 import gameInfos
 import researchViewer
+import guildSettings
 
 import discord
 import json
@@ -87,25 +88,6 @@ def exitCommandWithoutResponse(interaction:discord.Interaction) -> bool:
 
     return False
 
-async def setAllServerSettings(guildId:int,property:str,value) -> None:
-
-    if allServerSettings.get(guildId) is None:
-        allServerSettings[guildId] = {}
-    allServerSettings[guildId][property] = value
-
-    with open(globalInfos.ALL_SERVER_SETTINGS_PATH,"w",encoding="utf-8") as f:
-        json.dump(allServerSettings,f)
-
-async def getAllServerSettings(guildId:int,property:str):
-
-    if (allServerSettings.get(guildId) is None) or (allServerSettings[guildId].get(property) is None):
-        defaultValue = globalInfos.SERVER_SETTINGS_DEFAULTS.get(property)
-        if type(defaultValue) in (list,dict):
-            defaultValue = defaultValue.copy()
-        await setAllServerSettings(guildId,property,defaultValue)
-
-    return allServerSettings[guildId][property]
-
 class PermissionLvls:
 
     PUBLIC_FEATURE = 0
@@ -157,11 +139,13 @@ async def hasPermission(requestedLvl:int,*,message:discord.Message|None=None,int
     if guildId is None:
         return requestedLvl < PermissionLvls.ADMIN
 
+    curGuildSettings = await guildSettings.getGuildSettings(guildId)
+
     if adminPerm:
         isAdmin = True
     else:
         isAdmin = False
-        adminRoles = await getAllServerSettings(guildId,"adminRoles")
+        adminRoles = curGuildSettings["adminRoles"]
         for role in userRoles:
             if role.id in adminRoles:
                 isAdmin = True
@@ -176,7 +160,7 @@ async def hasPermission(requestedLvl:int,*,message:discord.Message|None=None,int
     if requestedLvl == PermissionLvls.PRIVATE_FEATURE:
         return True
 
-    if await getAllServerSettings(guildId,"paused"):
+    if curGuildSettings["paused"]:
         return False
 
     if requestedLvl == PermissionLvls.REACTION:
@@ -184,14 +168,14 @@ async def hasPermission(requestedLvl:int,*,message:discord.Message|None=None,int
 
     # requestedLvl = public feature
 
-    if await getAllServerSettings(guildId,"restrictToChannel") not in (None,channelId):
+    if curGuildSettings["restrictToChannel"] not in (None,channelId):
         return False
 
-    restrictToRoles = await getAllServerSettings(guildId,"restrictToRoles")
+    restrictToRoles = curGuildSettings["restrictToRoles"]
     if restrictToRoles == []:
         return True
 
-    restrictToRolesInverted = await getAllServerSettings(guildId,"restrictToRolesInverted")
+    restrictToRolesInverted = curGuildSettings["restrictToRolesInverted"]
     for role in userRoles:
         roleInRestrictToRoles = role.id in restrictToRoles
         if restrictToRolesInverted and (not roleInRestrictToRoles):
@@ -250,31 +234,21 @@ def safenString(string:str) -> str:
 
 def runDiscordBot() -> None:
 
-    global client
+    global client, msgCommandMessages
+
     client = discord.Client(intents=discord.Intents.all(),activity=discord.Game("shapez 2"))
     tree = discord.app_commands.CommandTree(client)
 
+    shapeViewer.preRenderQuadrants()
+
+    with open(globalInfos.MSG_COMMAND_MESSAGES_PATH,encoding="utf-8") as f:
+        msgCommandMessages = json.load(f)
+
     @client.event
     async def on_ready() -> None:
-        global allServerSettings, executedOnReady
+        global executedOnReady
         if not executedOnReady:
-
             await tree.sync()
-
-            try:
-                with open(globalInfos.ALL_SERVER_SETTINGS_PATH,encoding="utf-8") as f:
-                    allServerSettings = json.load(f)
-            except FileNotFoundError:
-                allServerSettings = {}
-                with open(globalInfos.ALL_SERVER_SETTINGS_PATH,"w",encoding="utf-8") as f:
-                    json.dump(allServerSettings,f)
-            newAllServerSettings = {}
-            for k,v in allServerSettings.items():
-                newAllServerSettings[int(k)] = v
-            allServerSettings = newAllServerSettings
-
-            shapeViewer.preRenderQuadrants()
-
             print(f"{client.user} is now running")
             executedOnReady = True
 
@@ -319,39 +293,45 @@ def runDiscordBot() -> None:
         SINGLE_CHANNEL = "singleChannel"
         ROLE_LIST = "roleList"
 
-    def registerAdminCommand(type_:str,cmdName:str,serverSettingsKey:str,cmdDesc:str="") -> None:
+    def registerAdminCommand(type_:str,cmdName:str,guildSettingsKey:str,cmdDesc:str="") -> None:
 
         if type_ == RegisterCommandType.SINGLE_CHANNEL:
 
             @tree.command(name=cmdName,description=cmdDesc)
             @discord.app_commands.describe(channel="The channel. Don't provide this parameter to clear it")
-            async def generatedCommand(interaction:discord.Interaction,channel:discord.TextChannel|discord.Thread=None) -> None:
+            async def generatedCommand(interaction:discord.Interaction,channel:discord.TextChannel|discord.Thread|None=None) -> None:
                 if exitCommandWithoutResponse(interaction):
                     return
                 if await hasPermission(PermissionLvls.ADMIN,interaction=interaction):
                     if channel is None:
-                        await setAllServerSettings(interaction.guild_id,serverSettingsKey,None)
-                        responseMsg = f"'{serverSettingsKey}' parameter cleared"
+                        setParamTo = None
+                        responseMsgEnd = "cleared"
                     else:
-                        await setAllServerSettings(interaction.guild_id,serverSettingsKey,channel.id)
-                        responseMsg = f"'{serverSettingsKey}' parameter set to {channel.mention}"
+                        setParamTo = channel.id
+                        responseMsgEnd = f"set to {channel.mention}"
+                    await guildSettings.setGuildSetting(interaction.guild_id,guildSettingsKey,setParamTo)
+                    responseMsg = f"'{guildSettingsKey}' parameter {responseMsgEnd}"
                 else:
                     responseMsg = globalInfos.NO_PERMISSION_TEXT
                 await interaction.response.send_message(responseMsg,ephemeral=True)
 
         elif type_ == RegisterCommandType.ROLE_LIST:
 
-            @tree.command(name=cmdName,description=f"{globalInfos.ADMIN_ONLY_BADGE} modifys the '{serverSettingsKey}' list")
+            @tree.command(name=cmdName,description=f"{globalInfos.ADMIN_ONLY_BADGE} modifys the '{guildSettingsKey}' list")
             @discord.app_commands.describe(role="Only provide this if using 'add' or 'remove' subcommand")
             async def generatedCommand(interaction:discord.Interaction,
-                operation:typing.Literal["add","remove","view","clear"],role:discord.Role=None) -> None:
+                operation:typing.Literal["add","remove","view","clear"],role:discord.Role|None=None) -> None:
                 if exitCommandWithoutResponse(interaction):
                     return
                 if await hasPermission(PermissionLvls.ADMIN,interaction=interaction):
 
-                    if operation == "add":
+                    roleList = (await guildSettings.getGuildSettings(interaction.guild_id))[guildSettingsKey]
 
-                        roleList = await getAllServerSettings(interaction.guild_id,serverSettingsKey)
+                    if (operation in ("add","remove")) and (role is None):
+                        responseMsg = "A role must be provided when using the 'add' or 'remove' subcommand"
+
+                    elif operation == "add":
+
                         if len(roleList) >= globalInfos.MAX_ROLES_PER_LIST:
                             responseMsg = f"Can't have more than {globalInfos.MAX_ROLES_PER_LIST} roles per list"
                         else:
@@ -359,22 +339,20 @@ def runDiscordBot() -> None:
                                 responseMsg = f"{role.mention} is already in the list"
                             else:
                                 roleList.append(role.id)
-                                await setAllServerSettings(interaction.guild_id,serverSettingsKey,roleList)
-                                responseMsg = f"Added {role.mention} to the '{serverSettingsKey}' list"
+                                await guildSettings.setGuildSetting(interaction.guild_id,guildSettingsKey,roleList)
+                                responseMsg = f"Added {role.mention} to the '{guildSettingsKey}' list"
 
                     elif operation == "remove":
 
-                        roleList = await getAllServerSettings(interaction.guild_id,serverSettingsKey)
                         if role.id in roleList:
                             roleList.remove(role.id)
-                            await setAllServerSettings(interaction.guild_id,serverSettingsKey,roleList)
-                            responseMsg = f"Removed {role.mention} from the '{serverSettingsKey}' list"
+                            await guildSettings.setGuildSetting(interaction.guild_id,guildSettingsKey,roleList)
+                            responseMsg = f"Removed {role.mention} from the '{guildSettingsKey}' list"
                         else:
                             responseMsg = "Role is not present in the list"
 
                     elif operation == "view":
 
-                        roleList = await getAllServerSettings(interaction.guild_id,serverSettingsKey)
                         roleList = [interaction.guild.get_role(r) for r in roleList]
                         if roleList== []:
                             responseMsg = "Empty list"
@@ -383,8 +361,8 @@ def runDiscordBot() -> None:
 
                     elif operation == "clear":
 
-                        await setAllServerSettings(interaction.guild_id,serverSettingsKey,[])
-                        responseMsg = f"'{serverSettingsKey}' list cleared"
+                        await guildSettings.setGuildSetting(interaction.guild_id,guildSettingsKey,[])
+                        responseMsg = f"'{guildSettingsKey}' list cleared"
 
                     else:
                         responseMsg = "Unknown operation"
@@ -431,7 +409,7 @@ def runDiscordBot() -> None:
         if exitCommandWithoutResponse(interaction):
             return
         if await hasPermission(PermissionLvls.ADMIN,interaction=interaction):
-            await setAllServerSettings(interaction.guild_id,"paused",True)
+            await guildSettings.setGuildSetting(interaction.guild_id,"paused",True)
             responseMsg = "Bot is now paused on this server"
         else:
             responseMsg = globalInfos.NO_PERMISSION_TEXT
@@ -442,7 +420,7 @@ def runDiscordBot() -> None:
         if exitCommandWithoutResponse(interaction):
             return
         if await hasPermission(PermissionLvls.ADMIN,interaction=interaction):
-            await setAllServerSettings(interaction.guild_id,"paused",False)
+            await guildSettings.setGuildSetting(interaction.guild_id,"paused",False)
             responseMsg = "Bot is now unpaused on this server"
         else:
             responseMsg = globalInfos.NO_PERMISSION_TEXT
@@ -463,7 +441,7 @@ def runDiscordBot() -> None:
         if exitCommandWithoutResponse(interaction):
             return
         if await hasPermission(PermissionLvls.ADMIN,interaction=interaction):
-            await setAllServerSettings(interaction.guild_id,"restrictToRolesInverted",inverted)
+            await guildSettings.setGuildSetting(interaction.guild_id,"restrictToRolesInverted",inverted)
             responseMsg = f"'restrictToRolesInverted' parameter has been set to {inverted}"
         else:
             responseMsg = globalInfos.NO_PERMISSION_TEXT
@@ -765,9 +743,24 @@ def runDiscordBot() -> None:
             responseMsg = safenString(responseMsg)
         await interaction.followup.send(responseMsg,**kwargs)
 
+    @tree.command(name="msg",description="Public by default ! A command for shortcuts to messages")
+    @discord.app_commands.describe(msg="The message id",public="Wether to send the message publicly or not")
+    @discord.app_commands.choices(msg=[discord.app_commands.Choice(name=id,value=id) for id in msgCommandMessages.keys()])
+    async def msgCommand(interaction:discord.Interaction,msg:discord.app_commands.Choice[str],public:bool=True) -> None:
+        if exitCommandWithoutResponse(interaction):
+            return
+        if await hasPermission(PermissionLvls.PUBLIC_FEATURE if public else PermissionLvls.PRIVATE_FEATURE,interaction=interaction):
+            responseMsg = msgCommandMessages[msg.value]
+            ephemeral = not public
+        else:
+            responseMsg = globalInfos.NO_PERMISSION_TEXT
+            ephemeral = True
+        await interaction.response.send_message(responseMsg,ephemeral=ephemeral)
+
     with open(globalInfos.TOKEN_PATH) as f:
         token = f.read()
     client.run(token)
 
 executedOnReady = False
 globalPaused = False
+msgCommandMessages:dict[str,str]

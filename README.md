@@ -63,6 +63,8 @@ Note : shapes with more than 4 layers and/or with more/less than 4 quadrants per
 
 ## Slash commands
 
+Note : as a general rule, slash commands will always send private responses except if specified in the command's description or in a parameter
+
 ### Public commands :
 
 - /view-shapes [message] : Will trigger the shape viewer like a regular message but will send the response back only to you and will also include any error messages
@@ -76,6 +78,8 @@ Note : shapes with more than 4 layers and/or with more/less than 4 quadrants per
 - /blueprint-info [blueprint] [advanced=False] [blueprint_file=None] : Will give the version, type, building count, island count, building scale and island scale size of the given blueprint. If 'advanced' is set to True, will also give the individual counts for every building and islands. If the blueprint code is too big to be pasted, provide a file containing it in the 'blueprint_file' parameter and fill in the 'blueprint' parameter with dummy character(s)
 
 - /research-viewer [level=0] [node=0] [public=False] : Without the 'level' or 'node' parameters set, displays the entire research tree. With the 'level' parameter set to a number starting from 1, displays the corresponding level (milestone + side goals). With the 'level' and 'node' parameter set to a number starting from 1, displays the corresponding node of the corresponding level (1 for the milestone then starting from 2 for the side goals). If 'public' is set to true, the result will be sent publicly in the channel the command was executed in. Error messages will also be sent publicly if this parameter is set to true. When viewing a single node, will display via text the node's name, id, description, goal shape, goal amount, unlocks, lock/unlock commands. Note : the version of the research tree is included in the bottom left of the images created by this command
+
+- /msg [msg] [public=True] : A command for shortcuts to messages. Enter the message id in the 'msg' parameter. The 'public' parameter will determine if the message will be sent publicly in the channel the command was executed in or not ('True' by default !)
 
 ### Admin commands :
 
@@ -114,4 +118,4 @@ Note : shapes with more than 4 layers and/or with more/less than 4 quadrants per
 ## Small additional features :
 
 - If the bot is mentioned, it should react with `:robot:`
-- If one (and only one) blueprint code is detected in a message and its attached files, the bot will react with the alpha version of that blueprint
+- If one (and only one) blueprint code is detected in a message and its attached files, the bot will react with the version of that blueprint

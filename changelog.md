@@ -1,3 +1,15 @@
+## 17 Dec 23
+- Add /msg command with disambiguation screenshot message
+- Overhaul server settings system :
+  - Rename general term 'server settings' to 'guild settings' to better match discord's internal naming
+  - Move guild settings handling to its own module
+  - Fix not having a check in role list admin commands to verify that a role has been passed when using the 'add' or 'remove' subcommands
+- Use (prettier) builtin methods in blueprint decoding code
+- Move some code out of the `on_ready()` event
+- Add note in readme for slash commands response type
+- Make game infos load functions private
+- Fix readme saying the bot will only react with alpha versions of blueprints (post-alpha versions support is planned)
+
 ## 16 Dec 23
 - Update for alpha 15.1 demo : add version in game infos
 - Regroup the `discord.utils.escape_mentions()` used in public shape viewer, /operation-graph and /research-viewer into a `safenString()` function

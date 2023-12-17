@@ -15,7 +15,7 @@ class Level:
         self.milestone = milestone
         self.sideGoals = sideGoals
 
-def loadResearchTree() -> tuple[list[Level],str]:
+def _loadResearchTree() -> tuple[list[Level],str]:
 
     with open(globalInfos.GI_RESEARCH_PATH,encoding="utf-8") as f:
         researchRaw = json.load(f)
@@ -32,4 +32,4 @@ def loadResearchTree() -> tuple[list[Level],str]:
 
     return reserachTree, treeVersion
 
-reserachTree, treeVersion = loadResearchTree()
+reserachTree, treeVersion = _loadResearchTree()
