@@ -24,7 +24,7 @@ async def globalLogMessage(message:str) -> None:
         print(message)
     else:
         logChannel = client.get_channel(globalInfos.GLOBAL_LOG_CHANNEL)
-        await logChannel.send(message)
+        await logChannel.send(f"```{message}```")
 
 async def globalLogError() -> None:
     await globalLogMessage(("".join(traceback.format_exception(*sys.exc_info())))[:-1])
@@ -289,6 +289,15 @@ def runDiscordBot() -> None:
                         reaction = client.get_emoji(reaction)
                     await message.add_reaction(reaction)
 
+    @tree.error
+    async def on_error(interaction:discord.Interaction,error:discord.app_commands.AppCommandError) -> None:
+        await globalLogError()
+        responseMsg = globalInfos.UNKNOWN_ERROR_TEXT
+        if interaction.response.is_done():
+            await interaction.followup.send(responseMsg)
+        else:
+            await interaction.response.send_message(responseMsg,ephemeral=True)
+
     class RegisterCommandType:
         SINGLE_CHANNEL = "singleChannel"
         ROLE_LIST = "roleList"
@@ -473,6 +482,7 @@ def runDiscordBot() -> None:
     async def changeBlueprintVersionCommand(interaction:discord.Interaction,blueprint:str,version:int,blueprint_file:discord.Attachment|None=None) -> None:
         if exitCommandWithoutResponse(interaction):
             return
+        noErrors = False
         if await hasPermission(PermissionLvls.PRIVATE_FEATURE,interaction=interaction):
             if blueprint_file is None:
                 toProcessBlueprint = blueprint
@@ -483,6 +493,7 @@ def runDiscordBot() -> None:
             else:
                 try:
                     responseMsg = blueprints.changeBlueprintVersion(toProcessBlueprint,version)
+                    noErrors = True
                 except blueprints.BlueprintError as e:
                     responseMsg = f"Error happened : {e}"
         else:
@@ -494,7 +505,9 @@ def runDiscordBot() -> None:
             else:
                 kwargs = {"file" : file}
         else:
-            kwargs = {"content" : f"```{responseMsg}```"}
+            if noErrors:
+                responseMsg = f"```{responseMsg}```"
+            kwargs = {"content" : responseMsg}
         await interaction.response.send_message(ephemeral=True,**kwargs)
 
     @tree.command(name="member-count",description="Display the number of members in this server")
@@ -550,26 +563,21 @@ def runDiscordBot() -> None:
         hasErrors = False # unused but kept just in case
         if await hasPermission(PermissionLvls.PUBLIC_FEATURE if public else PermissionLvls.PRIVATE_FEATURE,interaction=interaction):
             await interaction.response.defer(ephemeral=not public)
-            try:
-                valid, instructionsOrError = operationGraph.getInstructionsFromText(instructions)
+            valid, instructionsOrError = operationGraph.getInstructionsFromText(instructions)
+            if valid:
+                valid, responseOrError = operationGraph.genOperationGraph(instructionsOrError,see_shape_vars)
                 if valid:
-                    valid, responseOrError = operationGraph.genOperationGraph(instructionsOrError,see_shape_vars)
-                    if valid:
-                        (image, imageSize), shapeVarValues = responseOrError
-                        file = discord.File(image,"graph.png")
-                        if see_shape_vars:
-                            responseMsg = "\n".join(f"- {k} : {{{v}}}" for k,v in shapeVarValues.items())
-                        else:
-                            responseMsg = ""
+                    (image, imageSize), shapeVarValues = responseOrError
+                    file = discord.File(image,"graph.png")
+                    if see_shape_vars:
+                        responseMsg = "\n".join(f"- {k} : {{{v}}}" for k,v in shapeVarValues.items())
                     else:
-                        responseMsg = responseOrError
-                        hasErrors = True
+                        responseMsg = ""
                 else:
-                    responseMsg = instructionsOrError
+                    responseMsg = responseOrError
                     hasErrors = True
-            except Exception:
-                await globalLogError()
-                responseMsg = globalInfos.UNKNOWN_ERROR_TEXT
+            else:
+                responseMsg = instructionsOrError
                 hasErrors = True
         else:
             await interaction.response.defer(ephemeral=True)
@@ -689,46 +697,42 @@ def runDiscordBot() -> None:
         responseMsg = ""
         if await hasPermission(PermissionLvls.PUBLIC_FEATURE if public else PermissionLvls.PRIVATE_FEATURE,interaction=interaction):
             await interaction.response.defer(ephemeral=not public)
-            try:
-                if node != 0:
-                    if level == 0:
-                        responseMsg = "Error : 'node' parameter provided but not 'level' parameter"
-                    elif level < 1 or level > len(gameInfos.research.reserachTree):
-                        responseMsg = "Error : invalid level"
-                    else:
-                        curLevel = gameInfos.research.reserachTree[level-1]
-                        if node < 1 or node > len(curLevel.sideGoals)+1:
-                            responseMsg = "Error : invalid node"
-                        else:
-                            file, fileSize = researchViewer.renderNode(level-1,node-1)
-                            curNode = curLevel.milestone if node == 1 else curLevel.sideGoals[node-2]
-                            desc = utils.decodedFormatToDiscordFormat(utils.decodeUnityFormat(curNode.desc))
-                            desc = "\n".join(f"> {l}" for l in desc.split("\n"))
-                            if curNode.unlocks == []:
-                                unlocks = "<Nothing>"
-                            else:
-                                unlocks = ", ".join(f"`{u}`" for u in curNode.unlocks)
-                            lines = [
-                                f"- **Name** : {utils.decodedFormatToDiscordFormat(utils.decodeUnityFormat(curNode.title))}",
-                                f"- **Id** : `{curNode.id}`",
-                                f"- **Description** :\n{desc}",
-                                f"- **Goal Shape** : `{curNode.goalShape}` x{utils.sepInGroupsNumber(curNode.goalAmount)}",
-                                f"- **Unlocks** :\n> {unlocks}",
-                                f"- **Lock/Unlock commands** :",
-                                f"> ```research.set {curNode.id} 0```",
-                                f"> ```research.set {curNode.id} 1```"
-                            ]
-                            responseMsg = "\n".join(lines)
-                elif level != 0:
-                    if level < 1 or level > len(gameInfos.research.reserachTree):
-                        responseMsg = "Error : invalid level"
-                    else:
-                        file, fileSize = researchViewer.renderLevel(level-1)
+            if node != 0:
+                if level == 0:
+                    responseMsg = "Error : 'node' parameter provided but not 'level' parameter"
+                elif level < 1 or level > len(gameInfos.research.reserachTree):
+                    responseMsg = "Error : invalid level"
                 else:
-                    file, fileSize = researchViewer.renderTree()
-            except Exception:
-                await globalLogError()
-                responseMsg = globalInfos.UNKNOWN_ERROR_TEXT
+                    curLevel = gameInfos.research.reserachTree[level-1]
+                    if node < 1 or node > len(curLevel.sideGoals)+1:
+                        responseMsg = "Error : invalid node"
+                    else:
+                        file, fileSize = researchViewer.renderNode(level-1,node-1)
+                        curNode = curLevel.milestone if node == 1 else curLevel.sideGoals[node-2]
+                        desc = utils.decodedFormatToDiscordFormat(utils.decodeUnityFormat(curNode.desc))
+                        desc = "\n".join(f"> {l}" for l in desc.split("\n"))
+                        if curNode.unlocks == []:
+                            unlocks = "<Nothing>"
+                        else:
+                            unlocks = ", ".join(f"`{u}`" for u in curNode.unlocks)
+                        lines = [
+                            f"- **Name** : {utils.decodedFormatToDiscordFormat(utils.decodeUnityFormat(curNode.title))}",
+                            f"- **Id** : `{curNode.id}`",
+                            f"- **Description** :\n{desc}",
+                            f"- **Goal Shape** : `{curNode.goalShape}` x{utils.sepInGroupsNumber(curNode.goalAmount)}",
+                            f"- **Unlocks** :\n> {unlocks}",
+                            f"- **Lock/Unlock commands** :",
+                            f"> ```research.set {curNode.id} 0```",
+                            f"> ```research.set {curNode.id} 1```"
+                        ]
+                        responseMsg = "\n".join(lines)
+            elif level != 0:
+                if level < 1 or level > len(gameInfos.research.reserachTree):
+                    responseMsg = "Error : invalid level"
+                else:
+                    file, fileSize = researchViewer.renderLevel(level-1)
+            else:
+                file, fileSize = researchViewer.renderTree()
         else:
             await interaction.response.defer(ephemeral=True)
             responseMsg = globalInfos.NO_PERMISSION_TEXT

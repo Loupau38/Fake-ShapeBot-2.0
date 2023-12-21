@@ -1,5 +1,5 @@
 {
-    "GameVersion": "0.0.0-alpha13",
+    "GameVersion": "0.0.0-alpha15.2",
     "Levels": [
         {
             "Node": {
@@ -51,42 +51,27 @@
         },
         {
             "Node": {
-                "Id": "RNSplittersMergers",
-                "Title": "Merge & Split Belts",
-                "Description": "Allows splitting & merging TWO belts. Drag over an existing belt to create a splitter / merger.",
+                "Id": "RNLayer2",
+                "Title": "2nd Floor",
+                "Description": "Unlocks the second floor, allowing you to route belts efficiently.",
                 "GoalShape": "Cu------",
                 "GoalAmount": 40,
                 "Unlocks": [
-                    "Splitter1To2Variant",
-                    "SplitterTShapeVariant",
-                    "Merger2To1Variant",
-                    "MergerTShapeVariant"
+                    "Lift1LayerVariant",
+                    "[[research.RULayer2.title]]"
                 ]
             },
-            "SideGoals": [
-                {
-                    "Id": "RNFullCutter",
-                    "Title": "Cutter",
-                    "Description": "Separates the <color=#FFA036>WEST HALF</color> of any shape from the <color=#FFA036>EAST HALF</color>, and outputs both separately.",
-                    "GoalShape": "Ru------",
-                    "GoalAmount": 60,
-                    "Unlocks": [
-                        "CutterDefaultVariant"
-                    ]
-                }
-            ]
+            "SideGoals": []
         },
         {
             "Node": {
-                "Id": "RNStackerAndLayer2",
-                "Title": "Stacker + Floor 2",
-                "Description": "Unlocks the stacker and Floor 2, allowing to combine/staple shapes.",
-                "GoalShape": "Cu------",
-                "GoalAmount": 300,
+                "Id": "RNStacker",
+                "Title": "Stacker",
+                "Description": "Unlocks the Stacker, allowing shapes to be stacked/combined.",
+                "GoalShape": "Ru------",
+                "GoalAmount": 60,
                 "Unlocks": [
-                    "Lift1LayerVariant",
-                    "StackerDefaultVariant",
-                    "[[research.RULayer2.title]]"
+                    "StackerDefaultVariant"
                 ]
             },
             "SideGoals": [
@@ -119,6 +104,16 @@
                     "Unlocks": [
                         "RotatorOneQuadCCWVariant"
                     ]
+                },
+                {
+                    "Id": "RNFullCutter",
+                    "Title": "Cutter",
+                    "Description": "Separates the <color=#FFA036>WEST HALF</color> of any shape from the <color=#FFA036>EAST HALF</color>, and outputs both separately.",
+                    "GoalShape": "Ru--Cu--:Cu------",
+                    "GoalAmount": 250,
+                    "Unlocks": [
+                        "CutterDefaultVariant"
+                    ]
                 }
             ]
         },
@@ -126,7 +121,7 @@
             "Node": {
                 "Id": "RNBlueprints",
                 "Title": "Blueprints",
-                "Description": "Allows to copy/paste parts of your factory.",
+                "Description": "Allows you to copy/paste parts of your factory.",
                 "GoalShape": "CuRuCuCu",
                 "GoalAmount": 240,
                 "Unlocks": [
@@ -157,7 +152,7 @@
                 {
                     "Id": "RNBlueprintEfficiency1",
                     "Title": "Blueprint Discount <b>1</b>",
-                    "Description": "Makes Blueprints free up to a certain amount of buildings.",
+                    "Description": "Makes Blueprints free up to a certain amount of structures.",
                     "GoalShape": "CuRuCuCu",
                     "GoalAmount": 3200,
                     "Unlocks": []
@@ -168,7 +163,7 @@
             "Node": {
                 "Id": "RNIslandBuilding",
                 "Title": "Space Platforms",
-                "Description": "Allows placing new space platforms to expand your factory.",
+                "Description": "Allows new space platforms to be built, expanding your factory.",
                 "GoalShape": "--RuRuRu:----Cu--",
                 "GoalAmount": 800,
                 "Unlocks": [
@@ -180,7 +175,9 @@
                     "Layout_HyperBelt",
                     "Layout_1_Forward",
                     "Layout_1_LeftTurn",
-                    "Layout_1_RightTurn"
+                    "Layout_1_RightTurn",
+                    "LayoutTunnelEntrance",
+                    "LayoutTunnelExit"
                 ]
             },
             "SideGoals": [
@@ -225,16 +222,6 @@
             },
             "SideGoals": [
                 {
-                    "Id": "RNMerger3Way",
-                    "Title": "3-Way Merger",
-                    "Description": "Combines three belts into one.",
-                    "GoalShape": "SuRuRuSu",
-                    "GoalAmount": 800,
-                    "Unlocks": [
-                        "Merger3To1Variant"
-                    ]
-                },
-                {
                     "Id": "RSStackingSpeed2",
                     "Title": "Stacking Speed <b>2</b>",
                     "Description": "Increases stacking speed by additive 50 %.",
@@ -253,17 +240,6 @@
                     "Unlocks": [
                         "RotatorHalfVariant"
                     ]
-                },
-                {
-                    "Id": "RNTunnels",
-                    "Title": "Space Tunnels",
-                    "Description": "Makes Space Belts use Tunnels, allowing them to spend less of your limit and go under platforms.",
-                    "GoalShape": "CuSuCuSu",
-                    "GoalAmount": 4800,
-                    "Unlocks": [
-                        "LayoutTunnelEntrance",
-                        "LayoutTunnelExit"
-                    ]
                 }
             ]
         },
@@ -271,7 +247,7 @@
             "Node": {
                 "Id": "RNFluids",
                 "Title": "Fluids & Painting",
-                "Description": "Allows to extract fluids & color shapes.",
+                "Description": "Allows you to extract fluids & color shapes.",
                 "GoalShape": "SuSuSu--:CuCuCuRu",
                 "GoalAmount": 2000,
                 "Unlocks": [
@@ -286,7 +262,7 @@
                 {
                     "Id": "RNFluidPacking",
                     "Title": "Fluid Packing",
-                    "Description": "Allows to package fluids to transport them between space stations as well as trains.",
+                    "Description": "Packages fluids, allowing them to be transported between space platforms as well as trains.",
                     "GoalShape": "----Rb--",
                     "GoalAmount": 1400,
                     "Unlocks": [
@@ -358,7 +334,7 @@
                 {
                     "Id": "RSPumpAndPackingSpeed1",
                     "Title": "Pump & Packing Speed <b>1</b>",
-                    "Description": "Increases fluid packing & extraction speed by additive 50 %.",
+                    "Description": "Increases fluid packing & pump speed by additive 50 %.",
                     "GoalShape": "CuSuCbSb:----CuSu",
                     "GoalAmount": 4000,
                     "Unlocks": [
@@ -368,7 +344,7 @@
                 {
                     "Id": "RNBlueprintEfficiency2",
                     "Title": "Blueprint Discount <b>2</b>",
-                    "Description": "Makes Blueprints free up to a certain amount of buildings.",
+                    "Description": "Makes Blueprints free up to a certain amount of structures.",
                     "GoalShape": "CuRuCuCu:CbCbCbCb",
                     "GoalAmount": 12000,
                     "Unlocks": []
@@ -379,7 +355,7 @@
             "Node": {
                 "Id": "RNTrains",
                 "Title": "Trains",
-                "Description": "Allows to transport massive amounts of shapes over long distances.",
+                "Description": "Allows massive amounts of shapes to be transported over long distance.",
                 "GoalShape": "CbCuCbCu:RuRbRuRb:SbSuSbSu",
                 "GoalAmount": 4000,
                 "Unlocks": [
@@ -422,7 +398,7 @@
                 {
                     "Id": "RNLabel",
                     "Title": "Label",
-                    "Description": "<color=#FF2C63>This content is work in progress and might get reworked at any time. Please give feedback in the shapez 2 discord!</color>\n\nShows a decorative text.",
+                    "Description": "<color=#FF2C63>This content is work in progress and might get reworked at any time. Please give feedback in the shapez 2 discord!</color>\n\nDisplays a descriptive text.",
                     "GoalShape": "CuCu----:SuSuSuSu:CuCu----",
                     "GoalAmount": 18000,
                     "Unlocks": [
@@ -507,7 +483,7 @@
                 {
                     "Id": "RSPumpAndPackingSpeed2",
                     "Title": "Pump & Packing Speed <b>2</b>",
-                    "Description": "Increases fluid packing & extraction speed by additive 50 %.",
+                    "Description": "Increases fluid packing & pump speed by additive 50 %.",
                     "GoalShape": "RuRuRuRu:Sp----Sp:CpCpCpCp:--CuCu--",
                     "GoalAmount": 60000,
                     "Unlocks": [
@@ -530,7 +506,7 @@
             "Node": {
                 "Id": "RNBlueprintEfficiency3",
                 "Title": "Blueprint Discount <b>3</b>",
-                "Description": "Makes Blueprints free up to a certain amount of buildings.",
+                "Description": "Makes Blueprints free up to a certain amount of structures.",
                 "GoalShape": "CuRuCuCu:CcCcCcCc",
                 "GoalAmount": 90000,
                 "Unlocks": []
@@ -607,7 +583,7 @@
                 {
                     "Id": "RSPumpAndPackingSpeed3",
                     "Title": "Pump & Packing Speed <b>3</b>",
-                    "Description": "Increases fluid packing & extraction speed by additive 50 %.",
+                    "Description": "Increases fluid packing & pump speed by additive 50 %.",
                     "GoalShape": "CrRgCbCw",
                     "GoalAmount": 240000,
                     "Unlocks": [
@@ -628,7 +604,7 @@
             "Node": {
                 "Id": "RNBlueprintEfficiency4",
                 "Title": "Blueprint Discount <b>4</b>",
-                "Description": "Makes Blueprints free up to a certain amount of buildings.",
+                "Description": "Makes Blueprints free up to a certain amount of structures.",
                 "GoalShape": "CwRwCwCw:P-P-P-P-:CcCcCcCc",
                 "GoalAmount": 180000,
                 "Unlocks": []
@@ -668,7 +644,7 @@
             "Node": {
                 "Id": "RNCrystals",
                 "Title": "Crystals",
-                "Description": "Allows to crystallize fluids.",
+                "Description": "Allows fluids to be crystallized inside empty shape quarters.",
                 "GoalShape": "RwCbCgCr:CyCcRwCp",
                 "GoalAmount": 240000,
                 "Unlocks": [
@@ -679,7 +655,7 @@
                 {
                     "Id": "RNBeltReader",
                     "Title": "Belt Reader",
-                    "Description": "<color=#FF2C63>This content is work in progress and might get reworked at any time. Please give feedback in the shapez 2 discord!</color>\n\nAllows to measure belt speed.",
+                    "Description": "<color=#FF2C63>This content is work in progress and might get reworked at any time. Please give feedback in the shapez 2 discord!</color>\n\nDetects and displays belt speed.",
                     "GoalShape": "Rucgcgcg:RuCucgCu",
                     "GoalAmount": 160000,
                     "Unlocks": [
@@ -727,7 +703,7 @@
                 {
                     "Id": "RNBlueprintEfficiency5",
                     "Title": "Blueprint Discount <b>5</b>",
-                    "Description": "Makes Blueprints free up to a certain amount of buildings.",
+                    "Description": "Makes Blueprints free up to a certain amount of structures.",
                     "GoalShape": "cwRwcwcw:P-P-P-P-:CcCcCcCc",
                     "GoalAmount": 320000,
                     "Unlocks": []

@@ -50,6 +50,8 @@ class GraphNode:
         self.layer = None
         self.pos = None
 
+class _GraphNodeLoopError(Exception): ...
+
 INSTRUCTION_SEPARATOR = ";"
 DEFINITION_SEPARATOR = "="
 VALUE_SEPARATOR = ","
@@ -297,6 +299,8 @@ def genOperationGraph(instructions:list[Instruction],showShapeVars:bool) -> tupl
             if graphNodes[inputNodeId].type == GraphNode.SHAPE:
                 connectedInput = inputNodeId
             else:
+                if graphNodes[inputNodeId].outputs == []:
+                    raise _GraphNodeLoopError
                 for output in graphNodes[inputNodeId].outputs:
                     if graphNodes[output].shapeVar == input:
                         connectedInput = output
@@ -335,6 +339,8 @@ def genOperationGraph(instructions:list[Instruction],showShapeVars:bool) -> tupl
         return False,OutputString("Error happened in instruction ",OutputString.Number(wasProcessingInstructionIndex,True)," : ",str(e))
     except RecursionError:
         return False,f"Too many connected instructions"
+    except _GraphNodeLoopError:
+        return False,f"Error : loop in graph nodes"
 
     def getNodeLayer(node:GraphNode) -> int:
         if node.layer is None:

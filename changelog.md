@@ -1,3 +1,10 @@
+## 21 Dec 23
+- Update for alpha 15.2 : add version, update buildings and research in game infos
+- Use code block for in-discord logged error messages
+- Implement unknown error handling working for every command
+- Potentially fix unknonw error when having a loop in the nodes of a /operation-graph graph
+- Fix /change-blueprint-version command returning error messages in code blocks
+
 ## 17 Dec 23
 - Add /msg command with disambiguation screenshot message
 - Overhaul server settings system :

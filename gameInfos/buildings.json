@@ -1,5 +1,5 @@
 {
-    "GameVersion": "0.0.0-alpha13",
+    "GameVersion": "0.0.0-alpha15.2",
     "Buildings": [
         {
             "Id": "HubBuilding",
@@ -416,6 +416,198 @@
             ]
         },
         {
+            "Id": "CutterBuilding",
+            "Title": "Cutting",
+            "Variants": [
+                {
+                    "Id": "CutterHalfVariant",
+                    "Title": "Half Destroyer",
+                    "InternalVariants": [
+                        {
+                            "Id": "CutterHalfInternalVariant",
+                            "Tiles": [
+                                {}
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "Id": "CutterDefaultVariant",
+                    "Title": "Cutter",
+                    "InternalVariants": [
+                        {
+                            "Id": "CutterDefaultInternalVariant",
+                            "Tiles": [
+                                {},
+                                {
+                                    "Y": -1
+                                }
+                            ]
+                        },
+                        {
+                            "Id": "CutterMirroredInternalVariant",
+                            "Tiles": [
+                                {},
+                                {
+                                    "Y": 1
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "Id": "HalvesSwapperDefaultVariant",
+                    "Title": "Swapper",
+                    "InternalVariants": [
+                        {
+                            "Id": "HalvesSwapperDefaultInternalVariant",
+                            "Tiles": [
+                                {
+                                    "Y": -1
+                                },
+                                {}
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "Id": "StackerBuilding",
+            "Title": "Stacker",
+            "Variants": [
+                {
+                    "Id": "StackerDefaultVariant",
+                    "Title": "Stacker",
+                    "InternalVariants": [
+                        {
+                            "Id": "StackerDefaultInternalVariant",
+                            "Tiles": [
+                                {},
+                                {
+                                    "Z": 1
+                                }
+                            ]
+                        },
+                        {
+                            "Id": "StackerMirroredInternalVariant",
+                            "Tiles": [
+                                {},
+                                {
+                                    "Z": 1
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "Id": "UnstackerDefaultVariant",
+                    "Title": "Unstacker",
+                    "InternalVariants": [
+                        {
+                            "Id": "UnstackerDefaultInternalVariant",
+                            "Tiles": [
+                                {},
+                                {
+                                    "Z": 1
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "Id": "PinPusherBuilding",
+            "Title": "Pin Pusher",
+            "Variants": [
+                {
+                    "Id": "PinPusherDefaultVariant",
+                    "Title": "Pin Pusher",
+                    "InternalVariants": [
+                        {
+                            "Id": "PinPusherDefaultInternalVariant",
+                            "Tiles": [
+                                {}
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "Id": "ExtractorBuilding",
+            "Title": "Extractor",
+            "Variants": [
+                {
+                    "Id": "ExtractorDefaultVariant",
+                    "Title": "Extractor",
+                    "InternalVariants": [
+                        {
+                            "Id": "ExtractorDefaultInternalVariant",
+                            "Tiles": [
+                                {}
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "Id": "TrashBuilding",
+            "Title": "Trash",
+            "Variants": [
+                {
+                    "Id": "TrashDefaultVariant",
+                    "Title": "Trash",
+                    "InternalVariants": [
+                        {
+                            "Id": "TrashDefaultInternalVariant",
+                            "Tiles": [
+                                {}
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "Id": "ShapePackerBuilding",
+            "Title": "Shape Packer",
+            "Variants": [
+                {
+                    "Id": "ShapePackerDefaultVariant",
+                    "Title": "Shape Packer",
+                    "InternalVariants": [
+                        {
+                            "Id": "ShapePackerDefaultInternalVariant",
+                            "Tiles": [
+                                {},
+                                {
+                                    "Y": -1
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "Id": "ShapeUnpackerDefaultVariant",
+                    "Title": "Shape Unpacker",
+                    "InternalVariants": [
+                        {
+                            "Id": "ShapeUnpackerDefaultInternalVariant",
+                            "Tiles": [
+                                {},
+                                {
+                                    "Y": -1
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
             "Id": "PipeBuilding",
             "Title": "Pipe",
             "Variants": [
@@ -536,24 +728,6 @@
             ]
         },
         {
-            "Id": "ExtractorBuilding",
-            "Title": "Extractor",
-            "Variants": [
-                {
-                    "Id": "ExtractorDefaultVariant",
-                    "Title": "Extractor",
-                    "InternalVariants": [
-                        {
-                            "Id": "ExtractorDefaultInternalVariant",
-                            "Tiles": [
-                                {}
-                            ]
-                        }
-                    ]
-                }
-            ]
-        },
-        {
             "Id": "PumpBuilding",
             "Title": "Pump",
             "Variants": [
@@ -564,63 +738,6 @@
                         {
                             "Id": "PumpDefaultInternalVariant",
                             "Tiles": [
-                                {}
-                            ]
-                        }
-                    ]
-                }
-            ]
-        },
-        {
-            "Id": "CutterBuilding",
-            "Title": "Cutting",
-            "Variants": [
-                {
-                    "Id": "CutterHalfVariant",
-                    "Title": "Half Destroyer",
-                    "InternalVariants": [
-                        {
-                            "Id": "CutterHalfInternalVariant",
-                            "Tiles": [
-                                {}
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "Id": "CutterDefaultVariant",
-                    "Title": "Cutter",
-                    "InternalVariants": [
-                        {
-                            "Id": "CutterDefaultInternalVariant",
-                            "Tiles": [
-                                {},
-                                {
-                                    "Y": -1
-                                }
-                            ]
-                        },
-                        {
-                            "Id": "CutterMirroredInternalVariant",
-                            "Tiles": [
-                                {},
-                                {
-                                    "Y": 1
-                                }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "Id": "HalvesSwapperDefaultVariant",
-                    "Title": "Swapper",
-                    "InternalVariants": [
-                        {
-                            "Id": "HalvesSwapperDefaultInternalVariant",
-                            "Tiles": [
-                                {
-                                    "Y": -1
-                                },
                                 {}
                             ]
                         }
@@ -665,51 +782,6 @@
             ]
         },
         {
-            "Id": "StackerBuilding",
-            "Title": "Stacker",
-            "Variants": [
-                {
-                    "Id": "StackerDefaultVariant",
-                    "Title": "Stacker",
-                    "InternalVariants": [
-                        {
-                            "Id": "StackerDefaultInternalVariant",
-                            "Tiles": [
-                                {},
-                                {
-                                    "Z": 1
-                                }
-                            ]
-                        },
-                        {
-                            "Id": "StackerMirroredInternalVariant",
-                            "Tiles": [
-                                {},
-                                {
-                                    "Z": 1
-                                }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "Id": "UnstackerDefaultVariant",
-                    "Title": "Unstacker",
-                    "InternalVariants": [
-                        {
-                            "Id": "UnstackerDefaultInternalVariant",
-                            "Tiles": [
-                                {},
-                                {
-                                    "Z": 1
-                                }
-                            ]
-                        }
-                    ]
-                }
-            ]
-        },
-        {
             "Id": "MixerBuilding",
             "Title": "Color Mixer",
             "Variants": [
@@ -732,42 +804,6 @@
                                 },
                                 {
                                     "X": 1,
-                                    "Y": -1
-                                }
-                            ]
-                        }
-                    ]
-                }
-            ]
-        },
-        {
-            "Id": "ShapePackerBuilding",
-            "Title": "Shape Packer",
-            "Variants": [
-                {
-                    "Id": "ShapePackerDefaultVariant",
-                    "Title": "Shape Packer",
-                    "InternalVariants": [
-                        {
-                            "Id": "ShapePackerDefaultInternalVariant",
-                            "Tiles": [
-                                {},
-                                {
-                                    "Y": -1
-                                }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "Id": "ShapeUnpackerDefaultVariant",
-                    "Title": "Shape Unpacker",
-                    "InternalVariants": [
-                        {
-                            "Id": "ShapeUnpackerDefaultInternalVariant",
-                            "Tiles": [
-                                {},
-                                {
                                     "Y": -1
                                 }
                             ]
@@ -843,24 +879,6 @@
             ]
         },
         {
-            "Id": "PinPusherBuilding",
-            "Title": "Pin Pusher",
-            "Variants": [
-                {
-                    "Id": "PinPusherDefaultVariant",
-                    "Title": "Pin Pusher",
-                    "InternalVariants": [
-                        {
-                            "Id": "PinPusherDefaultInternalVariant",
-                            "Tiles": [
-                                {}
-                            ]
-                        }
-                    ]
-                }
-            ]
-        },
-        {
             "Id": "CrystalGeneratorBuilding",
             "Title": "Crystal Generator",
             "Variants": [
@@ -870,24 +888,6 @@
                     "InternalVariants": [
                         {
                             "Id": "CrystalGeneratorDefaultInternalVariant",
-                            "Tiles": [
-                                {}
-                            ]
-                        }
-                    ]
-                }
-            ]
-        },
-        {
-            "Id": "TrashBuilding",
-            "Title": "Trash",
-            "Variants": [
-                {
-                    "Id": "TrashDefaultVariant",
-                    "Title": "Trash",
-                    "InternalVariants": [
-                        {
-                            "Id": "TrashDefaultInternalVariant",
                             "Tiles": [
                                 {}
                             ]

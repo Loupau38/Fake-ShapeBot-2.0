@@ -12,9 +12,10 @@ GAME_VERSIONS = {
     1029 : ["a11"],
     1030 : ["a12d","a12"],
     1031 : ["a13d","a13","a13.5d","a13.6d","a13.7d","a14d","a14.1d"],
-    1032 : ["a14.2d","a14.3d","a15d","a15.1d"]
+    1032 : ["a14.2d","a14.3d","a15d","a15.1d"],
+    1033 : ["a15.2"]
 }
-LATEST_GAME_VERSIONS = (1015,1032)
+LATEST_GAME_VERSIONS = (1015,1033)
 
 BP_VERSION_REACTION_A = "\U0001f1e6"
 BP_VERSION_REACTION_D = "\U0001f1e9"
