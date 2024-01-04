@@ -1,8 +1,25 @@
+## 04 Jan 24
+- Add shapez 1 discord server invite /msg message
+- Update readme formatting
+- Update game infos islands version to alpha 15.2
+- Use prettier syntax to import game infos modules
+- Blueprint encoding now omits keys when possible
+- In blueprint decoding error messages, when a Pos is mentioned, specify if it's raw or rectified
+- `safenString()` in public /msg command
+- Move some repeated code for getting blueprint code from string or file in slash commands into a function
+- Move repeated code for getting a command response into a function
+  - Remove now unused `utils.handleMsgTooLong()` function
+- Remove unused variable in `utils.decodedFormatToDiscordFormat()`
+- Add support for decoding building additional data in blueprints
+  - Add decode and encode string with length functions to utils module
+  - Add `isShapeCodeValid()` function to shape code generator module
+    - Move the checks for if the shape code is valid from the `generateShapeCodes()` function into their own functions
+
 ## 21 Dec 23
 - Update for alpha 15.2 : add version, update buildings and research in game infos
 - Use code block for in-discord logged error messages
 - Implement unknown error handling working for every command
-- Potentially fix unknonw error when having a loop in the nodes of a /operation-graph graph
+- Potentially fix unknown error when having a loop in the nodes of a /operation-graph graph
 - Fix /change-blueprint-version command returning error messages in code blocks
 
 ## 17 Dec 23

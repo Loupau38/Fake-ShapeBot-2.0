@@ -1,12 +1,6 @@
-import globalInfos
 import typing
 import pygame
 import io
-
-def handleMsgTooLong(msg:str) -> str:
-    if len(msg) > globalInfos.MESSAGE_MAX_LENGTH:
-        return globalInfos.MESSAGE_TOO_LONG_TEXT
-    return msg
 
 _NUMBERS = [str(num) for num in range(10)]
 def isNumber(string:str) -> bool:
@@ -88,7 +82,6 @@ def decodedFormatToDiscordFormat(decoded:list[dict[str,str|dict[str,bool|str]]])
     previousFormat = defaultFormat
     for elem in [*decoded,{"format":defaultFormat,"text":""}]:
         curFormat = elem["format"]
-        formatElems = []
         if curFormat["bold"] != previousFormat["bold"]:
             output += "**"
         elif curFormat["color"] != previousFormat["color"]:
@@ -126,6 +119,28 @@ def sepInGroupsNumber(num:int) -> str:
             output += ","
         output += char
     return output[::-1]
+
+def decodeStringWithLen(string:bytes,numBytesForLen:int=2,emptyIsLengthNegative1:bool=True) -> bytes:
+    stringLen = len(string)
+    if stringLen < numBytesForLen:
+        raise ValueError(f"String must be at least {numBytesForLen} characters long but is {stringLen}")
+    encodedLength, string = string[:numBytesForLen], string[numBytesForLen:]
+    decodedLength = int.from_bytes(encodedLength,"little",signed=True)
+    if (emptyIsLengthNegative1) and (decodedLength == -1):
+        decodedLength = 0
+    if decodedLength < 0:
+        raise ValueError(f"String length can't be negative : {decodedLength}")
+    stringLen = len(string)
+    if stringLen < decodedLength:
+        raise ValueError(f"String is shorter than expected length ({stringLen} vs {decodedLength})")
+    decodedString = string[:decodedLength]
+    return decodedString
+
+def encodeStringWithLen(string:bytes,numBytesForLen:int=2,emptyIsLengthNegative1:bool=True) -> bytes:
+    stringLen = len(string)
+    if emptyIsLengthNegative1 and (stringLen == 0):
+        stringLen = -1
+    return stringLen.to_bytes(numBytesForLen,"little",signed=True) + string
 
 
 

@@ -59,8 +59,6 @@ async def useShapeViewer(userMessage:str,sendErrors:bool) -> tuple[bool,str,tupl
                     msgParts.append("\n".join(viewer3dLinks))
 
         responseMsg = "\n\n".join(msgParts)
-        if len(responseMsg) > globalInfos.MESSAGE_MAX_LENGTH:
-            responseMsg = globalInfos.MESSAGE_TOO_LONG_TEXT
 
         return hasErrors, responseMsg, (None if file is None else (file, imageSize))
 
@@ -230,6 +228,38 @@ def detectBPVersion(potentialBPCodes:list[str]) -> list[str|int]|None:
 def safenString(string:str) -> str:
     return discord.utils.escape_mentions(string)
 
+async def getBPFromStringOrFile(string:str,file:discord.Attachment|None) -> str|None:
+    if file is None:
+        return string
+    return await decodeAttachment(file)
+
+def getCommandResponse(text:str,file:tuple[discord.File,int]|None,guild:discord.Guild|None,public:bool,
+    notInFileFormat:tuple[str,str]=("","")) -> dict[str,str|discord.File]:
+    kwargs = {}
+
+    if len(notInFileFormat[0])+len(text)+len(notInFileFormat[1]) > globalInfos.MESSAGE_MAX_LENGTH:
+        if file is None:
+            textFile = msgToFile(text,"response.txt",guild)
+            if textFile is None:
+                kwargs["content"] = globalInfos.MESSAGE_TOO_LONG_TEXT
+            else:
+                kwargs["file"] = textFile
+        else:
+            kwargs["content"] = globalInfos.MESSAGE_TOO_LONG_TEXT
+    else:
+        text = notInFileFormat[0] + text + notInFileFormat[1]
+        if public:
+            text = safenString(text)
+        kwargs["content"] = text
+
+    if file is not None:
+        if isFileTooBig(file[1],guild):
+            kwargs["file"] = discord.File(globalInfos.IMAGE_FILE_TOO_BIG_PATH)
+        else:
+            kwargs["file"] = file[0]
+
+    return kwargs
+
 ##################################################
 
 def runDiscordBot() -> None:
@@ -263,12 +293,7 @@ def runDiscordBot() -> None:
             if hasErrors:
                 await message.add_reaction(globalInfos.INVALID_SHAPE_CODE_REACTION)
             if (responseMsg != "") or (file is not None):
-                if file is not None:
-                    file, fileSize = file
-                    if isFileTooBig(fileSize,message.guild):
-                        file = discord.File(globalInfos.IMAGE_FILE_TOO_BIG_PATH)
-                responseMsg = safenString(responseMsg)
-                await message.channel.send(responseMsg,**({} if file is None else {"file":file}))
+                await message.channel.send(**getCommandResponse(responseMsg,file,message.guild,True))
 
         if await hasPermission(PermissionLvls.REACTION,message=message):
 
@@ -467,13 +492,7 @@ def runDiscordBot() -> None:
         else:
             responseMsg = globalInfos.NO_PERMISSION_TEXT
             file = None
-        kwargs = {}
-        if file is not None:
-            file, fileSize = file
-            if isFileTooBig(fileSize,interaction.guild):
-                file = discord.File(globalInfos.IMAGE_FILE_TOO_BIG_PATH)
-            kwargs["file"] = file
-        await interaction.followup.send(responseMsg,**kwargs)
+        await interaction.followup.send(**getCommandResponse(responseMsg,file,interaction.guild,False))
 
     @tree.command(name="change-blueprint-version",description="Change a blueprint's version")
     @discord.app_commands.describe(blueprint="The full blueprint code",
@@ -482,33 +501,19 @@ def runDiscordBot() -> None:
     async def changeBlueprintVersionCommand(interaction:discord.Interaction,blueprint:str,version:int,blueprint_file:discord.Attachment|None=None) -> None:
         if exitCommandWithoutResponse(interaction):
             return
-        noErrors = False
         if await hasPermission(PermissionLvls.PRIVATE_FEATURE,interaction=interaction):
-            if blueprint_file is None:
-                toProcessBlueprint = blueprint
-            else:
-                toProcessBlueprint = await decodeAttachment(blueprint_file)
+            toProcessBlueprint = await getBPFromStringOrFile(blueprint,blueprint_file)
             if toProcessBlueprint is None:
                 responseMsg = "Error while processing file"
             else:
                 try:
                     responseMsg = blueprints.changeBlueprintVersion(toProcessBlueprint,version)
-                    noErrors = True
                 except blueprints.BlueprintError as e:
                     responseMsg = f"Error happened : {e}"
         else:
             responseMsg = globalInfos.NO_PERMISSION_TEXT
-        if len(responseMsg)+6 > globalInfos.MESSAGE_MAX_LENGTH:
-            file = msgToFile(responseMsg,"blueprint.txt",interaction.guild)
-            if file is None:
-                kwargs = {"content" : "Response too big"}
-            else:
-                kwargs = {"file" : file}
-        else:
-            if noErrors:
-                responseMsg = f"```{responseMsg}```"
-            kwargs = {"content" : responseMsg}
-        await interaction.response.send_message(ephemeral=True,**kwargs)
+
+        await interaction.response.send_message(ephemeral=True,**getCommandResponse(responseMsg,None,interaction.guild,False,("```","```")))
 
     @tree.command(name="member-count",description="Display the number of members in this server")
     async def MemberCountCommand(interaction:discord.Interaction) -> None:
@@ -583,15 +588,10 @@ def runDiscordBot() -> None:
             await interaction.response.defer(ephemeral=True)
             responseMsg = globalInfos.NO_PERMISSION_TEXT
             hasErrors = True
-        responseMsg = utils.handleMsgTooLong(responseMsg.render(public) if type(responseMsg) == utils.OutputString else responseMsg)
-        kwargs = {}
-        if file is not None:
-            if isFileTooBig(imageSize,interaction.guild):
-                file = discord.File(globalInfos.IMAGE_FILE_TOO_BIG_PATH)
-            kwargs["file"] = file
-        if public:
-            responseMsg = safenString(responseMsg)
-        await interaction.followup.send(responseMsg,**kwargs)
+
+        if type(responseMsg) == utils.OutputString:
+            responseMsg = responseMsg.render(public)
+        await interaction.followup.send(**getCommandResponse(responseMsg,None if file is None else (file,imageSize),interaction.guild,public))
 
     @tree.command(name="blueprint-info",description="Get a blueprint's version, building count and size")
     @discord.app_commands.describe(blueprint="The full blueprint code",
@@ -623,10 +623,7 @@ def runDiscordBot() -> None:
 
         if await hasPermission(PermissionLvls.PRIVATE_FEATURE,interaction=interaction):
 
-            if blueprint_file is None:
-                toProcessBlueprint = blueprint
-            else:
-                toProcessBlueprint = await decodeAttachment(blueprint_file)
+            toProcessBlueprint = await getBPFromStringOrFile(blueprint,blueprint_file)
             if toProcessBlueprint is None:
                 responseMsg = "Error while processing file"
 
@@ -674,16 +671,7 @@ def runDiscordBot() -> None:
         else:
             responseMsg = globalInfos.NO_PERMISSION_TEXT
 
-        if len(responseMsg) > globalInfos.MESSAGE_MAX_LENGTH:
-            file = msgToFile(responseMsg,"infos.txt",interaction.guild)
-            if file is None:
-                kwargs = {"content" : "Response too big"}
-            else:
-                kwargs = {"file" : file}
-        else:
-            kwargs = {"content" : responseMsg}
-
-        await interaction.response.send_message(ephemeral=True,**kwargs)
+        await interaction.response.send_message(ephemeral=True,**getCommandResponse(responseMsg,None,interaction.guild,False))
 
     @tree.command(name="research-viewer",description="View the research tree")
     @discord.app_commands.describe(
@@ -736,16 +724,10 @@ def runDiscordBot() -> None:
         else:
             await interaction.response.defer(ephemeral=True)
             responseMsg = globalInfos.NO_PERMISSION_TEXT
-        kwargs = {}
+
         if file is not None:
-            if isFileTooBig(fileSize,interaction.guild):
-                file = discord.File(globalInfos.IMAGE_FILE_TOO_BIG_PATH)
-            else:
-                file = discord.File(file,"researchTree.png")
-            kwargs["file"] = file
-        if public:
-            responseMsg = safenString(responseMsg)
-        await interaction.followup.send(responseMsg,**kwargs)
+            file = discord.File(file,"researchTree.png")
+        await interaction.followup.send(**getCommandResponse(responseMsg,None if file is None else (file,fileSize),interaction.guild,public))
 
     @tree.command(name="msg",description="Public by default ! A command for shortcuts to messages")
     @discord.app_commands.describe(msg="The message id",public="Wether to send the message publicly or not")
@@ -759,6 +741,8 @@ def runDiscordBot() -> None:
         else:
             responseMsg = globalInfos.NO_PERMISSION_TEXT
             ephemeral = True
+        if not ephemeral:
+            responseMsg = safenString(responseMsg)
         await interaction.response.send_message(responseMsg,ephemeral=ephemeral)
 
     with open(globalInfos.TOKEN_PATH) as f:

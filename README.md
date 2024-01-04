@@ -1,10 +1,10 @@
 # Fake ShapeBot 2.0
 
-## Shape viewer :
+## Shape viewer
 
 Put your shape code and parameters in `{}`
 
-### Shapes :
+### Shapes
 
 - Colorable :
   - C : Circle
@@ -16,7 +16,7 @@ Put your shape code and parameters in `{}`
   - P : Pin
   - \- : Nothing
 
-### Colors :
+### Colors
 
 - u : Uncolored
 - r : Red
@@ -29,7 +29,7 @@ Put your shape code and parameters in `{}`
 - k : Black
 - \- : Nothing
 
-### Parameters :
+### Parameters
 
 Each parameter must have a `+` in front of it
 
@@ -42,7 +42,7 @@ Each parameter must have a `+` in front of it
 
 Note : `cut` and `qcut` are mutually exclusive
 
-### Additional features :
+### Additional features
 
 - If the shape code starts with either `level`, `lvl` or `m` followed by a number, it will produce the shape for the corresponding milestone
 - Shape expansion : Colorable shapes (like `C`) not followed by a color will have `u` appended (`Cu`), uncolorable shapes (like `P` or `-`) not followed by `-` will have `-` appended (`P-` or `--`)
@@ -50,7 +50,7 @@ Note : `cut` and `qcut` are mutually exclusive
 No matter in which order you put your parameters in your shape code, they will be executed in the following order :\
 milestone shapes, lfill, struct, shape expansion, fill, lsep, cut/qcut
 
-### Display parameters :
+### Display parameters
 
 Display parameters must be put outside of the `{}`, have a `/` in front of them and have a `:` separating the parameter name from the value (if there is one)
 
@@ -65,7 +65,7 @@ Note : shapes with more than 4 layers and/or with more/less than 4 quadrants per
 
 Note : as a general rule, slash commands will always send private responses except if specified in the command's description or in a parameter
 
-### Public commands :
+### Public commands
 
 - /view-shapes [message] : Will trigger the shape viewer like a regular message but will send the response back only to you and will also include any error messages
 
@@ -81,7 +81,7 @@ Note : as a general rule, slash commands will always send private responses exce
 
 - /msg [msg] [public=True] : A command for shortcuts to messages. Enter the message id in the 'msg' parameter. The 'public' parameter will determine if the message will be sent publicly in the channel the command was executed in or not ('True' by default !)
 
-### Admin commands :
+### Admin commands
 
 - Pausing :\
   While paused, the bot will not send any public messages on the server
@@ -109,13 +109,13 @@ Note : as a general rule, slash commands will always send private responses exce
     - view : View the list
     - clear : Clears the list
 
-### Owner commands :
+### Owner commands
 
 - /global-pause : Pauses the bot globally
 - /global-unpause : Unpauses the bot globally
 - /stop : Stops the bot
 
-## Small additional features :
+## Small additional features
 
 - If the bot is mentioned, it should react with `:robot:`
 - If one (and only one) blueprint code is detected in a message and its attached files, the bot will react with the version of that blueprint

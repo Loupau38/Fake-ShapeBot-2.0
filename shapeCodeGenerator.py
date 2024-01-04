@@ -49,6 +49,58 @@ def getPotentialDisplayParamsFromMessage(message:str) -> list[tuple]:
             potentialDisplayParams.append((potentialDisplayParam,))
     return potentialDisplayParams
 
+def _separateInLayers(potentialShapeCode:str) -> tuple[str|list[str],bool]:
+    if globalInfos.SHAPE_LAYER_SEPARATOR in potentialShapeCode:
+        layers = potentialShapeCode.split(globalInfos.SHAPE_LAYER_SEPARATOR)
+        for i,layer in enumerate(layers):
+            if layer == "":
+                return f"Layer {i+1} empty",False
+    else:
+        if potentialShapeCode == "":
+            return "Empty shape code",False
+        layers = [potentialShapeCode]
+    return layers,True
+
+def _verifyOnlyValidChars(layers:list[str]) -> tuple[str|None,bool]:
+    for layerIndex,layer in enumerate(layers):
+        for charIndex,char in enumerate(layer):
+            if char not in [*COLOR_SHAPES,*NO_COLOR_SHAPES,*COLORS,NOTHING_CHAR]:
+                return f"Invalid char in layer {layerIndex+1} ({layer}), at char {charIndex+1} : '{char}'",False
+    return None,True
+
+def _verifyShapesAndColorsInRightPos(layers:list[str]) -> tuple[str|None,bool]:
+    for layerIndex,layer in enumerate(layers):
+        shapeMode = True
+        lastChar = len(layer)-1
+        for charIndex,char in enumerate(layer):
+            errorMsgStart = f"Char in layer {layerIndex+1} ({layer}) at char {charIndex+1} ({char})"
+            if shapeMode:
+                if char not in [*COLOR_SHAPES,*NO_COLOR_SHAPES,NOTHING_CHAR]:
+                    return f"{errorMsgStart} must be a shape or empty",False
+                if charIndex == lastChar:
+                    return f"{errorMsgStart} should have a color but is end of layer",False
+                if char in [*NO_COLOR_SHAPES,NOTHING_CHAR]:
+                    nextMustBeColor = False
+                else:
+                    nextMustBeColor = True
+                shapeMode = False
+            else:
+                if char not in [*COLORS,NOTHING_CHAR]:
+                    return f"{errorMsgStart} must be a color or empty",False
+                if nextMustBeColor and (char not in COLORS):
+                    return f"{errorMsgStart} must be a color",False
+                if (not nextMustBeColor) and (char != NOTHING_CHAR):
+                    return f"{errorMsgStart} must be empty"
+                shapeMode = True
+    return None,True
+
+def _verifyAllLayersHaveSameLen(layers:list[str]) -> tuple[str|None,bool]:
+    expectedLayerLen = len(layers[0])
+    for layerIndex,layer in enumerate(layers[1:]):
+        if len(layer) != expectedLayerLen:
+            return f"Layer {layerIndex+2} ({layer}){f' (or 1 ({layers[0]}))' if layerIndex == 0 else ''} doesn't have the expected number of quadrants",False
+    return None,True
+
 def generateShapeCodes(potentialShapeCode:str) -> tuple[list[str]|str,bool]:
     """Returns (``[shapeCode0,shapeCode1,...]`` or ``errorMsg``), ``isShapeCodeValid``"""
 
@@ -85,15 +137,10 @@ def generateShapeCodes(potentialShapeCode:str) -> tuple[list[str]|str,bool]:
             break
 
     # separate in layers
-    if globalInfos.SHAPE_LAYER_SEPARATOR in potentialShapeCode:
-        layers = potentialShapeCode.split(globalInfos.SHAPE_LAYER_SEPARATOR)
-        for i,layer in enumerate(layers):
-            if layer == "":
-                return f"Layer {i+1} empty",False
-    else:
-        if potentialShapeCode == "":
-            return "Empty shape code",False
-        layers = [potentialShapeCode]
+    layersResult = _separateInLayers(potentialShapeCode)
+    if not layersResult[1]:
+        return layersResult[0],False
+    layers:list[str] = layersResult[0]
 
     # handle lfill
     if "lfill" in params:
@@ -123,10 +170,9 @@ def generateShapeCodes(potentialShapeCode:str) -> tuple[list[str]|str,bool]:
             layers[layerIndex] = layer.replace(old,new)
 
     # verify if only valid chars
-    for layerIndex,layer in enumerate(layers):
-        for charIndex,char in enumerate(layer):
-            if char not in [*COLOR_SHAPES,*NO_COLOR_SHAPES,*COLORS,NOTHING_CHAR]:
-                return f"Invalid char in layer {layerIndex+1} ({layer}), at char {charIndex+1} : '{char}'",False
+    validCharsResult = _verifyOnlyValidChars(layers)
+    if not validCharsResult[1]:
+        return validCharsResult[0],False
 
     # handle {C} -> {Cu} transformation
     for layerIndex,layer in enumerate(layers):
@@ -155,29 +201,9 @@ def generateShapeCodes(potentialShapeCode:str) -> tuple[list[str]|str,bool]:
         layers[layerIndex] = newLayer
 
     # verify if shapes and colors are in the right positions
-    for layerIndex,layer in enumerate(layers):
-        shapeMode = True
-        lastChar = len(layer)-1
-        for charIndex,char in enumerate(layer):
-            errorMsgStart = f"Char in layer {layerIndex+1} ({layer}) at char {charIndex+1} ({char})"
-            if shapeMode:
-                if char not in [*COLOR_SHAPES,*NO_COLOR_SHAPES,NOTHING_CHAR]:
-                    return f"{errorMsgStart} must be a shape or empty",False
-                if charIndex == lastChar:
-                    return f"{errorMsgStart} should have a color but is end of layer",False
-                if char in [*NO_COLOR_SHAPES,NOTHING_CHAR]:
-                    nextMustBeColor = False
-                else:
-                    nextMustBeColor = True
-                shapeMode = False
-            else:
-                if char not in [*COLORS,NOTHING_CHAR]:
-                    return f"{errorMsgStart} must be a color or empty",False
-                if nextMustBeColor and (char not in COLORS):
-                    return f"{errorMsgStart} must be a color",False
-                if (not nextMustBeColor) and (char != NOTHING_CHAR):
-                    return f"{errorMsgStart} must be empty"
-                shapeMode = True
+    shapesAndColorsInRightPosResult = _verifyShapesAndColorsInRightPos(layers)
+    if not shapesAndColorsInRightPosResult[1]:
+        return shapesAndColorsInRightPosResult[0],False
 
     # handle fill
     if "fill" in params:
@@ -192,10 +218,10 @@ def generateShapeCodes(potentialShapeCode:str) -> tuple[list[str]|str,bool]:
                 newLayer = layer
             layers[layerIndex] = newLayer
 
-    expectedLayerLen = len(layers[0])
-    for layerIndex,layer in enumerate(layers[1:]):
-        if len(layer) != expectedLayerLen:
-            return f"Layer {layerIndex+2} ({layer}){f' (or 1 ({layers[0]}))' if layerIndex == 0 else ''} doesn't have the expected number of quadrants",False
+    # verify all layers have the same length
+    allLayersHaveSameLenResult = _verifyAllLayersHaveSameLen(layers)
+    if not allLayersHaveSameLenResult[1]:
+        return allLayersHaveSameLenResult[0],False
 
     # handle lsep
     if "lsep" in params:
@@ -245,3 +271,24 @@ def generateShapeCodes(potentialShapeCode:str) -> tuple[list[str]|str,bool]:
             noEmptyShapeCodes.append(globalInfos.SHAPE_LAYER_SEPARATOR.join(shape))
 
     return noEmptyShapeCodes,True
+
+def isShapeCodeValid(potentialShapeCode:str) -> tuple[None|str,bool]:
+
+    layersResult = _separateInLayers(potentialShapeCode)
+    if not layersResult[1]:
+        return layersResult[0],False
+    layers:list[str] = layersResult[0]
+
+    validCharsResult = _verifyOnlyValidChars(layers)
+    if not validCharsResult[1]:
+        return validCharsResult[0],False
+
+    shapesAndColorsInRightPosResult = _verifyShapesAndColorsInRightPos(layers)
+    if not shapesAndColorsInRightPosResult[1]:
+        return shapesAndColorsInRightPosResult[0],False
+
+    allLayersHaveSameLenResult = _verifyAllLayersHaveSameLen(layers)
+    if not allLayersHaveSameLenResult[1]:
+        return allLayersHaveSameLenResult[0],False
+
+    return None,True

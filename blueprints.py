@@ -1,6 +1,8 @@
 import utils
 from utils import Rotation, Pos, Size
 import gameInfos
+import globalInfos
+import shapeCodeGenerator
 import gzip
 import base64
 import json
@@ -16,6 +18,8 @@ ISLAND_BP_TYPE = "Island"
 NUM_LAYERS = 3
 ISLAND_ROTATION_CENTER = utils.FloatPos(*([(gameInfos.islands.ISLAND_SIZE/2)-.5]*2))
 
+COLOR_PREFIX = "color-"
+
 class BlueprintError(Exception): ...
 
 class TileEntry:
@@ -23,21 +27,22 @@ class TileEntry:
         self.referTo = referTo
 
 class BuildingEntry:
-    def __init__(self,pos:Pos,rotation:Rotation,type:gameInfos.buildings.Building,extra:bytes) -> None:
+    def __init__(self,pos:Pos,rotation:Rotation,type:gameInfos.buildings.Building,extra:typing.Any) -> None:
         self.pos = pos
         self.rotation = rotation
         self.type = type
         self.extra = extra
 
     def toJSON(self) -> dict:
-        return {
-            "X" : self.pos.x,
-            "Y" : self.pos.y,
-            "L" : self.pos.z,
-            "R" : self.rotation.value,
-            "T" : self.type.id,
-            "C" : base64.b64encode(self.extra).decode()
+        toReturn = {
+            "T" : self.type.id
         }
+        _omitKeyIfDefault(toReturn,"X",self.pos.x)
+        _omitKeyIfDefault(toReturn,"Y",self.pos.y)
+        _omitKeyIfDefault(toReturn,"L",self.pos.z)
+        _omitKeyIfDefault(toReturn,"R",self.rotation.value)
+        _omitKeyIfDefault(toReturn,"C",_encodeBuildingExtraData(self.extra,self.type.id))
+        return toReturn
 
 class BuildingBlueprint:
     def __init__(self,asEntryList:list[BuildingEntry],asTileDict:dict[Pos,TileEntry]) -> None:
@@ -68,11 +73,11 @@ class IslandEntry:
 
     def toJSON(self) -> dict:
         toReturn = {
-            "X" : self.pos.x,
-            "Y" : self.pos.y,
-            "R" : self.rotation.value,
             "T" : self.type.id
         }
+        _omitKeyIfDefault(toReturn,"X",self.pos.x)
+        _omitKeyIfDefault(toReturn,"Y",self.pos.y)
+        _omitKeyIfDefault(toReturn,"R",self.rotation.value)
         if self.buildingBP is not None:
             toReturn["B"] = self.buildingBP.toJSON()
         return toReturn
@@ -128,6 +133,175 @@ def _genericGetCounts(bp:BuildingBlueprint|IslandBlueprint) -> dict[str,int]:
         else:
             output[entryType] += 1
     return output
+
+def _omitKeyIfDefault(dict:dict,key:str,value:int|str) -> None:
+    if key not in (0,""):
+        dict[key] = value
+
+def _decodeBuildingExtraData(raw:str,buildingType:str) -> typing.Any:
+
+    def standardDecode(rawDecoded:bytes,emptyIsLengthNegative1:bool) -> str:
+        try:
+            decodedBytes = utils.decodeStringWithLen(rawDecoded,emptyIsLengthNegative1=emptyIsLengthNegative1)
+        except ValueError as e:
+            raise BlueprintError(f"Error while decoding string : {e}")
+        try:
+            return decodedBytes.decode()
+        except Exception:
+            raise BlueprintError("Can't decode from bytes")
+
+    def checkIfValidColor(color:str) -> None:
+        if not color.startswith(COLOR_PREFIX):
+            raise BlueprintError(f"Doesn't start with '{COLOR_PREFIX}' prefix")
+        color = color.removeprefix(COLOR_PREFIX)
+        if color not in globalInfos.SHAPE_COLORS:
+            raise BlueprintError(f"Unknown color : '{color}'")
+
+    def getValidShapeGenerator(string:str) -> dict[str,str]:
+        for crateOrNot in ("","crate"):
+            if string.startswith(f"shape{crateOrNot}:"):
+                string = string.removeprefix(f"shape{crateOrNot}:")
+                error, valid = shapeCodeGenerator.isShapeCodeValid(string)
+                if not valid:
+                    raise BlueprintError(f"Invalid shape code : {error}")
+                return {"type":f"shape{crateOrNot}","value":string}
+        if string.startswith("fluidcrate:"):
+            string.removeprefix("fluidcrate:")
+            try:
+                checkIfValidColor(string)
+            except BlueprintError as e:
+                raise BlueprintError(f"Invalid color code : {e}")
+            return {"type":"fluidcrate","value":string}
+        raise BlueprintError("Invalid shape creation string")
+
+    try:
+        rawDecoded = base64.b64decode(raw)
+    except Exception:
+        raise BlueprintError("Can't decode from base64")
+
+    if buildingType == "LabelDefaultInternalVariant":
+        return standardDecode(rawDecoded,False)
+
+    if buildingType == "ConstantSignalDefaultInternalVariant":
+
+        if len(rawDecoded) < 1:
+            raise BlueprintError("String must be at least 1 byte long")
+        signalType = rawDecoded[0]
+
+        if signalType > 7:
+            raise BlueprintError(f"Unknown signal type : {signalType}")
+
+        if signalType in (0,1,2): # empty, null, conflict
+            return {
+                "type" : {
+                    0 : "empty",
+                    1 : "null",
+                    2 : "conflict"
+                }[signalType]
+            }
+
+        if signalType in (4,5): # bool
+            return {"type":"bool","value":signalType==5}
+
+        signalValue = rawDecoded[1:]
+
+        if signalType == 3: # integer
+            if len(signalValue) != 4:
+                raise BlueprintError("Signal value must be 4 bytes long for integer signal type")
+            return {"type":"int","value":int.from_bytes(signalValue,"little",signed=True)}
+
+        # shape or fluid
+        try:
+            signalValueDecoded = standardDecode(signalValue,True)
+        except BlueprintError as e:
+            raise BlueprintError(f"Error while decoding signal value : {e}")
+
+        if signalType == 6: # shape
+            try:
+                return {"type":"shape","value":getValidShapeGenerator(signalValueDecoded)}
+            except BlueprintError as e:
+                raise BlueprintError(f"Error while decoding shape signal value : {e}")
+
+        # fluid
+        try:
+            checkIfValidColor(signalValueDecoded)
+        except BlueprintError as e:
+            raise BlueprintError(f"Invalid fluid signal value : {e}")
+        return {"type":"fluid","value":signalValueDecoded}
+
+    if buildingType == "SandboxItemProducerDefaultInternalVariant":
+        shapeCode = standardDecode(rawDecoded,True)
+        if shapeCode == "":
+            return {"type":"empty"}
+        try:
+            return getValidShapeGenerator(shapeCode)
+        except BlueprintError as e:
+            raise BlueprintError(f"Error while decoding shape generation string : {e}")
+
+    if buildingType == "SandboxFluidProducerDefaultInternalVariant":
+        fluidCode = standardDecode(rawDecoded,True)
+        if fluidCode == "":
+            return {"type":"empty"}
+        fluidCode = COLOR_PREFIX + fluidCode
+        try:
+            checkIfValidColor(fluidCode)
+        except BlueprintError as e:
+            raise BlueprintError(f"Invalid fluid : {e}")
+        return {"type":"paint","value":fluidCode}
+
+    if buildingType in ("TrainStationLoaderInternalVariant","TrainStationUnloaderInternalVariant"):
+        # train stations currently can have any text as their filter, add check when they get a valid color check
+        return standardDecode(rawDecoded,True)
+
+    return None
+
+def _encodeBuildingExtraData(extra:typing.Any,buildingType:str) -> str:
+
+    if extra is None:
+        return ""
+
+    def b64encode(string:bytes) -> str:
+        return base64.b64encode(string).decode()
+
+    def standardEncode(string:str,emptyIsLengthNegative1:bool) -> str:
+        return b64encode(utils.encodeStringWithLen(string.encode(),emptyIsLengthNegative1=emptyIsLengthNegative1))
+
+    if buildingType == "LabelDefaultInternalVariant":
+        return standardEncode(extra,False)
+
+    if buildingType == "ConstantSignalDefaultInternalVariant":
+
+        if extra["type"] in ("empty","null","conflict"):
+            return b64encode(bytes([{"empty":0,"null":1,"conflict":2}[extra["type"]]]))
+
+        if extra["type"] == "bool":
+            return b64encode(bytes([5 if extra["value"] else 4]))
+
+        if extra["type"] == "int":
+            return b64encode(bytes([3])+extra["value"].to_bytes(4,"little",signed=True))
+
+        if extra["type"] == "shape":
+            return b64encode(bytes([6])+utils.encodeStringWithLen(f"{extra['value']['type']}:{extra['value']['value']}".encode()))
+
+        if extra["type"] == "fluid":
+            return b64encode(bytes([7])+utils.encodeStringWithLen(extra["value"].encode()))
+
+    if buildingType == "SandboxItemProducerDefaultInternalVariant":
+        if extra["type"] == "empty":
+            shapeCode = ""
+        else:
+            shapeCode = f"{extra['type']}:{extra['value']}"
+        return standardEncode(shapeCode,True)
+
+    if buildingType == "SandboxFluidProducerDefaultInternalVariant":
+        if extra["type"] == "empty":
+            fluidCode = ""
+        else:
+            fluidCode = extra["value"].removeprefix(COLOR_PREFIX)
+        return standardEncode(fluidCode,True)
+
+    if buildingType in ("TrainStationLoaderInternalVariant","TrainStationUnloaderInternalVariant"):
+        return standardEncode(extra,True)
 
 
 
@@ -279,9 +453,9 @@ def _getValidBlueprint(blueprint:dict,mustBeBuildingBP:bool=False) -> dict:
             else:
                 c = _getKeyValue(entry,"C",str,"")
                 try:
-                    c = base64.b64decode(c)
-                except Exception:
-                    raise BlueprintError(f"{_ERR_MSG_PATH_SEP}C{_ERR_MSG_PATH_END}Can't decode from base64")
+                    c = _decodeBuildingExtraData(c,t)
+                except BlueprintError as e:
+                    raise BlueprintError(f"{_ERR_MSG_PATH_SEP}C{_ERR_MSG_PATH_END}{e}")
                 validEntry["C"] = c
 
             validBPEntries.append(validEntry)
@@ -306,7 +480,7 @@ def _decodeBuildingBP(buildings:list[dict[str,int|str|bytes]],moveBPCenter:bool=
         for curTile in curTiles:
 
             if tileDict.get(curTile) is not None:
-                raise BlueprintError(f"Error while placing tile of '{building['T']}' at {curTile} : another tile is already placed there")
+                raise BlueprintError(f"Error while placing tile of '{building['T']}' at {curTile} (raw) : another tile is already placed there")
 
             tileDict[curTile] = TileEntry(buildingIndex)
 
@@ -346,7 +520,7 @@ def _decodeIslandBP(islands:list[dict[str,int|str|dict]]) -> tuple[IslandBluepri
         for curTile in curTiles:
 
             if tileDict.get(curTile) is not None:
-                raise BlueprintError(f"Error while placing tile of '{island['T']}' at {curTile} : another tile is already placed there")
+                raise BlueprintError(f"Error while placing tile of '{island['T']}' at {curTile} (raw) : another tile is already placed there")
 
             tileDict[curTile] = TileEntry(islandIndex)
 
@@ -376,7 +550,7 @@ def _decodeIslandBP(islands:list[dict[str,int|str|dict]]) -> tuple[IslandBluepri
             curBuildingBP = _decodeBuildingBP(island["B"]["Entries"],False)
         except BlueprintError as e:
             raise BlueprintError(
-                f"Error while creating representation of building blueprint of '{island['T']}' at {Pos(island['X'],island['Y'])} : {e}")
+                f"Error while creating building blueprint representation of '{island['T']}' at {Pos(island['X'],island['Y'])} (rectified) : {e}")
 
         curIslandBuildArea = [a.rotateCW(island["R"],ISLAND_ROTATION_CENTER) for a in gameInfos.islands.allIslands[island["T"]].totalBuildArea]
 
@@ -391,7 +565,7 @@ def _decodeIslandBP(islands:list[dict[str,int|str|dict]]) -> tuple[IslandBluepri
                     break
             if not inArea:
                 raise BlueprintError(
-                    f"Error in island '{island['T']}' at {Pos(island['X'],island['Y'])} : tile of building '{curBuilding.type.id}' at {pos} is not inside it's island build area")
+                    f"Error in island '{island['T']}' at {Pos(island['X'],island['Y'])} (rectified) : tile of building '{curBuilding.type.id}' at {pos} (raw) is not inside its island build area")
 
             globalBuildingDict[
                 Pos(
