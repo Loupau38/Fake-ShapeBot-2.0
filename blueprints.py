@@ -23,17 +23,21 @@ COLOR_PREFIX = "color-"
 class BlueprintError(Exception): ...
 
 class TileEntry:
-    def __init__(self,referTo:int) -> None:
-        self.referTo = referTo
+    def __init__(self,referTo) -> None:
+        self.referTo:BuildingEntry|IslandEntry = referTo
 
 class BuildingEntry:
     def __init__(self,pos:Pos,rotation:Rotation,type:gameInfos.buildings.Building,extra:typing.Any) -> None:
         self.pos = pos
         self.rotation = rotation
         self.type = type
-        self.extra = extra
+        self.extra:typing.Any
+        if extra is None:
+            self.extra = _getDefaultBuildingExtraData(type.id)
+        else:
+            self.extra = extra
 
-    def toJSON(self) -> dict:
+    def encode(self) -> dict:
         toReturn = {
             "T" : self.type.id
         }
@@ -45,9 +49,9 @@ class BuildingEntry:
         return toReturn
 
 class BuildingBlueprint:
-    def __init__(self,asEntryList:list[BuildingEntry],asTileDict:dict[Pos,TileEntry]) -> None:
+    def __init__(self,asEntryList:list[BuildingEntry]) -> None:
         self.asEntryList = asEntryList
-        self.asTileDict = asTileDict
+        self.asTileDict = _getTileDictFromEntryList(asEntryList)
 
     def getSize(self) -> Size:
         return _genericGetSize(self)
@@ -58,10 +62,10 @@ class BuildingBlueprint:
     def getBuildingCounts(self) -> dict[str,int]:
         return _genericGetCounts(self)
 
-    def toJSON(self) -> dict:
+    def encode(self) -> dict:
         return {
             "$type" : BUILDING_BP_TYPE,
-            "Entries" : [e.toJSON() for e in self.asEntryList]
+            "Entries" : [e.encode() for e in self.asEntryList]
         }
 
 class IslandEntry:
@@ -71,7 +75,7 @@ class IslandEntry:
         self.type = type
         self.buildingBP = buildingBP
 
-    def toJSON(self) -> dict:
+    def encode(self) -> dict:
         toReturn = {
             "T" : self.type.id
         }
@@ -79,13 +83,13 @@ class IslandEntry:
         _omitKeyIfDefault(toReturn,"Y",self.pos.y)
         _omitKeyIfDefault(toReturn,"R",self.rotation.value)
         if self.buildingBP is not None:
-            toReturn["B"] = self.buildingBP.toJSON()
+            toReturn["B"] = self.buildingBP.encode()
         return toReturn
 
 class IslandBlueprint:
-    def __init__(self,asEntryList:list[IslandEntry],asTileDict:dict[Pos,TileEntry]) -> None:
+    def __init__(self,asEntryList:list[IslandEntry]) -> None:
         self.asEntryList = asEntryList
-        self.asTileDict = asTileDict
+        self.asTileDict = _getTileDictFromEntryList(asEntryList)
 
     def getSize(self) -> Size:
         return _genericGetSize(self)
@@ -96,24 +100,48 @@ class IslandBlueprint:
     def getIslandCounts(self) -> dict[str,int]:
         return _genericGetCounts(self)
 
-    def toJSON(self) -> dict:
+    def encode(self) -> dict:
         return {
             "$type" : ISLAND_BP_TYPE,
-            "Entries" : [e.toJSON() for e in self.asEntryList]
+            "Entries" : [e.encode() for e in self.asEntryList]
         }
 
 class Blueprint:
-    def __init__(self,majorVersion:int,version:int,type:str,islandBP:IslandBlueprint|None,buildingBP:BuildingBlueprint|None) -> None:
+    def __init__(self,majorVersion:int,version:int,type_:str,blueprint:BuildingBlueprint|IslandBlueprint) -> None:
         self.majorVersion = majorVersion
         self.version = version
-        self.type = type
-        self.islandBP = islandBP
-        self.buildingBP = buildingBP
+        self.type = type_
+        self.islandBP:IslandBlueprint|None
+        self.buildingBP:BuildingBlueprint|None
+        if type(blueprint) == BuildingBlueprint:
+            self.buildingBP = blueprint
+            self.islandBP = None
+        else:
+            self.islandBP = blueprint
+            tempBuildingList = []
+            for island in blueprint.asEntryList:
+                if island.buildingBP is None:
+                    continue
+                for building in island.buildingBP.asEntryList:
+                    tempBuildingList.append(BuildingEntry(
+                        Pos(
+                            (island.pos.x*gameInfos.islands.ISLAND_SIZE) + building.pos.x,
+                            (island.pos.y*gameInfos.islands.ISLAND_SIZE) + building.pos.y,
+                            building.pos.z
+                        ),
+                        building.rotation,
+                        building.type,
+                        building.extra
+                    ))
+            if tempBuildingList == []:
+                self.buildingBP = None
+            else:
+                self.buildingBP = BuildingBlueprint(tempBuildingList)
 
-    def toJSON(self) -> tuple[dict,int]:
+    def encode(self) -> tuple[dict,int]:
         return {
             "V" : self.version,
-            "BP" : (self.buildingBP if self.islandBP is None else self.islandBP).toJSON()
+            "BP" : (self.buildingBP if self.islandBP is None else self.islandBP).encode()
         }, self.majorVersion
 
 def _genericGetSize(bp:BuildingBlueprint|IslandBlueprint) -> Size:
@@ -135,7 +163,7 @@ def _genericGetCounts(bp:BuildingBlueprint|IslandBlueprint) -> dict[str,int]:
     return output
 
 def _omitKeyIfDefault(dict:dict,key:str,value:int|str) -> None:
-    if key not in (0,""):
+    if value not in (0,""):
         dict[key] = value
 
 def _decodeBuildingExtraData(raw:str,buildingType:str) -> typing.Any:
@@ -227,7 +255,7 @@ def _decodeBuildingExtraData(raw:str,buildingType:str) -> typing.Any:
             checkIfValidColor(signalValueDecoded)
         except BlueprintError as e:
             raise BlueprintError(f"Invalid fluid signal value : {e}")
-        return {"type":"fluid","value":signalValueDecoded}
+        return {"type":"fluid","value":{"type":"paint","value":signalValueDecoded}}
 
     if buildingType == "SandboxItemProducerDefaultInternalVariant":
         shapeCode = standardDecode(rawDecoded,True)
@@ -242,7 +270,6 @@ def _decodeBuildingExtraData(raw:str,buildingType:str) -> typing.Any:
         fluidCode = standardDecode(rawDecoded,True)
         if fluidCode == "":
             return {"type":"empty"}
-        fluidCode = COLOR_PREFIX + fluidCode
         try:
             checkIfValidColor(fluidCode)
         except BlueprintError as e:
@@ -250,6 +277,8 @@ def _decodeBuildingExtraData(raw:str,buildingType:str) -> typing.Any:
         return {"type":"paint","value":fluidCode}
 
     if buildingType in ("TrainStationLoaderInternalVariant","TrainStationUnloaderInternalVariant"):
+        if rawDecoded == b"": # support for pre-alpha 15.2 blueprints
+            return ""
         # train stations currently can have any text as their filter, add check when they get a valid color check
         return standardDecode(rawDecoded,True)
 
@@ -297,11 +326,43 @@ def _encodeBuildingExtraData(extra:typing.Any,buildingType:str) -> str:
         if extra["type"] == "empty":
             fluidCode = ""
         else:
-            fluidCode = extra["value"].removeprefix(COLOR_PREFIX)
+            fluidCode = extra["value"]
         return standardEncode(fluidCode,True)
 
     if buildingType in ("TrainStationLoaderInternalVariant","TrainStationUnloaderInternalVariant"):
         return standardEncode(extra,True)
+
+def _getDefaultBuildingExtraData(buildingType:str) -> typing.Any:
+
+    if buildingType == "LabelDefaultInternalVariant":
+        return "Click to change text"
+
+    if buildingType == "ConstantSignalDefaultInternalVariant":
+        return {"type":"null"}
+
+    if buildingType == "SandboxItemProducerDefaultInternalVariant":
+        return {"type":"shape","value":"CuCuCuCu"}
+
+    if buildingType == "SandboxFluidProducerDefaultInternalVariant":
+        return {"type":"paint","value":f"{COLOR_PREFIX}r"}
+
+    if buildingType in ("TrainStationLoaderInternalVariant","TrainStationUnloaderInternalVariant"):
+        return ""
+
+    return None
+
+def _getTileDictFromEntryList(entryList:list[BuildingEntry|IslandEntry]) -> dict[Pos,TileEntry]:
+    tileDict:dict[Pos,TileEntry] = {}
+    for entry in entryList:
+        if type(entry) == BuildingEntry:
+            curTiles = entry.type.tiles
+        else:
+            curTiles = [t.pos for t  in entry.type.tiles]
+        curTiles = [t.rotateCW(entry.rotation) for t in curTiles]
+        curTiles = [Pos(entry.pos.x+t.x,entry.pos.y+t.y,entry.pos.z+t.z) for t in curTiles]
+        for curTile in curTiles:
+            tileDict[curTile] = TileEntry(entry)
+    return tileDict
 
 
 
@@ -386,14 +447,14 @@ def _encodeBlueprintLastPart(blueprint:dict,majorVersion:int) -> str:
         blueprint = base64.b64encode(gzip.compress(json.dumps(blueprint,indent=4).encode())).decode()
         blueprint = PREFIX + SEPARATOR + str(majorVersion) + SEPARATOR + blueprint + SUFFIX
     except Exception:
-        raise BlueprintError("Error while encoding blueprint")
+        raise BlueprintError("Error while encoding blueprint (dict to fully encoded part)")
     return blueprint
 
 def _getValidBlueprint(blueprint:dict,mustBeBuildingBP:bool=False) -> dict:
 
     validBP = {}
 
-    bpType = _getKeyValue(blueprint,"$type",str,BUILDING_BP_TYPE)
+    bpType = _getKeyValue(blueprint,"$type",str,BUILDING_BP_TYPE) # default to building instead of nothing : support for pre-alpha 8 blueprints
 
     if bpType not in (BUILDING_BP_TYPE,ISLAND_BP_TYPE):
         raise BlueprintError(f"{_ERR_MSG_PATH_SEP}$type{_ERR_MSG_PATH_END}Unknown blueprint type : '{bpType}'")
@@ -467,96 +528,89 @@ def _getValidBlueprint(blueprint:dict,mustBeBuildingBP:bool=False) -> dict:
 
     return validBP
 
-def _decodeBuildingBP(buildings:list[dict[str,int|str|bytes]],moveBPCenter:bool=True) -> BuildingBlueprint:
+def _decodeBuildingBP(buildings:list[dict[str,typing.Any]],moveBPCenter:bool=True) -> BuildingBlueprint:
 
-    tileDict:dict[Pos,TileEntry] = {}
     entryList:list[BuildingEntry] = []
+    occupiedTiles:set[Pos] = set()
 
-    for buildingIndex,building in enumerate(buildings):
+    for building in buildings:
 
         curTiles = [t.rotateCW(building["R"]) for t in gameInfos.buildings.allBuildings[building["T"]].tiles]
         curTiles = [Pos(building["X"]+t.x,building["Y"]+t.y,building["L"]+t.z) for t in curTiles]
 
         for curTile in curTiles:
 
-            if tileDict.get(curTile) is not None:
+            if curTile in occupiedTiles:
                 raise BlueprintError(f"Error while placing tile of '{building['T']}' at {curTile} (raw) : another tile is already placed there")
 
-            tileDict[curTile] = TileEntry(buildingIndex)
+            occupiedTiles.add(curTile)
 
-    minX, minY, minZ = [min(e.__dict__[k] for e in tileDict.keys()) for k in ("x","y","z")]
-    maxZ = max(e.z for e in tileDict.keys())
+    minX, minY, minZ = [min(e.__dict__[k] for e in occupiedTiles) for k in ("x","y","z")]
+    maxZ = max(e.z for e in occupiedTiles)
 
     if maxZ-minZ+1 > NUM_LAYERS:
         raise BlueprintError(f"Cannot have more than {NUM_LAYERS} layers")
-
-    if moveBPCenter:
-        tileDict = {Pos(p.x-minX,p.y-minY,p.z-minZ) : t for p,t in tileDict.items()}
 
     for b in buildings:
         if moveBPCenter:
             b["X"] -= minX
             b["Y"] -= minY
             b["L"] -= minZ
-        entryList.append(BuildingEntry(Pos(
-            b["X"],b["Y"],b["L"]),
+        entryList.append(BuildingEntry(
+            Pos(b["X"],b["Y"],b["L"]),
             b["R"],
             gameInfos.buildings.allBuildings[b["T"]],
             b["C"]
         ))
 
-    return BuildingBlueprint(entryList,tileDict)
+    return BuildingBlueprint(entryList)
 
-def _decodeIslandBP(islands:list[dict[str,int|str|dict]]) -> tuple[IslandBlueprint,BuildingBlueprint|None]:
+def _decodeIslandBP(islands:list[dict[str,int|str|dict]]) -> IslandBlueprint:
 
-    tileDict:dict[Pos,TileEntry] = {}
     entryList:list[IslandEntry] = []
+    occupiedTiles:set[Pos] = set()
 
-    for islandIndex,island in enumerate(islands):
+    for island in islands:
 
         curTiles = [t.pos.rotateCW(island["R"]) for t in gameInfos.islands.allIslands[island["T"]].tiles]
         curTiles = [Pos(island["X"]+t.x,island["Y"]+t.y) for t in curTiles]
 
         for curTile in curTiles:
 
-            if tileDict.get(curTile) is not None:
+            if curTile in occupiedTiles:
                 raise BlueprintError(f"Error while placing tile of '{island['T']}' at {curTile} (raw) : another tile is already placed there")
 
-            tileDict[curTile] = TileEntry(islandIndex)
+            occupiedTiles.add(curTile)
 
-    minX, minY = [min(e.__dict__[k] for e in tileDict.keys()) for k in ("x","y")]
-
-    tileDict = {Pos(p.x-minX,p.y-minY) : t for p,t in tileDict.items()}
+    minX, minY = [min(e.__dict__[k] for e in occupiedTiles) for k in ("x","y")]
 
     for i in islands:
         i["X"] -= minX
         i["Y"] -= minY
 
-    globalBuildingList:list[BuildingEntry] = []
-    globalBuildingDict:dict[Pos,TileEntry] = {}
-
     for island in islands:
 
+        islandEntryInfos:dict[str,Pos|int|gameInfos.islands.Island] = {
+            "pos" : Pos(island["X"],island["Y"]),
+            "r" : island["R"],
+            "t" : gameInfos.islands.allIslands[island["T"]]
+        }
+
         if island.get("B") is None:
-            entryList.append(IslandEntry(
-                Pos(island["X"],island["Y"]),
-                island["R"],
-                gameInfos.islands.allIslands[island["T"]],
-                None
-            ))
+            entryList.append(IslandEntry(*islandEntryInfos.values(),None))
             continue
 
         try:
             curBuildingBP = _decodeBuildingBP(island["B"]["Entries"],False)
         except BlueprintError as e:
             raise BlueprintError(
-                f"Error while creating building blueprint representation of '{island['T']}' at {Pos(island['X'],island['Y'])} (rectified) : {e}")
+                f"Error while creating building blueprint representation of '{islandEntryInfos['t'].id}' at {islandEntryInfos['pos']} (rectified) : {e}")
 
-        curIslandBuildArea = [a.rotateCW(island["R"],ISLAND_ROTATION_CENTER) for a in gameInfos.islands.allIslands[island["T"]].totalBuildArea]
+        curIslandBuildArea = [a.rotateCW(islandEntryInfos["r"],ISLAND_ROTATION_CENTER) for a in islandEntryInfos["t"].totalBuildArea]
 
         for pos,b in curBuildingBP.asTileDict.items():
 
-            curBuilding = curBuildingBP.asEntryList[b.referTo]
+            curBuilding:BuildingEntry = b.referTo
 
             inArea = False
             for area in curIslandBuildArea:
@@ -565,36 +619,13 @@ def _decodeIslandBP(islands:list[dict[str,int|str|dict]]) -> tuple[IslandBluepri
                     break
             if not inArea:
                 raise BlueprintError(
-                    f"Error in island '{island['T']}' at {Pos(island['X'],island['Y'])} (rectified) : tile of building '{curBuilding.type.id}' at {pos} (raw) is not inside its island build area")
+                    f"Error in island '{islandEntryInfos['t'].id}' at {islandEntryInfos['pos']} (rectified) : tile of building '{curBuilding.type.id}' at {pos} (raw) is not inside its island build area")
 
-            globalBuildingDict[
-                Pos(
-                    (island["X"]*gameInfos.islands.ISLAND_SIZE) + curBuilding.pos.x,
-                    (island["Y"]*gameInfos.islands.ISLAND_SIZE) + curBuilding.pos.y,
-                    curBuilding.pos.z
-                )
-            ] = TileEntry(len(globalBuildingList)+b.referTo)
+        entryList.append(IslandEntry(*islandEntryInfos.values(),curBuildingBP))
 
-        for b in curBuildingBP.asEntryList:
-            globalBuildingList.append(BuildingEntry(
-                Pos(
-                    (island["X"]*gameInfos.islands.ISLAND_SIZE) + b.pos.x,
-                    (island["Y"]*gameInfos.islands.ISLAND_SIZE) + b.pos.y,
-                    b.pos.z
-                ),
-                b.rotation,
-                b.type,
-                b.extra
-            ))
+    return IslandBlueprint(entryList)
 
-        entryList.append(IslandEntry(
-            Pos(island["X"],island["Y"]),
-            island["R"],
-            gameInfos.islands.allIslands[island["T"]],
-            curBuildingBP
-        ))
 
-    return IslandBlueprint(entryList,tileDict), (BuildingBlueprint(globalBuildingList,globalBuildingDict) if globalBuildingList != [] else None)
 
 
 
@@ -619,23 +650,23 @@ def decodeBlueprint(rawBlueprint:str) -> Blueprint:
     bpType = validBP["$type"]
 
     if bpType == BUILDING_BP_TYPE:
-        try:
-            buildingBP = _decodeBuildingBP(validBP["Entries"])
-        except BlueprintError as e:
-            raise BlueprintError(f"Error while creating building blueprint representation : {e}")
-        return Blueprint(majorVersion,version,bpType,None,buildingBP)
+        func = _decodeBuildingBP
+        text = "building"
+    else:
+        func = _decodeIslandBP
+        text = "island"
 
     try:
-        islandBP, buildingBP = _decodeIslandBP(validBP["Entries"])
+        decodedDecodedBP = func(validBP["Entries"])
     except BlueprintError as e:
-        raise BlueprintError(f"Error while creating island blueprint representation : {e}")
-    return Blueprint(majorVersion,version,bpType,islandBP,buildingBP)
+        raise BlueprintError(f"Error while creating {text} blueprint representation : {e}")
+    return Blueprint(majorVersion,version,bpType,decodedDecodedBP)
 
 def encodeBlueprint(blueprint:Blueprint) -> str:
     try:
-        encodedBP, majorVersion = blueprint.toJSON()
+        encodedBP, majorVersion = blueprint.encode()
     except Exception:
-        raise BlueprintError("Error while encoding blueprint")
+        raise BlueprintError("Error while encoding blueprint (objects to dict part)")
     return _encodeBlueprintLastPart(encodedBP,majorVersion)
 
 def getPotentialBPCodesInString(string:str) -> list[str]:

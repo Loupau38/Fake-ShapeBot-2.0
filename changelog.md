@@ -1,3 +1,22 @@
+## 06 Jan 24
+- In blueprints module, move tile dict representation creation from decoding part to building or island blueprint object creation
+- Use set instead of dict for overlapping tiles check in blueprint decoding
+- In blueprints module, move building blueprint creation from island blueprint from decoding part to blueprint object creation
+- Remove some repeated code for building/island blueprint decoding in `decodeBlueprint()` function
+- Use different coding approach for at least a bit complex slash commands reducing indentation levels and `else:` count
+- Rename `toJSON()` blueprint encoding functions to `encode()`
+- On blueprint encoding error, precise in which of the two parts the error happened
+- Add /blueprint-creator command
+  - Add latest major version constant to version module of game infos
+  - Separate latest public and latest patreon-only game versions into two constants
+  - When a blueprint building entry that should have additional data is created without any, it will now get its default
+- Fix blueprints module producing error when decoding blueprints containing train stations older than alpha 15.2
+- Fix `bot.globalLogMessage()` not acting correctly if the message is more than 2000 characters
+- Fix /change-blueprint-version command returning error messages in code blocks (again)
+- Fix not accounting for fluid producers actually saving their color with the `color-` prefix in blueprints
+- Fix constant signal generated fluid value not being represented like a fluid producer's generated fluid
+- Fix blueprint encoding not omitting keys
+
 ## 04 Jan 24
 - Add shapez 1 discord server invite /msg message
 - Update readme formatting

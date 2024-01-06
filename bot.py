@@ -11,6 +11,7 @@ import utils
 import gameInfos
 import researchViewer
 import guildSettings
+import shapeCodeGenerator
 
 import discord
 import json
@@ -24,7 +25,7 @@ async def globalLogMessage(message:str) -> None:
         print(message)
     else:
         logChannel = client.get_channel(globalInfos.GLOBAL_LOG_CHANNEL)
-        await logChannel.send(f"```{message}```")
+        await logChannel.send(**getCommandResponse(message,None,logChannel.guild,True,("```","```")))
 
 async def globalLogError() -> None:
     await globalLogMessage(("".join(traceback.format_exception(*sys.exc_info())))[:-1])
@@ -470,7 +471,9 @@ def runDiscordBot() -> None:
     registerAdminCommand(RegisterCommandType.ROLE_LIST,"restrict-to-roles","restrictToRoles")
 
     @tree.command(name="restrict-to-roles-set-inverted",description=f"{globalInfos.ADMIN_ONLY_BADGE} sets if the restrict to roles list should be inverted")
-    @discord.app_commands.describe(inverted="If True : only users who have at least one role that isn't part of the list will be able to use public message features, if False : only users who have at least one role that is part of the list will be able to use public message features")
+    @discord.app_commands.describe(
+        inverted="If True : only users who have at least one role that isn't part of the list will be able to use public message features, if False : only users who have at least one role that is part of the list will be able to use public message features"
+    )
     async def restrictToRolesSetInvertedCommand(interaction:discord.Interaction,inverted:bool) -> None:
         if exitCommandWithoutResponse(interaction):
             return
@@ -495,107 +498,139 @@ def runDiscordBot() -> None:
         await interaction.followup.send(**getCommandResponse(responseMsg,file,interaction.guild,False))
 
     @tree.command(name="change-blueprint-version",description="Change a blueprint's version")
-    @discord.app_commands.describe(blueprint="The full blueprint code",
-        version="The blueprint version number (latest public : {}, latest patreon only : {})".format(*gameInfos.versions.LATEST_GAME_VERSIONS),
-        blueprint_file="A file containing a blueprint code if it's too big to paste it directly (fill in the 'blueprint' parameter with dummy character(s))")
+    @discord.app_commands.describe(
+        blueprint="The full blueprint code",
+        version=f"The blueprint version number (latest public : {gameInfos.versions.LATEST_PUBLIC_GAME_VERSION}, latest patreon only : {gameInfos.versions.LATEST_GAME_VERSION})",
+        blueprint_file="A file containing a blueprint code if it's too big to paste it directly (fill in the 'blueprint' parameter with dummy character(s))"
+    )
     async def changeBlueprintVersionCommand(interaction:discord.Interaction,blueprint:str,version:int,blueprint_file:discord.Attachment|None=None) -> None:
         if exitCommandWithoutResponse(interaction):
             return
-        if await hasPermission(PermissionLvls.PRIVATE_FEATURE,interaction=interaction):
+
+        async def runCommand() -> None:
+            nonlocal interaction, blueprint, version, blueprint_file, responseMsg, noErrors
+            noErrors = False
+
+            if not await hasPermission(PermissionLvls.PRIVATE_FEATURE,interaction=interaction):
+                responseMsg = globalInfos.NO_PERMISSION_TEXT
+                return
+
             toProcessBlueprint = await getBPFromStringOrFile(blueprint,blueprint_file)
             if toProcessBlueprint is None:
                 responseMsg = "Error while processing file"
-            else:
-                try:
-                    responseMsg = blueprints.changeBlueprintVersion(toProcessBlueprint,version)
-                except blueprints.BlueprintError as e:
-                    responseMsg = f"Error happened : {e}"
-        else:
-            responseMsg = globalInfos.NO_PERMISSION_TEXT
+                return
 
-        await interaction.response.send_message(ephemeral=True,**getCommandResponse(responseMsg,None,interaction.guild,False,("```","```")))
+            try:
+                responseMsg = blueprints.changeBlueprintVersion(toProcessBlueprint,version)
+                noErrors = True
+            except blueprints.BlueprintError as e:
+                responseMsg = f"Error happened : {e}"
+
+        responseMsg:str; noErrors:bool
+        await runCommand()
+        await interaction.response.send_message(ephemeral=True,**getCommandResponse(responseMsg,None,interaction.guild,False,
+            ("```","```") if noErrors else ("","")))
 
     @tree.command(name="member-count",description="Display the number of members in this server")
     async def MemberCountCommand(interaction:discord.Interaction) -> None:
         if exitCommandWithoutResponse(interaction):
             return
+
         def fillText(text:str,desiredLen:int,align:str) -> str:
             if align == "l":
                 return text.ljust(desiredLen)
             if align == "r":
                 return text.rjust(desiredLen)
             return text.center(desiredLen)
-        if await hasPermission(PermissionLvls.PRIVATE_FEATURE,interaction=interaction):
+
+        async def runCommand() -> None:
+            nonlocal interaction, responseMsg
+
+            if not await hasPermission(PermissionLvls.PRIVATE_FEATURE,interaction=interaction):
+                responseMsg = globalInfos.NO_PERMISSION_TEXT
+                return
+
             if interaction.guild is None:
                 responseMsg = "Not in a server"
-            else:
-                guild = await client.fetch_guild(interaction.guild_id,with_counts=True)
-                total = guild.approximate_member_count
-                online = guild.approximate_presence_count
-                offline = total - online
-                totalTxt, onlineTxt, offlineTxt = "Total", "Online", "Offline"
-                onlineProportion = online / total
-                onlinePercent = round(onlineProportion*100)
-                offlinePercent = 100-onlinePercent
-                onlinePercent, offlinePercent = f"{onlinePercent}%", f"{offlinePercent}%"
-                online, total, offline = [str(n) for n in (online,total,offline)]
-                totalMaxLen = max(len(s) for s in (total,totalTxt))
-                onlineMaxLen = max(len(s) for s in (online,onlinePercent,onlineTxt))
-                offlineMaxLen = max(len(s) for s in (offline,offlinePercent,offlineTxt))
-                numSpaces = 20
-                totalLen = onlineMaxLen + numSpaces + totalMaxLen + numSpaces + offlineMaxLen
-                spaces = " "*numSpaces
-                filledProgressBar = round(onlineProportion*totalLen)
-                lines = [
-                    f"{fillText(onlineTxt,onlineMaxLen,'l')}{spaces}{fillText(totalTxt,totalMaxLen,'c')}{spaces}{fillText(offlineTxt,offlineMaxLen,'r')}",
-                    f"{fillText(online,onlineMaxLen,'l')}{spaces}{fillText(total,totalMaxLen,'c')}{spaces}{fillText(offline,offlineMaxLen,'r')}",
-                    f"{fillText(onlinePercent,onlineMaxLen,'l')}{spaces}{' '*totalMaxLen}{spaces}{fillText(offlinePercent,offlineMaxLen,'r')}",
-                    f"{'#'*filledProgressBar}{'-'*(totalLen-filledProgressBar)}"
-                ]
-                responseMsg = "\n".join(lines)
-                responseMsg = f"```{responseMsg}```"
-        else:
-            responseMsg = globalInfos.NO_PERMISSION_TEXT
+                return
+
+            guild = await client.fetch_guild(interaction.guild_id,with_counts=True)
+            total = guild.approximate_member_count
+            online = guild.approximate_presence_count
+            offline = total - online
+            totalTxt, onlineTxt, offlineTxt = "Total", "Online", "Offline"
+            onlineProportion = online / total
+            onlinePercent = round(onlineProportion*100)
+            offlinePercent = 100-onlinePercent
+            onlinePercent, offlinePercent = f"{onlinePercent}%", f"{offlinePercent}%"
+            online, total, offline = [str(n) for n in (online,total,offline)]
+            totalMaxLen = max(len(s) for s in (total,totalTxt))
+            onlineMaxLen = max(len(s) for s in (online,onlinePercent,onlineTxt))
+            offlineMaxLen = max(len(s) for s in (offline,offlinePercent,offlineTxt))
+            numSpaces = 20
+            totalLen = onlineMaxLen + numSpaces + totalMaxLen + numSpaces + offlineMaxLen
+            spaces = " "*numSpaces
+            filledProgressBar = round(onlineProportion*totalLen)
+            lines = [
+                f"{fillText(onlineTxt,onlineMaxLen,'l')}{spaces}{fillText(totalTxt,totalMaxLen,'c')}{spaces}{fillText(offlineTxt,offlineMaxLen,'r')}",
+                f"{fillText(online,onlineMaxLen,'l')}{spaces}{fillText(total,totalMaxLen,'c')}{spaces}{fillText(offline,offlineMaxLen,'r')}",
+                f"{fillText(onlinePercent,onlineMaxLen,'l')}{spaces}{' '*totalMaxLen}{spaces}{fillText(offlinePercent,offlineMaxLen,'r')}",
+                f"{'#'*filledProgressBar}{'-'*(totalLen-filledProgressBar)}"
+            ]
+            responseMsg = "\n".join(lines)
+            responseMsg = f"```{responseMsg}```"
+
+        responseMsg:str
+        await runCommand()
         await interaction.response.send_message(responseMsg,ephemeral=True)
 
     @tree.command(name="operation-graph",description="See documentation on github")
-    @discord.app_commands.describe(public="Errors will be sent publicly if this is True! Sets if the result is sent publicly in the channel",
-        see_shape_vars="Wether or not to send the shape codes that were affected to every shape variable")
+    @discord.app_commands.describe(
+        public="Errors will be sent publicly if this is True! Sets if the result is sent publicly in the channel",
+        see_shape_vars="Wether or not to send the shape codes that were affected to every shape variable"
+    )
     async def operationGraphCommand(interaction:discord.Interaction,instructions:str,public:bool=False,see_shape_vars:bool=False) -> None:
         if exitCommandWithoutResponse(interaction):
             return
-        file = None
-        hasErrors = False # unused but kept just in case
-        if await hasPermission(PermissionLvls.PUBLIC_FEATURE if public else PermissionLvls.PRIVATE_FEATURE,interaction=interaction):
+
+        async def runCommand() -> None:
+            nonlocal interaction, instructions, public, see_shape_vars, responseMsg, file, imageSize
+            file = None
+
+            if not await hasPermission(PermissionLvls.PUBLIC_FEATURE if public else PermissionLvls.PRIVATE_FEATURE,interaction=interaction):
+                await interaction.response.defer(ephemeral=True)
+                responseMsg = globalInfos.NO_PERMISSION_TEXT
+                return
+
             await interaction.response.defer(ephemeral=not public)
             valid, instructionsOrError = operationGraph.getInstructionsFromText(instructions)
-            if valid:
-                valid, responseOrError = operationGraph.genOperationGraph(instructionsOrError,see_shape_vars)
-                if valid:
-                    (image, imageSize), shapeVarValues = responseOrError
-                    file = discord.File(image,"graph.png")
-                    if see_shape_vars:
-                        responseMsg = "\n".join(f"- {k} : {{{v}}}" for k,v in shapeVarValues.items())
-                    else:
-                        responseMsg = ""
-                else:
-                    responseMsg = responseOrError
-                    hasErrors = True
-            else:
+            if not valid:
                 responseMsg = instructionsOrError
-                hasErrors = True
-        else:
-            await interaction.response.defer(ephemeral=True)
-            responseMsg = globalInfos.NO_PERMISSION_TEXT
-            hasErrors = True
+                return
 
+            valid, responseOrError = operationGraph.genOperationGraph(instructionsOrError,see_shape_vars)
+            if not valid:
+                responseMsg = responseOrError
+                return
+
+            (image, imageSize), shapeVarValues = responseOrError
+            file = discord.File(image,"graph.png")
+            if see_shape_vars:
+                responseMsg = "\n".join(f"- {k} : {{{v}}}" for k,v in shapeVarValues.items())
+            else:
+                responseMsg = ""
+
+        file:discord.File; imageSize:int
+        await runCommand()
         if type(responseMsg) == utils.OutputString:
             responseMsg = responseMsg.render(public)
         await interaction.followup.send(**getCommandResponse(responseMsg,None if file is None else (file,imageSize),interaction.guild,public))
 
-    @tree.command(name="blueprint-info",description="Get a blueprint's version, building count and size")
-    @discord.app_commands.describe(blueprint="The full blueprint code",
-        blueprint_file="A file containing a blueprint code if it's too big to paste it directly (fill in the 'blueprint' parameter with dummy character(s))")
+    @tree.command(name="blueprint-info",description="Get infos about a blueprint")
+    @discord.app_commands.describe(
+        blueprint="The full blueprint code",
+        blueprint_file="A file containing a blueprint code if it's too big to paste it directly (fill in the 'blueprint' parameter with dummy character(s))"
+    )
     async def blueprintInfoCommand(interaction:discord.Interaction,blueprint:str,advanced:bool=False,blueprint_file:discord.Attachment|None=None) -> None:
 
         def formatCounts(bp:blueprints.BuildingBlueprint|blueprints.IslandBlueprint|None,name:str) -> str:
@@ -621,116 +656,140 @@ def runDiscordBot() -> None:
         if exitCommandWithoutResponse(interaction):
             return
 
-        if await hasPermission(PermissionLvls.PRIVATE_FEATURE,interaction=interaction):
+        async def runCommand() -> None:
+            nonlocal interaction, blueprint, advanced, blueprint_file, responseMsg
+
+            if not await hasPermission(PermissionLvls.PRIVATE_FEATURE,interaction=interaction):
+                responseMsg = globalInfos.NO_PERMISSION_TEXT
+                return
 
             toProcessBlueprint = await getBPFromStringOrFile(blueprint,blueprint_file)
             if toProcessBlueprint is None:
                 responseMsg = "Error while processing file"
+                return
 
-            else:
-                try:
+            try:
 
-                    bp = blueprints.decodeBlueprint(toProcessBlueprint)
+                bp = blueprints.decodeBlueprint(toProcessBlueprint)
 
-                    versionTxt = gameInfos.versions.versionNumToText(bp.version,advanced)
-                    if versionTxt is None:
-                        versionTxt = "Unknown"
-                    elif advanced:
-                        versionTxt = f"[{', '.join(f'`{txt}`' for txt in versionTxt)}]"
-                    else:
-                        versionTxt = f"`{versionTxt}`"
+                versionTxt = gameInfos.versions.versionNumToText(bp.version,advanced)
+                if versionTxt is None:
+                    versionTxt = "Unknown"
+                elif advanced:
+                    versionTxt = f"[{', '.join(f'`{txt}`' for txt in versionTxt)}]"
+                else:
+                    versionTxt = f"`{versionTxt}`"
 
-                    responseParts = [
-                        f"Version : `{bp.version}` / {versionTxt}",
-                        f"Blueprint type : `{bp.type}`"
-                    ]
+                responseParts = [
+                    f"Version : `{bp.version}` / {versionTxt}",
+                    f"Blueprint type : `{bp.type}`"
+                ]
 
-                    sizes = []
+                sizes = []
 
-                    if bp.buildingBP is not None:
-                        buildingCount = bp.buildingBP.getBuildingCount()
-                        buildingSize = bp.buildingBP.getSize()
-                        sizes.append(f"Building size : `{buildingSize.width}`x`{buildingSize.height}`x`{buildingSize.depth}`")
-                        responseParts.append(f"Building count : `{utils.sepInGroupsNumber(buildingCount)}`")
+                if bp.buildingBP is not None:
+                    buildingCount = bp.buildingBP.getBuildingCount()
+                    buildingSize = bp.buildingBP.getSize()
+                    sizes.append(f"Building size : `{buildingSize.width}`x`{buildingSize.height}`x`{buildingSize.depth}`")
+                    responseParts.append(f"Building count : `{utils.sepInGroupsNumber(buildingCount)}`")
 
-                    if bp.islandBP is not None:
-                        islandCount = bp.islandBP.getIslandCount()
-                        islandSize = bp.islandBP.getSize()
-                        sizes.append(f"Island size : `{islandSize.width}`x`{islandSize.height}`")
-                        responseParts.append(f"Island count : `{utils.sepInGroupsNumber(islandCount)}`")
+                if bp.islandBP is not None:
+                    islandCount = bp.islandBP.getIslandCount()
+                    islandSize = bp.islandBP.getSize()
+                    sizes.append(f"Island size : `{islandSize.width}`x`{islandSize.height}`")
+                    responseParts.append(f"Island count : `{utils.sepInGroupsNumber(islandCount)}`")
 
-                    responseParts.extend(sizes)
-                    responseMsg = ", ".join(responseParts)
+                responseParts.extend(sizes)
+                responseMsg = ", ".join(responseParts)
 
-                    if advanced:
-                        responseMsg += formatCounts(bp.buildingBP,"Buildings")
-                        responseMsg += formatCounts(bp.islandBP,"Islands")
+                if advanced:
+                    responseMsg += formatCounts(bp.buildingBP,"Buildings")
+                    responseMsg += formatCounts(bp.islandBP,"Islands")
 
-                except blueprints.BlueprintError as e:
-                    responseMsg = f"Error happened : {e}"
-        else:
-            responseMsg = globalInfos.NO_PERMISSION_TEXT
+            except blueprints.BlueprintError as e:
+                responseMsg = f"Error happened : {e}"
 
+        responseMsg:str
+        await runCommand()
         await interaction.response.send_message(ephemeral=True,**getCommandResponse(responseMsg,None,interaction.guild,False))
 
     @tree.command(name="research-viewer",description="View the research tree")
     @discord.app_commands.describe(
         level="The level to view, starting from 1",
         node="The node to view, starting from 1. The 'level' parameter must be set to a value",
-        public="Errors will be sent publicly if this is True! Sets if the result is sent publicly in the channel")
+        public="Errors will be sent publicly if this is True! Sets if the result is sent publicly in the channel"
+    )
     async def researchViewerCommand(interaction:discord.Interaction,level:int=0,node:int=0,public:bool=False) -> None:
         if exitCommandWithoutResponse(interaction):
             return
-        file = None
-        responseMsg = ""
-        if await hasPermission(PermissionLvls.PUBLIC_FEATURE if public else PermissionLvls.PRIVATE_FEATURE,interaction=interaction):
+
+        async def runCommand() -> None:
+            nonlocal interaction, level, node, public, responseMsg, file, fileSize
+            file = None
+
+            if not await hasPermission(PermissionLvls.PUBLIC_FEATURE if public else PermissionLvls.PRIVATE_FEATURE,interaction=interaction):
+                await interaction.response.defer(ephemeral=True)
+                responseMsg = globalInfos.NO_PERMISSION_TEXT
+                return
+
             await interaction.response.defer(ephemeral=not public)
+            if level < 0 or level > len(gameInfos.research.reserachTree):
+                responseMsg = "Error : invalid level"
+                return
+
             if node != 0:
+
                 if level == 0:
                     responseMsg = "Error : 'node' parameter provided but not 'level' parameter"
-                elif level < 1 or level > len(gameInfos.research.reserachTree):
-                    responseMsg = "Error : invalid level"
-                else:
-                    curLevel = gameInfos.research.reserachTree[level-1]
-                    if node < 1 or node > len(curLevel.sideGoals)+1:
-                        responseMsg = "Error : invalid node"
-                    else:
-                        file, fileSize = researchViewer.renderNode(level-1,node-1)
-                        curNode = curLevel.milestone if node == 1 else curLevel.sideGoals[node-2]
-                        desc = utils.decodedFormatToDiscordFormat(utils.decodeUnityFormat(curNode.desc))
-                        desc = "\n".join(f"> {l}" for l in desc.split("\n"))
-                        if curNode.unlocks == []:
-                            unlocks = "<Nothing>"
-                        else:
-                            unlocks = ", ".join(f"`{u}`" for u in curNode.unlocks)
-                        lines = [
-                            f"- **Name** : {utils.decodedFormatToDiscordFormat(utils.decodeUnityFormat(curNode.title))}",
-                            f"- **Id** : `{curNode.id}`",
-                            f"- **Description** :\n{desc}",
-                            f"- **Goal Shape** : `{curNode.goalShape}` x{utils.sepInGroupsNumber(curNode.goalAmount)}",
-                            f"- **Unlocks** :\n> {unlocks}",
-                            f"- **Lock/Unlock commands** :",
-                            f"> ```research.set {curNode.id} 0```",
-                            f"> ```research.set {curNode.id} 1```"
-                        ]
-                        responseMsg = "\n".join(lines)
-            elif level != 0:
-                if level < 1 or level > len(gameInfos.research.reserachTree):
-                    responseMsg = "Error : invalid level"
-                else:
-                    file, fileSize = researchViewer.renderLevel(level-1)
-            else:
-                file, fileSize = researchViewer.renderTree()
-        else:
-            await interaction.response.defer(ephemeral=True)
-            responseMsg = globalInfos.NO_PERMISSION_TEXT
+                    return
 
+                curLevel = gameInfos.research.reserachTree[level-1]
+                if node < 1 or node > len(curLevel.sideGoals)+1:
+                    responseMsg = "Error : invalid node"
+                    return
+
+                file, fileSize = researchViewer.renderNode(level-1,node-1)
+                curNode = curLevel.milestone if node == 1 else curLevel.sideGoals[node-2]
+                desc = utils.decodedFormatToDiscordFormat(utils.decodeUnityFormat(curNode.desc))
+                desc = "\n".join(f"> {l}" for l in desc.split("\n"))
+                if curNode.unlocks == []:
+                    unlocks = "<Nothing>"
+                else:
+                    unlocks = ", ".join(f"`{u}`" for u in curNode.unlocks)
+
+                lines = [
+                    f"- **Name** : {utils.decodedFormatToDiscordFormat(utils.decodeUnityFormat(curNode.title))}",
+                    f"- **Id** : `{curNode.id}`",
+                    f"- **Description** :\n{desc}",
+                    f"- **Goal Shape** : `{curNode.goalShape}` x{utils.sepInGroupsNumber(curNode.goalAmount)}",
+                    f"- **Unlocks** :\n> {unlocks}",
+                    f"- **Lock/Unlock commands** :",
+                    f"> ```research.set {curNode.id} 0```",
+                    f"> ```research.set {curNode.id} 1```"
+                ]
+
+                responseMsg = "\n".join(lines)
+                return
+
+            if level != 0:
+                file, fileSize = researchViewer.renderLevel(level-1)
+                responseMsg = ""
+                return
+
+            file, fileSize = researchViewer.renderTree()
+            responseMsg = ""
+
+        responseMsg:str; fileSize:int
+        await runCommand()
         if file is not None:
             file = discord.File(file,"researchTree.png")
         await interaction.followup.send(**getCommandResponse(responseMsg,None if file is None else (file,fileSize),interaction.guild,public))
 
     @tree.command(name="msg",description="Public by default ! A command for shortcuts to messages")
-    @discord.app_commands.describe(msg="The message id",public="Wether to send the message publicly or not")
+    @discord.app_commands.describe(
+        msg="The message id",
+        public="Wether to send the message publicly or not"
+    )
     @discord.app_commands.choices(msg=[discord.app_commands.Choice(name=id,value=id) for id in msgCommandMessages.keys()])
     async def msgCommand(interaction:discord.Interaction,msg:discord.app_commands.Choice[str],public:bool=True) -> None:
         if exitCommandWithoutResponse(interaction):
@@ -744,6 +803,110 @@ def runDiscordBot() -> None:
         if not ephemeral:
             responseMsg = safenString(responseMsg)
         await interaction.response.send_message(responseMsg,ephemeral=ephemeral)
+
+    @tree.command(name="blueprint-creator",description="Create blueprints")
+    @discord.app_commands.describe(
+        to_create="What blueprint to create, see docs on github for specifics",
+        extra="Extra data potentially required depending on the 'to_create' parameter"
+    )
+    async def blueprintCreatorCommand(interaction:discord.Interaction,
+        to_create:typing.Literal[
+            "item-producer-w-shape",
+            "item-producer-w-shape-crate",
+            "item-producer-w-fluid-crate",
+            "all-buildings",
+            "all-islands"
+        ],extra:str="") -> None:
+        if exitCommandWithoutResponse(interaction):
+            return
+
+        async def runCommand() -> None:
+            nonlocal interaction, to_create, extra, responseMsg, noErrors
+            noErrors = False
+
+            blueprintInfos:tuple[int,int,str] = (
+                gameInfos.versions.LATEST_MAJOR_VERSION,
+                gameInfos.versions.LATEST_GAME_VERSION,
+                blueprints.BUILDING_BP_TYPE
+            )
+
+            if to_create.startswith("item-producer-w-"):
+                to_create = to_create.removeprefix("item-producer-w-")
+
+                if to_create in ("shape","shape-crate"):
+                    shapeCodesOrError, valid = shapeCodeGenerator.generateShapeCodes(extra)
+
+                    if not valid:
+                        responseMsg = f"Invalid shape code : {shapeCodesOrError}"
+                        return
+
+                    shapeCodesLen = len(shapeCodesOrError)
+                    if shapeCodesLen != 1:
+                        responseMsg = f"Not exactly one shape code returned ({shapeCodesLen})"
+                        return
+
+                    buildingExtra = {"type":"shapecrate" if to_create == "shape-crate" else "shape","value":shapeCodesOrError[0]}
+
+                else:
+                    if extra not in globalInfos.SHAPE_COLORS:
+                        responseMsg = "Invalid color"
+                        return
+
+                    buildingExtra = {"type":"fluidcrate","value":blueprints.COLOR_PREFIX+extra}
+
+                try:
+                    responseMsg = blueprints.encodeBlueprint(blueprints.Blueprint(
+                        *blueprintInfos,
+                        blueprints.BuildingBlueprint([blueprints.BuildingEntry(
+                            utils.Pos(0,0),
+                            utils.Rotation(0),
+                            gameInfos.buildings.allBuildings["SandboxItemProducerDefaultInternalVariant"],
+                            buildingExtra
+                        )])
+                    ))
+                    noErrors = True
+                except blueprints.BlueprintError as e:
+                    responseMsg = f"Error happened while creating blueprint : {e}"
+                return
+
+            to_create = to_create.removeprefix("all-")
+            toCreateBuildings = to_create == "buildings"
+            toPlaceList = (
+                gameInfos.buildings.allBuildings.values()
+                if toCreateBuildings else
+                gameInfos.islands.allIslands.values()
+            )
+            curX = 0
+            entryList = []
+
+            for toPlace in toPlaceList:
+                curTiles = toPlace.tiles
+                if not toCreateBuildings:
+                    curTiles = [t.pos for t in curTiles]
+                minX = min(t.x for t in curTiles)
+                minZ = min(t.z for t in curTiles)
+                maxX = max(t.x for t in curTiles)
+                curX -= minX
+                entryList.append(
+                    (blueprints.BuildingEntry if toCreateBuildings else blueprints.IslandEntry)
+                    (utils.Pos(curX,0,-minZ),utils.Rotation(0),toPlace,None)
+                )
+                curX += maxX + 1
+
+            try:
+                responseMsg = blueprints.encodeBlueprint(blueprints.Blueprint(
+                    *blueprintInfos,
+                    (blueprints.BuildingBlueprint if toCreateBuildings else blueprints.IslandBlueprint)
+                    (entryList)
+                ))
+                noErrors = True
+            except blueprints.BlueprintError as e:
+                responseMsg = f"Error happened while creating blueprint : {e}"
+
+        responseMsg:str; noErrors:bool
+        await runCommand()
+        await interaction.response.send_message(ephemeral=True,**getCommandResponse(responseMsg,None,interaction.guild,False,
+            ("```","```") if noErrors else ("","")))
 
     with open(globalInfos.TOKEN_PATH) as f:
         token = f.read()
