@@ -1,3 +1,11 @@
+## 08 Jan 24
+- Update for alpha 15.2 demo : add version in game infos
+- Add changelog link to readme
+- Rename user displayed term 'island' to 'platform'
+- Add platform unit count and blueprint cost to /blueprint-info
+- Change /blueprint-info response format
+- Add exception name to most error messages triggered by an `except Exception`
+
 ## 06 Jan 24
 - In blueprints module, move tile dict representation creation from decoding part to building or island blueprint object creation
 - Use set instead of dict for overlapping tiles check in blueprint decoding

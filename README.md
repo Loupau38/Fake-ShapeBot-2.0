@@ -75,7 +75,7 @@ Note : as a general rule, slash commands will always send private responses exce
 
 - /operation-graph [instructions] [public=False] [see_shape_vars=False] : See the [/operation-graph documentation](https://github.com/Loupau38/Fake-ShapeBot-2.0/blob/main/operationGraphDoc.md)
 
-- /blueprint-info [blueprint] [advanced=False] [blueprint_file=None] : Will give the version, type, building count, island count, building scale and island scale size of the given blueprint. If 'advanced' is set to True, will also give the individual counts for every building and islands. If the blueprint code is too big to be pasted, provide a file containing it in the 'blueprint_file' parameter and fill in the 'blueprint' parameter with dummy character(s)
+- /blueprint-info [blueprint] [advanced=False] [blueprint_file=None] : Will give the version, type, blueprint cost, building count, building scale size, platform count, platform scale size and platform unit count of the given blueprint. If 'advanced' is set to True, will also give the individual counts for every building and platforms. If the blueprint code is too big to be pasted, provide a file containing it in the 'blueprint_file' parameter and fill in the 'blueprint' parameter with dummy character(s)
 
 - /research-viewer [level=0] [node=0] [public=False] : Without the 'level' or 'node' parameters set, displays the entire research tree. With the 'level' parameter set to a number starting from 1, displays the corresponding level (milestone + side goals). With the 'level' and 'node' parameter set to a number starting from 1, displays the corresponding node of the corresponding level (1 for the milestone then starting from 2 for the side goals). If 'public' is set to true, the result will be sent publicly in the channel the command was executed in. Error messages will also be sent publicly if this parameter is set to true. When viewing a single node, will display via text the node's name, id, description, goal shape, goal amount, unlocks, lock/unlock commands. Note : the version of the research tree is included in the bottom left of the images created by this command
 
@@ -86,7 +86,7 @@ Note : as a general rule, slash commands will always send private responses exce
   - item-producer-w-shape-crate : Same as above except the shape will be contained in a crate instead
   - item-producer-w-fluid-crate : Same as above except a fluid crate will be produced instead, with the fluid's one letter color code inside the 'extra' parameter
   - all-buildings : Will create a blueprint containing all buildings, starting at X=0 and increasing (Y=0 for all, Z is 0 or increased so no building tiles are below 0). Note : this is intended for testing external blueprint related tools, pasting the blueprint ingame will result in errors and not placed buildings
-  - all-islands : Same as above except with islands instead of buildings
+  - all-platforms : Same as above except with platforms instead of buildings
 
 ### Admin commands
 
@@ -126,3 +126,5 @@ Note : as a general rule, slash commands will always send private responses exce
 
 - If the bot is mentioned, it should react with `:robot:`
 - If one (and only one) blueprint code is detected in a message and its attached files, the bot will react with the version of that blueprint
+
+[Changelog](https://github.com/Loupau38/Fake-ShapeBot-2.0/blob/main/changelog.md)

@@ -7,6 +7,7 @@ import gzip
 import base64
 import json
 import typing
+import math
 
 PREFIX = "SHAPEZ2"
 SEPARATOR = "-"
@@ -100,6 +101,9 @@ class IslandBlueprint:
     def getIslandCounts(self) -> dict[str,int]:
         return _genericGetCounts(self)
 
+    def getTileCount(self) -> int:
+        return len(self.asTileDict)
+
     def encode(self) -> dict:
         return {
             "$type" : ISLAND_BP_TYPE,
@@ -138,6 +142,19 @@ class Blueprint:
             else:
                 self.buildingBP = BuildingBlueprint(tempBuildingList)
 
+    def getCost(self) -> int:
+        # bp cost formula : last updated : alpha 15.2
+        # note to self : dnSpy > BuildingBlueprint > ComputeCost() / ComputeTotalCost()
+        if self.buildingBP is None:
+            return 0
+        buildingCount = self.buildingBP.getBuildingCount()
+        if buildingCount <= 1:
+            return 0
+        try:
+            return math.ceil((buildingCount-1) ** 1.3)
+        except Exception as e:
+            raise BlueprintError("Failed to compute blueprint cost") from e
+
     def encode(self) -> tuple[dict,int]:
         return {
             "V" : self.version,
@@ -175,8 +192,8 @@ def _decodeBuildingExtraData(raw:str,buildingType:str) -> typing.Any:
             raise BlueprintError(f"Error while decoding string : {e}")
         try:
             return decodedBytes.decode()
-        except Exception:
-            raise BlueprintError("Can't decode from bytes")
+        except Exception as e:
+            raise BlueprintError(f"Can't decode from bytes ({e.__class__.__name__})")
 
     def checkIfValidColor(color:str) -> None:
         if not color.startswith(COLOR_PREFIX):
@@ -204,8 +221,8 @@ def _decodeBuildingExtraData(raw:str,buildingType:str) -> typing.Any:
 
     try:
         rawDecoded = base64.b64decode(raw)
-    except Exception:
-        raise BlueprintError("Can't decode from base64")
+    except Exception as e:
+        raise BlueprintError(f"Can't decode from base64 ({e.__class__.__name__})")
 
     if buildingType == "LabelDefaultInternalVariant":
         return standardDecode(rawDecoded,False)
@@ -416,20 +433,20 @@ def _decodeBlueprintFirstPart(rawBlueprint:str) -> tuple[dict,int]:
 
         try:
             encodedBP = encodedBP.encode()
-        except Exception:
-            raise BlueprintError("Can't encode in bytes")
+        except Exception as e:
+            raise BlueprintError(f"Can't encode in bytes ({e.__class__.__name__})")
         try:
             encodedBP = base64.b64decode(encodedBP)
-        except Exception:
-            raise BlueprintError("Can't decode from base64")
+        except Exception as e:
+            raise BlueprintError(f"Can't decode from base64 ({e.__class__.__name__})")
         try:
             encodedBP = gzip.decompress(encodedBP)
-        except Exception:
-            raise BlueprintError("Can't gzip decompress")
+        except Exception as e:
+            raise BlueprintError(f"Can't gzip decompress ({e.__class__.__name__})")
         try:
             decodedBP = json.loads(encodedBP)
-        except Exception:
-            raise BlueprintError("Can't parse json")
+        except Exception as e:
+            raise BlueprintError(f"Can't parse json ({e.__class__.__name__})")
 
         try:
             _getKeyValue(decodedBP,"V",int)
@@ -446,8 +463,8 @@ def _encodeBlueprintLastPart(blueprint:dict,majorVersion:int) -> str:
     try:
         blueprint = base64.b64encode(gzip.compress(json.dumps(blueprint,indent=4).encode())).decode()
         blueprint = PREFIX + SEPARATOR + str(majorVersion) + SEPARATOR + blueprint + SUFFIX
-    except Exception:
-        raise BlueprintError("Error while encoding blueprint (dict to fully encoded part)")
+    except Exception as e:
+        raise BlueprintError(f"Error while encoding blueprint (dict to fully encoded part) ({e.__class__.__name__})")
     return blueprint
 
 def _getValidBlueprint(blueprint:dict,mustBeBuildingBP:bool=False) -> dict:
@@ -619,7 +636,7 @@ def _decodeIslandBP(islands:list[dict[str,int|str|dict]]) -> IslandBlueprint:
                     break
             if not inArea:
                 raise BlueprintError(
-                    f"Error in island '{islandEntryInfos['t'].id}' at {islandEntryInfos['pos']} (rectified) : tile of building '{curBuilding.type.id}' at {pos} (raw) is not inside its island build area")
+                    f"Error in '{islandEntryInfos['t'].id}' at {islandEntryInfos['pos']} (rectified) : tile of building '{curBuilding.type.id}' at {pos} (raw) is not inside its platform build area")
 
         entryList.append(IslandEntry(*islandEntryInfos.values(),curBuildingBP))
 
@@ -654,7 +671,7 @@ def decodeBlueprint(rawBlueprint:str) -> Blueprint:
         text = "building"
     else:
         func = _decodeIslandBP
-        text = "island"
+        text = "platform"
 
     try:
         decodedDecodedBP = func(validBP["Entries"])
@@ -665,8 +682,8 @@ def decodeBlueprint(rawBlueprint:str) -> Blueprint:
 def encodeBlueprint(blueprint:Blueprint) -> str:
     try:
         encodedBP, majorVersion = blueprint.encode()
-    except Exception:
-        raise BlueprintError("Error while encoding blueprint (objects to dict part)")
+    except Exception as e:
+        raise BlueprintError(f"Error while encoding blueprint (objects to dict part) ({e.__class__.__name__})")
     return _encodeBlueprintLastPart(encodedBP,majorVersion)
 
 def getPotentialBPCodesInString(string:str) -> list[str]:

@@ -63,9 +63,9 @@ async def useShapeViewer(userMessage:str,sendErrors:bool) -> tuple[bool,str,tupl
 
         return hasErrors, responseMsg, (None if file is None else (file, imageSize))
 
-    except Exception:
+    except Exception as e:
         await globalLogError()
-        return True, globalInfos.UNKNOWN_ERROR_TEXT if sendErrors else "", None
+        return True, f"{globalInfos.UNKNOWN_ERROR_TEXT} ({e.__class__.__name__})" if sendErrors else "", None
 
 def isDisabledInGuild(guildId:int|None) -> bool:
 
@@ -318,7 +318,7 @@ def runDiscordBot() -> None:
     @tree.error
     async def on_error(interaction:discord.Interaction,error:discord.app_commands.AppCommandError) -> None:
         await globalLogError()
-        responseMsg = globalInfos.UNKNOWN_ERROR_TEXT
+        responseMsg = f"{globalInfos.UNKNOWN_ERROR_TEXT} ({error.__cause__.__class__.__name__})"
         if interaction.response.is_done():
             await interaction.followup.send(responseMsg)
         else:
@@ -679,32 +679,38 @@ def runDiscordBot() -> None:
                     versionTxt = f"[{', '.join(f'`{txt}`' for txt in versionTxt)}]"
                 else:
                     versionTxt = f"`{versionTxt}`"
+                bpTypeTxt = "Platform" if bp.type == blueprints.ISLAND_BP_TYPE else "Building"
+                try:
+                    bpCost = f"`{utils.sepInGroupsNumber(bp.getCost())}`"
+                except blueprints.BlueprintError as e:
+                    bpCost = f"Failed to compute (`{e.__cause__.__class__.__name__}`)"
 
-                responseParts = [
+                responseParts = [[
                     f"Version : `{bp.version}` / {versionTxt}",
-                    f"Blueprint type : `{bp.type}`"
-                ]
-
-                sizes = []
+                    f"Blueprint type : `{bpTypeTxt}`",
+                    f"Blueprint cost : {bpCost}"
+                ]]
 
                 if bp.buildingBP is not None:
-                    buildingCount = bp.buildingBP.getBuildingCount()
                     buildingSize = bp.buildingBP.getSize()
-                    sizes.append(f"Building size : `{buildingSize.width}`x`{buildingSize.height}`x`{buildingSize.depth}`")
-                    responseParts.append(f"Building count : `{utils.sepInGroupsNumber(buildingCount)}`")
+                    responseParts.append([
+                        f"Building count : `{utils.sepInGroupsNumber(bp.buildingBP.getBuildingCount())}`",
+                        f"Building size : `{buildingSize.width}`x`{buildingSize.height}`x`{buildingSize.depth}`"
+                    ])
 
                 if bp.islandBP is not None:
-                    islandCount = bp.islandBP.getIslandCount()
                     islandSize = bp.islandBP.getSize()
-                    sizes.append(f"Island size : `{islandSize.width}`x`{islandSize.height}`")
-                    responseParts.append(f"Island count : `{utils.sepInGroupsNumber(islandCount)}`")
+                    responseParts.append([
+                        f"Platform count : `{utils.sepInGroupsNumber(bp.islandBP.getIslandCount())}`",
+                        f"Platform size : `{islandSize.width}`x`{islandSize.height}`",
+                        f"Platform units : `{utils.sepInGroupsNumber(bp.islandBP.getTileCount())}`"
+                    ])
 
-                responseParts.extend(sizes)
-                responseMsg = ", ".join(responseParts)
+                responseMsg = "\n".join(", ".join(part) for part in responseParts)
 
                 if advanced:
-                    responseMsg += formatCounts(bp.buildingBP,"Buildings")
-                    responseMsg += formatCounts(bp.islandBP,"Islands")
+                    responseMsg += formatCounts(bp.buildingBP,"Building")
+                    responseMsg += formatCounts(bp.islandBP,"Platform")
 
             except blueprints.BlueprintError as e:
                 responseMsg = f"Error happened : {e}"
@@ -815,7 +821,7 @@ def runDiscordBot() -> None:
             "item-producer-w-shape-crate",
             "item-producer-w-fluid-crate",
             "all-buildings",
-            "all-islands"
+            "all-platforms"
         ],extra:str="") -> None:
         if exitCommandWithoutResponse(interaction):
             return
