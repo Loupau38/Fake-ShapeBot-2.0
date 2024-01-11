@@ -1,3 +1,6 @@
+## 11 Jan 24
+- Update for alpha 15.3 demo : add version in game infos
+
 ## 08 Jan 24
 - Update for alpha 15.2 demo : add version in game infos
 - Add changelog link to readme
