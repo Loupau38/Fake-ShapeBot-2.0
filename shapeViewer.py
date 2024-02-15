@@ -2,21 +2,24 @@ import globalInfos
 import pygame
 
 COLORS = {
-    "u":(187,187,186),
-    "r":(255,0,0),
-    "g":(0,255,0),
-    "b":(0,0,255),
-    "c":(0,255,255),
-    "p":(255,0,255),
-    "y":(255,255,0),
-    "w":(255,255,255),
-    "k":(0,0,0)
+    "u" : (187,187,186),
+    "r" : (255,0,0),
+    "g" : (0,255,0),
+    "b" : (0,0,255),
+    "c" : (0,255,255),
+    "p" : (255,0,255),
+    "y" : (255,255,0),
+    "w" : (255,255,255),
+    "k" : (0,0,0)
 }
 SHAPE_BORDER_COLOR = (42,28,42)
 BG_CIRCLE_COLOR = (31,41,61,25)
 SHADOW_COLOR = (50,50,50,127)
 
-LAYER_SIZE_REDUCTION = 0.7 # maybe it should be 0.76, maybe not
+# according to 'dnSpy > ShapeMeshGenerator > GenerateShapeMesh()', this value should be 0.85
+# according to ingame screenshots, it should be 0.77
+# according to me, the closest is 0.8
+LAYER_SIZE_REDUCTION = 0.8
 DEFAULT_IMAGE_SIZE = 602
 DEFAULT_BG_CIRCLE_DIAMETER = 520
 DEFAULT_SHAPE_DIAMETER = 407

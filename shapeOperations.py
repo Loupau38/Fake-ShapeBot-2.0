@@ -221,7 +221,7 @@ def pushPin(shape:Shape) -> list[Shape]:
                 newLayer[quadIndex] = Quadrant(NOTHING_CHAR,NOTHING_CHAR)
         newLayer[0] = Quadrant(PIN_CHAR,NOTHING_CHAR) if i == 0 else Quadrant(NOTHING_CHAR,NOTHING_CHAR)
         newLayers.append(newLayer)
-    newLayers = cleanUpEmptyUpperLayers(newLayers)
+    newLayers = cleanUpEmptyUpperLayers(makeLayersFall(newLayers))
     return [Shape(newLayers)]
 
 def genCrystal(shape:Shape,color:str) -> list[Shape]:

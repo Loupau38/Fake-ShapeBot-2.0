@@ -38,7 +38,7 @@ class BuildingEntry:
         else:
             self.extra = extra
 
-    def encode(self) -> dict:
+    def _encode(self) -> dict:
         toReturn = {
             "T" : self.type.id
         }
@@ -63,10 +63,10 @@ class BuildingBlueprint:
     def getBuildingCounts(self) -> dict[str,int]:
         return _genericGetCounts(self)
 
-    def encode(self) -> dict:
+    def _encode(self) -> dict:
         return {
             "$type" : BUILDING_BP_TYPE,
-            "Entries" : [e.encode() for e in self.asEntryList]
+            "Entries" : [e._encode() for e in self.asEntryList]
         }
 
 class IslandEntry:
@@ -76,7 +76,7 @@ class IslandEntry:
         self.type = type
         self.buildingBP = buildingBP
 
-    def encode(self) -> dict:
+    def _encode(self) -> dict:
         toReturn = {
             "T" : self.type.id
         }
@@ -84,7 +84,7 @@ class IslandEntry:
         _omitKeyIfDefault(toReturn,"Y",self.pos.y)
         _omitKeyIfDefault(toReturn,"R",self.rotation.value)
         if self.buildingBP is not None:
-            toReturn["B"] = self.buildingBP.encode()
+            toReturn["B"] = self.buildingBP._encode()
         return toReturn
 
 class IslandBlueprint:
@@ -104,10 +104,10 @@ class IslandBlueprint:
     def getTileCount(self) -> int:
         return len(self.asTileDict)
 
-    def encode(self) -> dict:
+    def _encode(self) -> dict:
         return {
             "$type" : ISLAND_BP_TYPE,
-            "Entries" : [e.encode() for e in self.asEntryList]
+            "Entries" : [e._encode() for e in self.asEntryList]
         }
 
 class Blueprint:
@@ -155,10 +155,10 @@ class Blueprint:
         except Exception as e:
             raise BlueprintError("Failed to compute blueprint cost") from e
 
-    def encode(self) -> tuple[dict,int]:
+    def _encode(self) -> tuple[dict,int]:
         return {
             "V" : self.version,
-            "BP" : (self.buildingBP if self.islandBP is None else self.islandBP).encode()
+            "BP" : (self.buildingBP if self.islandBP is None else self.islandBP)._encode()
         }, self.majorVersion
 
 def _genericGetSize(bp:BuildingBlueprint|IslandBlueprint) -> Size:
@@ -211,7 +211,7 @@ def _decodeBuildingExtraData(raw:str,buildingType:str) -> typing.Any:
                     raise BlueprintError(f"Invalid shape code : {error}")
                 return {"type":f"shape{crateOrNot}","value":string}
         if string.startswith("fluidcrate:"):
-            string.removeprefix("fluidcrate:")
+            string = string.removeprefix("fluidcrate:")
             try:
                 checkIfValidColor(string)
             except BlueprintError as e:
@@ -461,7 +461,7 @@ def _decodeBlueprintFirstPart(rawBlueprint:str) -> tuple[dict,int]:
 
 def _encodeBlueprintLastPart(blueprint:dict,majorVersion:int) -> str:
     try:
-        blueprint = base64.b64encode(gzip.compress(json.dumps(blueprint,indent=4).encode())).decode()
+        blueprint = base64.b64encode(gzip.compress(json.dumps(blueprint,indent=2).encode())).decode()
         blueprint = PREFIX + SEPARATOR + str(majorVersion) + SEPARATOR + blueprint + SUFFIX
     except Exception as e:
         raise BlueprintError(f"Error while encoding blueprint (dict to fully encoded part) ({e.__class__.__name__})")
@@ -575,7 +575,7 @@ def _decodeBuildingBP(buildings:list[dict[str,typing.Any]],moveBPCenter:bool=Tru
             b["L"] -= minZ
         entryList.append(BuildingEntry(
             Pos(b["X"],b["Y"],b["L"]),
-            b["R"],
+            Rotation(b["R"]),
             gameInfos.buildings.allBuildings[b["T"]],
             b["C"]
         ))
@@ -614,7 +614,12 @@ def _decodeIslandBP(islands:list[dict[str,int|str|dict]]) -> IslandBlueprint:
         }
 
         if island.get("B") is None:
-            entryList.append(IslandEntry(*islandEntryInfos.values(),None))
+            entryList.append(IslandEntry(
+                islandEntryInfos["pos"],
+                Rotation(islandEntryInfos["r"]),
+                islandEntryInfos["t"],
+                None
+            ))
             continue
 
         try:
@@ -638,7 +643,12 @@ def _decodeIslandBP(islands:list[dict[str,int|str|dict]]) -> IslandBlueprint:
                 raise BlueprintError(
                     f"Error in '{islandEntryInfos['t'].id}' at {islandEntryInfos['pos']} (rectified) : tile of building '{curBuilding.type.id}' at {pos} (raw) is not inside its platform build area")
 
-        entryList.append(IslandEntry(*islandEntryInfos.values(),curBuildingBP))
+        entryList.append(IslandEntry(
+            islandEntryInfos["pos"],
+            Rotation(islandEntryInfos["r"]),
+            islandEntryInfos["t"],
+            curBuildingBP
+        ))
 
     return IslandBlueprint(entryList)
 
@@ -681,7 +691,7 @@ def decodeBlueprint(rawBlueprint:str) -> Blueprint:
 
 def encodeBlueprint(blueprint:Blueprint) -> str:
     try:
-        encodedBP, majorVersion = blueprint.encode()
+        encodedBP, majorVersion = blueprint._encode()
     except Exception as e:
         raise BlueprintError(f"Error while encoding blueprint (objects to dict part) ({e.__class__.__name__})")
     return _encodeBlueprintLastPart(encodedBP,majorVersion)

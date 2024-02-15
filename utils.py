@@ -112,13 +112,7 @@ def decodedFormatToPygameSurf(decoded:list[dict[str,str|dict[str,bool|str]]],fon
     return surf
 
 def sepInGroupsNumber(num:int) -> str:
-    numStr = str(num)
-    output = ""
-    for i,char in enumerate(numStr[::-1]):
-        if (i != 0) and (i % 3 == 0):
-            output += ","
-        output += char
-    return output[::-1]
+    return f"{num:,}"
 
 def decodeStringWithLen(string:bytes,numBytesForLen:int=2,emptyIsLengthNegative1:bool=True) -> bytes:
     stringLen = len(string)

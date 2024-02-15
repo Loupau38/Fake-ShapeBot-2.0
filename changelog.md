@@ -1,3 +1,19 @@
+## ?? ??? 24
+- Update for alpha 15.3 demo pins : add modified version name in game infos
+- Make blueprints module blueprint objects' encode functions private
+- Update shape viewer response formatting
+  - Fix `:` in links not being escaped
+- Implement cache for /research-viewer with level=0 and node=0
+- Add level number above levels in research viewer
+- Separate milestone from sidegoals in research viewer
+- Change shape viewer layer size reduction amount
+- Change bot name to 'Fake ShapeBot 2'
+- Change `utils.sepInGroupsNumber()` function code to use builtin f-string formatter
+- Fix /operation-graph pin pushing operation not making unsupported quadrants fall
+- Fix decoding blueprints with item producers producing fluid crates causing an error
+- Fix type of an island or building entry's rotation being `int` instead of `utils.Rotation` when decoding blueprints
+- Fix blueprint encoding using 4 spaces as indent in the JSON while the game uses 2
+
 ## 11 Jan 24
 - Update for alpha 15.3 demo : add version in game infos
 

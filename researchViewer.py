@@ -27,12 +27,15 @@ def preRenderAllNames() -> tuple[dict[str,pygame.Surface],int]:
 
 _preRenderedNodeNames, _nodeWidth = preRenderAllNames()
 _nodeHeight = SHAPE_SIZE
-_maxNodesInLevel = max(len(lvl.sideGoals) for lvl in gameInfos.research.reserachTree) + 1
+_maxSideGoalsInLevel = max(len(lvl.sideGoals) for lvl in gameInfos.research.reserachTree)
+_levelNumMaxHeight = max(NODE_FONT.render(str(num),1,TEXT_COLOR).get_height() for num in range(1,len(gameInfos.research.reserachTree)+1))
 _levelWidth = _nodeWidth + (2*MARGIN)
-_levelHeight = (_maxNodesInLevel*SHAPE_SIZE) + ((_maxNodesInLevel+1)*MARGIN)
+_levelHeight = MARGIN + _levelNumMaxHeight + MARGIN + _nodeHeight + (3*MARGIN) + ((_nodeHeight+MARGIN)*_maxSideGoalsInLevel)
 _numLevels = len(gameInfos.research.reserachTree)
 _treeWidth = (_numLevels*_levelWidth) + ((_numLevels-1)*MARGIN)
 _treeHeight = _levelHeight
+
+_treeCache:tuple[bytes,int]|None = None
 
 def _renderNode(node:gameInfos.research.Node) -> pygame.Surface:
     nodeSurf = pygame.Surface((_nodeWidth,_nodeHeight),pygame.SRCALPHA)
@@ -46,10 +49,13 @@ def _renderLevel(level:gameInfos.research.Level) -> pygame.Surface:
     levelSurf = pygame.Surface((_levelWidth,_levelHeight),pygame.SRCALPHA)
     pygame.draw.rect(levelSurf,LEVEL_COLOR,pygame.Rect(0,0,*levelSurf.get_size()),border_radius=RECT_BORDER_RADIUS)
     curY = MARGIN
-    for node in [level.milestone,*level.sideGoals]:
+    levelNum = NODE_FONT.render(str(gameInfos.research.reserachTree.index(level)+1),1,TEXT_COLOR)
+    levelSurf.blit(levelNum,((levelSurf.get_width()/2)-(levelNum.get_width()/2),curY))
+    curY += levelNum.get_height() + MARGIN
+    for i,node in enumerate([level.milestone,*level.sideGoals]):
         renderedNode = _renderNode(node)
         levelSurf.blit(renderedNode,(MARGIN,curY))
-        curY += renderedNode.get_height() + MARGIN
+        curY += renderedNode.get_height() + MARGIN + ((2*MARGIN) if i == 0 else 0)
     return levelSurf
 
 def _renderTree() -> pygame.Surface:
@@ -71,7 +77,12 @@ def _showSurface(surf:pygame.Surface) -> pygame.Surface:
     return newSurf
 
 def renderTree() -> tuple[io.BytesIO,int]:
-    return utils.pygameSurfToBytes(_showSurface(_renderTree()))
+    global _treeCache
+    if _treeCache is None:
+        image, imageSize = utils.pygameSurfToBytes(_showSurface(_renderTree()))
+        _treeCache = (image.getvalue(),imageSize)
+    image, imageSize = _treeCache
+    return io.BytesIO(image), imageSize
 
 def renderLevel(level:int) -> tuple[io.BytesIO,int]:
     return utils.pygameSurfToBytes(_showSurface(_renderLevel(gameInfos.research.reserachTree[level])))

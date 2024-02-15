@@ -1,4 +1,4 @@
-# Fake ShapeBot 2.0
+# Fake ShapeBot 2
 
 ## Shape viewer
 

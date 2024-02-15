@@ -48,16 +48,16 @@ async def useShapeViewer(userMessage:str,sendErrors:bool) -> tuple[bool,str,tupl
             if hasInvalid:
                 hasErrors = True
                 if sendErrors:
-                    msgParts.append("\n".join(f"- {msg}" for msg in errorMsgs))
+                    msgParts.append("**Error messages :**\n"+"\n".join(f"- {msg}" for msg in errorMsgs))
 
             if response is not None:
 
                 (image, imageSize), spoiler, resultingShapeCodes, viewer3dLinks = response
                 file = discord.File(image,"shapes.png",spoiler=spoiler)
                 if resultingShapeCodes is not None:
-                    msgParts.append(" ".join(f"{{{code}}}" for code in resultingShapeCodes))
+                    msgParts.append("**Resulting shape codes :**\n"+" ".join(f"{{{code}}}" for code in resultingShapeCodes))
                 if viewer3dLinks is not None:
-                    msgParts.append("\n".join(viewer3dLinks))
+                    msgParts.append("**3D viewer links :**\n"+"\n".join(viewer3dLinks))
 
         responseMsg = "\n\n".join(msgParts)
 
