@@ -1,4 +1,4 @@
-## ?? ??? 24
+## 15 Feb 24
 - Update for alpha 15.3 demo pins : add modified version name in game infos
 - Make blueprints module blueprint objects' encode functions private
 - Update shape viewer response formatting
