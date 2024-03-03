@@ -1,3 +1,25 @@
+## 03 Mar 24
+- Update for alphas : 15.2-wiretest1, 16-researchtest1, 16, 16.1 :
+  - Add regular or modified version names in game infos
+  - Update buildings in game infos
+  - Update islands in game infos
+    - Update island size
+    - Add support for build area overrides
+  - Add note in readme for /research-viewer not being updated
+  - Add support for island additional data in blueprints module
+  - Update blueprints module for train stations, space belts and rails additional data
+  - Update pin pusher in shape operations module
+  - Fix latest public game version not being updated for the demo
+- Remove duplicate blueprint code inputting instructions in readme
+- Use island names instead of IDs in island counts of /blueprint-info with advanced=true
+- Include `extractGameInfos.py` script in repo
+- Update operation graph doc wording
+- Add 'advanced' parameter to /change-blueprint-version
+- Remove leading and trailing whitespace in slash commands blueprint inputs
+- Remove unneeded `nonlocal` declarations in slash commands
+- Fix paint and full paint operations in /operation-graph not keeping the color of unpaintable shapes
+- Fix crystals not being connected vertically in shape operations module
+
 ## 15 Feb 24
 - Update for alpha 15.3 demo pins : add modified version name in game infos
 - Make blueprints module blueprint objects' encode functions private

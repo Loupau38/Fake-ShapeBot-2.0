@@ -25,12 +25,12 @@ Examples : `1:r90cw:2`, `3,7:stack:5`, `10,15:sh:4,21`, `6,r:paint:11`
 
 - cut :
   - 1 input
-  - 2 outputs : left half, right half
+  - 2 outputs : west half, east half
   - Cuts the shape in half
 - hcut :
   - 1 input
-  - 1 output : right half
-  - Half cuts the shape
+  - 1 output : east half
+  - Destroys the west half of the shape
 - r90cw :
   - 1 input
   - 1 output
@@ -46,7 +46,7 @@ Examples : `1:r90cw:2`, `3,7:stack:5`, `10,15:sh:4,21`, `6,r:paint:11`
 - sh :
   - 2 inputs
   - 2 outputs
-  - Swaps the left halves of both shapes
+  - Swaps the west halves of both shapes
 - stack :
   - 2 inputs : bottom shape, top shape
   - 1 output
@@ -54,15 +54,15 @@ Examples : `1:r90cw:2`, `3,7:stack:5`, `10,15:sh:4,21`, `6,r:paint:11`
 - paint :
   - 2 inputs : shape, color
   - 1 output
-  - Paints the top layer of the given shape the given color
+  - Paints the top layer of the given shape in the given color
 - fpaint :
   - 2 inputs : shape, color
   - 1 ouput
-  - Paints the given shape the given color
+  - Paints the given shape in the given color
 - pin :
   - 1 input
   - 1 output
-  - Pushes a pin in the top right quadrant of the shape
+  - Lifts the shape up one layer and places a pin under every non-empty quadrant of the old bottom layer
 - crystal :
   - 2 inputs : shape, color
   - 1 output
@@ -75,4 +75,4 @@ Examples : `1:r90cw:2`, `3,7:stack:5`, `10,15:sh:4,21`, `6,r:paint:11`
 ## Additional parameters
 
 - `public` (default : false) : When true, the resulting graph will be sent publicly in the channel the command was executed in. Error messages will also be sent publicly if this parameter is set to true.
-- `see_shape_vars` (default : false) : For every shape on the graph, it will display the corresponding shape variable number and will also send via text the shape codes associated with every shape variable.
+- `see_shape_vars` (default : false) : For every shape on the graph, the corresponding shape variable number will be displayed and the shape code associated with every shape variable will be sent via text.

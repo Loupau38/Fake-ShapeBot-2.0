@@ -231,8 +231,12 @@ def safenString(string:str) -> str:
 
 async def getBPFromStringOrFile(string:str,file:discord.Attachment|None) -> str|None:
     if file is None:
-        return string
-    return await decodeAttachment(file)
+        toReturn = string
+    else:
+        toReturn = await decodeAttachment(file)
+        if toReturn is None:
+            return None
+    return toReturn.strip()
 
 def getCommandResponse(text:str,file:tuple[discord.File,int]|None,guild:discord.Guild|None,public:bool,
     notInFileFormat:tuple[str,str]=("","")) -> dict[str,str|discord.File]:
@@ -501,14 +505,15 @@ def runDiscordBot() -> None:
     @discord.app_commands.describe(
         blueprint="The full blueprint code",
         version=f"The blueprint version number (latest public : {gameInfos.versions.LATEST_PUBLIC_GAME_VERSION}, latest patreon only : {gameInfos.versions.LATEST_GAME_VERSION})",
-        blueprint_file="A file containing a blueprint code if it's too big to paste it directly (fill in the 'blueprint' parameter with dummy character(s))"
+        blueprint_file="A file containing a blueprint code if it's too big to paste it directly (fill in the 'blueprint' parameter with dummy character(s))",
+        advanced="Wether or not to fully decode and encode the blueprint"
     )
-    async def changeBlueprintVersionCommand(interaction:discord.Interaction,blueprint:str,version:int,blueprint_file:discord.Attachment|None=None) -> None:
+    async def changeBlueprintVersionCommand(interaction:discord.Interaction,blueprint:str,version:int,blueprint_file:discord.Attachment|None=None,advanced:bool=False) -> None:
         if exitCommandWithoutResponse(interaction):
             return
 
         async def runCommand() -> None:
-            nonlocal interaction, blueprint, version, blueprint_file, responseMsg, noErrors
+            nonlocal responseMsg, noErrors
             noErrors = False
 
             if not await hasPermission(PermissionLvls.PRIVATE_FEATURE,interaction=interaction):
@@ -521,7 +526,12 @@ def runDiscordBot() -> None:
                 return
 
             try:
-                responseMsg = blueprints.changeBlueprintVersion(toProcessBlueprint,version)
+                if advanced:
+                    decodedBP = blueprints.decodeBlueprint(toProcessBlueprint)
+                    decodedBP.version = version
+                    responseMsg = blueprints.encodeBlueprint(decodedBP)
+                else:
+                    responseMsg = blueprints.changeBlueprintVersion(toProcessBlueprint,version)
                 noErrors = True
             except blueprints.BlueprintError as e:
                 responseMsg = f"Error happened : {e}"
@@ -544,7 +554,7 @@ def runDiscordBot() -> None:
             return text.center(desiredLen)
 
         async def runCommand() -> None:
-            nonlocal interaction, responseMsg
+            nonlocal responseMsg
 
             if not await hasPermission(PermissionLvls.PRIVATE_FEATURE,interaction=interaction):
                 responseMsg = globalInfos.NO_PERMISSION_TEXT
@@ -594,7 +604,7 @@ def runDiscordBot() -> None:
             return
 
         async def runCommand() -> None:
-            nonlocal interaction, instructions, public, see_shape_vars, responseMsg, file, imageSize
+            nonlocal responseMsg, file, imageSize
             file = None
 
             if not await hasPermission(PermissionLvls.PUBLIC_FEATURE if public else PermissionLvls.PRIVATE_FEATURE,interaction=interaction):
@@ -650,14 +660,14 @@ def runDiscordBot() -> None:
                     output += "\n".join(lines)
                 else:
                     counts = bp.getIslandCounts()
-                    output += "\n".join(f"- `{k}` : `{utils.sepInGroupsNumber(v)}`" for k,v in counts.items())
+                    output += "\n".join(f"- `{gameInfos.islands.allIslands[k].title}` : `{utils.sepInGroupsNumber(v)}`" for k,v in counts.items())
             return output
 
         if exitCommandWithoutResponse(interaction):
             return
 
         async def runCommand() -> None:
-            nonlocal interaction, blueprint, advanced, blueprint_file, responseMsg
+            nonlocal responseMsg
 
             if not await hasPermission(PermissionLvls.PRIVATE_FEATURE,interaction=interaction):
                 responseMsg = globalInfos.NO_PERMISSION_TEXT
@@ -730,7 +740,7 @@ def runDiscordBot() -> None:
             return
 
         async def runCommand() -> None:
-            nonlocal interaction, level, node, public, responseMsg, file, fileSize
+            nonlocal responseMsg, file, fileSize
             file = None
 
             if not await hasPermission(PermissionLvls.PUBLIC_FEATURE if public else PermissionLvls.PRIVATE_FEATURE,interaction=interaction):
@@ -827,7 +837,7 @@ def runDiscordBot() -> None:
             return
 
         async def runCommand() -> None:
-            nonlocal interaction, to_create, extra, responseMsg, noErrors
+            nonlocal responseMsg, noErrors
             noErrors = False
 
             blueprintInfos:tuple[int,int,str] = (
@@ -893,10 +903,12 @@ def runDiscordBot() -> None:
                 minZ = min(t.z for t in curTiles)
                 maxX = max(t.x for t in curTiles)
                 curX -= minX
-                entryList.append(
-                    (blueprints.BuildingEntry if toCreateBuildings else blueprints.IslandEntry)
-                    (utils.Pos(curX,0,-minZ),utils.Rotation(0),toPlace,None)
-                )
+                shared:tuple[utils.Pos,utils.Rotation,gameInfos.buildings.Building|gameInfos.islands.Island,None] = (
+                    utils.Pos(curX,0,-minZ),utils.Rotation(0),toPlace,None)
+                if toCreateBuildings:
+                    entryList.append(blueprints.BuildingEntry(*shared))
+                else:
+                    entryList.append(blueprints.IslandEntry(*shared,None))
                 curX += maxX + 1
 
             try:

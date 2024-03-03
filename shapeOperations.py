@@ -1,12 +1,13 @@
 import globalInfos
 import math
+import typing
 
 NOTHING_CHAR = globalInfos.SHAPE_NOTHING_CHAR
 PIN_CHAR = "P"
 CRYSTAL_CHAR = "c"
 UNPAINTABLE_SHAPES = [CRYSTAL_CHAR,PIN_CHAR,NOTHING_CHAR]
 REPLACED_BY_CRYSTAL = [PIN_CHAR,NOTHING_CHAR]
-MAX_STACKER_LAYERS = 4
+MAX_LAYERS = 4
 
 class Quadrant:
 
@@ -44,6 +45,16 @@ class Shape:
 
 class InvalidOperationInputs(ValueError): ...
 
+def gravityConnected(quad1:Quadrant,quad2:Quadrant) -> bool:
+    if (quad1.shape in (NOTHING_CHAR,PIN_CHAR)) or (quad2.shape in (NOTHING_CHAR,PIN_CHAR)):
+        return False
+    return True
+
+def crystalsFused(quad1:Quadrant,quad2:Quadrant) -> bool:
+    if (quad1.shape == CRYSTAL_CHAR) and (quad2.shape == CRYSTAL_CHAR):
+        return True
+    return False
+
 def getCorrectedIndex(list:list,index:int) -> int:
     if index > len(list)-1:
         return index - len(list)
@@ -51,51 +62,84 @@ def getCorrectedIndex(list:list,index:int) -> int:
         return len(list) + index
     return index
 
-def getConnected(layer:list[Quadrant],index:int,matchShape:bool=False) -> list[int]:
-    def checkQuad(curQuad:Quadrant) -> bool:
-        return ((curQuad.shape != quad.shape) if matchShape else (curQuad.shape in (NOTHING_CHAR,PIN_CHAR)))
-    quad = layer[index]
-    if quad.shape == NOTHING_CHAR:
+def getConnectedSingleLayer(layer:list[Quadrant],index:int,connectedFunc:typing.Callable[[Quadrant,Quadrant],bool]) -> list[int]:
+
+    if layer[index].shape == NOTHING_CHAR:
         return []
-    if quad.shape == PIN_CHAR:
-        return [index]
+
     connected = [index]
+    previousIndex = index
+
     for i in range(index+1,len(layer)+index):
         curIndex = getCorrectedIndex(layer,i)
-        curQuad = layer[curIndex]
-        if checkQuad(curQuad):
+        if not connectedFunc(layer[previousIndex],layer[curIndex]):
             break
         connected.append(curIndex)
+        previousIndex = curIndex
+
+    previousIndex = index
     for i in range(index-1,-len(layer)+index,-1):
         curIndex = getCorrectedIndex(layer,i)
         if curIndex in connected:
             break
-        curQuad = layer[curIndex]
-        if checkQuad(curQuad):
+        if not connectedFunc(layer[previousIndex],layer[curIndex]):
             break
         connected.append(curIndex)
+        previousIndex = curIndex
+
     return connected
 
-#TODO : make crystals connected vertically
-def getConnectedMultiLayer(layers:list[list[Quadrant]],layerIndex:int,quadIndex:int) -> dict[int,list[int]]:
-    pass
+def getConnectedMultiLayer(layers:list[list[Quadrant]],layerIndex:int,quadIndex:int,
+    connectedFunc:typing.Callable[[Quadrant,Quadrant],bool]) -> list[tuple[int,int]]:
+
+    if layers[layerIndex][quadIndex].shape == NOTHING_CHAR:
+        return []
+
+    connected = [(layerIndex,quadIndex)]
+    for curLayer,curQuad in connected:
+
+        # same layer
+        for quadIndex in getConnectedSingleLayer(layers[curLayer],curQuad,connectedFunc):
+            if (curLayer,quadIndex) not in connected:
+                connected.append((curLayer,quadIndex))
+
+        # layer below
+        toCheckLayer, toCheckQuad = curLayer-1, curQuad
+        if (curLayer > 0) and ((toCheckLayer,toCheckQuad) not in connected):
+            if connectedFunc(layers[curLayer][curQuad],layers[toCheckLayer][toCheckQuad]):
+                connected.append((toCheckLayer,toCheckQuad))
+
+        # layer above
+        toCheckLayer, toCheckQuad = curLayer+1, curQuad
+        if (curLayer < (len(layers)-1)) and ((toCheckLayer,toCheckQuad) not in connected):
+            if connectedFunc(layers[curLayer][curQuad],layers[toCheckLayer][toCheckQuad]):
+                connected.append((toCheckLayer,toCheckQuad))
+
+    return connected
+
+def breakCrystals(layers:list[list[Quadrant]],layerIndex:int,quadIndex:int) -> None:
+    for curLayer,curQuad in getConnectedMultiLayer(layers,layerIndex,quadIndex,crystalsFused):
+        layers[curLayer][curQuad] = Quadrant(NOTHING_CHAR,NOTHING_CHAR)
 
 def makeLayersFall(layers:list[list[Quadrant]]) -> list[list[Quadrant]]:
+
     def sepInGroups(layer:list[Quadrant]) -> list[list[int]]:
         handledIndexes = []
         groups = []
         for quadIndex,_ in enumerate(layer):
             if quadIndex in handledIndexes:
                 continue
-            group = getConnected(layer,quadIndex)
+            group = getConnectedSingleLayer(layer,quadIndex,gravityConnected)
             if group != []:
                 groups.append(group)
                 handledIndexes.extend(group)
         return groups
+
     for layerIndex,layer in enumerate(layers):
         if layerIndex == 0:
             continue
-        for group in sepInGroups(layer):
+
+        for group in sepInGroups(layer): # first pass : break crystals
             fall = True
             for quadIndex in group:
                 if layers[layerIndex-1][quadIndex].shape != NOTHING_CHAR:
@@ -105,7 +149,8 @@ def makeLayersFall(layers:list[list[Quadrant]]) -> list[list[Quadrant]]:
                 for quadIndex in group:
                     if layer[quadIndex].shape == CRYSTAL_CHAR:
                         layer[quadIndex] = Quadrant(NOTHING_CHAR,NOTHING_CHAR)
-        for group in sepInGroups(layer):
+
+        for group in sepInGroups(layer): # second pass : make layers fall with removed crystals
             for layerIndex2 in range(layerIndex,0,-1):
                 fall = True
                 for quadIndex in group:
@@ -117,6 +162,7 @@ def makeLayersFall(layers:list[list[Quadrant]]) -> list[list[Quadrant]]:
                 for quadIndex in group:
                     layers[layerIndex2-1][quadIndex] = layers[layerIndex2][quadIndex]
                     layers[layerIndex2][quadIndex] = Quadrant(NOTHING_CHAR,NOTHING_CHAR)
+
     return layers
 
 def cleanUpEmptyUpperLayers(layers:list[list[Quadrant]]) -> list[list[Quadrant]]:
@@ -145,15 +191,14 @@ def differentNumQuadsUnsupported(func):
 def cut(shape:Shape) -> list[Shape]:
     takeQuads = math.ceil(shape.numQuads/2)
     cutPoints = [(0,shape.numQuads-1),(shape.numQuads-takeQuads,shape.numQuads-takeQuads-1)]
-    for layer in shape.layers:
+    layers = shape.layers
+    for layerIndex,layer in enumerate(layers):
         for cutPoint in cutPoints:
-            if (layer[cutPoint[0]].shape == CRYSTAL_CHAR) and (layer[cutPoint[1]].shape == CRYSTAL_CHAR):
-                toBreak = [*getConnected(layer,cutPoint[0],True),*getConnected(layer,cutPoint[1],True)]
-                for quadIndex in toBreak:
-                    layer[quadIndex] = Quadrant(NOTHING_CHAR,NOTHING_CHAR)
+            if crystalsFused(layer[cutPoint[0]],layer[cutPoint[1]]):
+                breakCrystals(layers,layerIndex,cutPoint[0])
     shapeA = []
     shapeB = []
-    for layer in shape.layers:
+    for layer in layers:
         shapeA.append([*([Quadrant(NOTHING_CHAR,NOTHING_CHAR)]*(shape.numQuads-takeQuads)),*(layer[-takeQuads:])])
         shapeB.append([*(layer[:-takeQuads]),*([Quadrant(NOTHING_CHAR,NOTHING_CHAR)]*(takeQuads))])
     shapeA, shapeB = [cleanUpEmptyUpperLayers(makeLayersFall(s)) for s in (shapeA,shapeB)]
@@ -201,27 +246,38 @@ def stack(bottomShape:Shape,topShape:Shape) -> list[Shape]:
     newTopShape = [[Quadrant(NOTHING_CHAR,NOTHING_CHAR) if q.shape == CRYSTAL_CHAR else q for q in l] for l in topShape.layers]
     newLayers = [*bottomShape.layers,*newTopShape]
     newLayers = cleanUpEmptyUpperLayers(makeLayersFall(newLayers))
-    newLayers = newLayers[:MAX_STACKER_LAYERS]
+    newLayers = newLayers[:MAX_LAYERS]
     return [Shape(newLayers)]
 
 def topPaint(shape:Shape,color:str) -> list[Shape]:
     newLayers = shape.layers[:-1]
-    newLayers.append([Quadrant(q.shape,NOTHING_CHAR if q.shape in UNPAINTABLE_SHAPES else color) for q in shape.layers[-1]])
+    newLayers.append([Quadrant(q.shape,q.color if q.shape in UNPAINTABLE_SHAPES else color) for q in shape.layers[-1]])
     return [Shape(newLayers)]
 
 def fullPaint(shape:Shape,color:str) -> list[Shape]:
-    return [Shape([[Quadrant(q.shape,NOTHING_CHAR if q.shape in UNPAINTABLE_SHAPES else color) for q in l] for l in shape.layers])]
+    return [Shape([[Quadrant(q.shape,q.color if q.shape in UNPAINTABLE_SHAPES else color) for q in l] for l in shape.layers])]
 
 def pushPin(shape:Shape) -> list[Shape]:
-    newLayers = []
-    for i,layer in enumerate(shape.layers):
-        newLayer = layer
-        if newLayer[0].shape == CRYSTAL_CHAR:
-            for quadIndex in getConnected(newLayer,0,True):
-                newLayer[quadIndex] = Quadrant(NOTHING_CHAR,NOTHING_CHAR)
-        newLayer[0] = Quadrant(PIN_CHAR,NOTHING_CHAR) if i == 0 else Quadrant(NOTHING_CHAR,NOTHING_CHAR)
-        newLayers.append(newLayer)
-    newLayers = cleanUpEmptyUpperLayers(makeLayersFall(newLayers))
+
+    layers = shape.layers
+    addedPins = []
+
+    for quad in layers[0]:
+        if quad.shape == NOTHING_CHAR:
+            addedPins.append(Quadrant(NOTHING_CHAR,NOTHING_CHAR))
+        else:
+            addedPins.append(Quadrant(PIN_CHAR,NOTHING_CHAR))
+
+    if len(layers) < MAX_LAYERS:
+        newLayers = [addedPins,*layers]
+    else:
+        newLayers = [addedPins,*(layers[:MAX_LAYERS-1])]
+        removedLayer = layers[MAX_LAYERS-1]
+        for quadIndex,quad in enumerate(newLayers[MAX_LAYERS-1]):
+            if crystalsFused(quad,removedLayer[quadIndex]):
+                breakCrystals(newLayers,MAX_LAYERS-1,quadIndex)
+        newLayers = cleanUpEmptyUpperLayers(makeLayersFall(newLayers))
+
     return [Shape(newLayers)]
 
 def genCrystal(shape:Shape,color:str) -> list[Shape]:

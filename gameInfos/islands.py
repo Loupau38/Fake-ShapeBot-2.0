@@ -4,8 +4,8 @@ import gameInfos.common
 import json
 
 ISLAND_SIZE = 20
-DEFAULT_REMOVED_ISLAND_SIZE = 4
-REDUCED_REMOVED_ISLAND_SIZE = 5
+DEFAULT_REMOVED_ISLAND_SIZE = 3
+REDUCED_REMOVED_ISLAND_SIZE = 4
 NOTCH_SIZE = 4
 
 class IslandTile:
@@ -36,15 +36,30 @@ def _loadIslands() -> dict[str,Island]:
     for islandRaw in islandsRaw["Islands"]:
 
         curRemovedNotches:list[tuple[Pos,Rotation]] = [
-            ((rn:=gameInfos.common.loadDirection(rnr))["pos"],rn["rot"]) for rnr in islandRaw["RemovedNotches"]]
+            ((rn:=gameInfos.common.loadDirection(rnr))["pos"],rn["rot"]) for rnr in islandRaw["RemovedNotches"]
+        ]
         curReducedSides:list[tuple[Pos,Rotation]] = [
-            ((rs:=gameInfos.common.loadDirection(rsr))["pos"],rs["rot"]) for rsr in islandRaw["ReducedSides"]]
+            ((rs:=gameInfos.common.loadDirection(rsr))["pos"],rs["rot"]) for rsr in islandRaw["ReducedSides"]
+        ]
+        curBuildAreaOverrides:dict[Pos,list[Rect]] = {}
+        for baor in islandRaw.get("BuildAreaOverride",[]):
+            curBAORects = []
+            for baorr in baor["Rects"]:
+                curBAORects.append(Rect(
+                    Pos(baorr[0],baorr[1]),
+                    Size(baorr[2],baorr[3])
+                ))
+            curBuildAreaOverrides[gameInfos.common.loadPos(baor["Tile"])] = curBAORects
 
         curTiles = [gameInfos.common.loadPos(tr) for tr in islandRaw["Tiles"]]
 
         generatedIslandTiles = []
 
         for tile in curTiles:
+
+            if curBuildAreaOverrides.get(tile) is not None:
+                generatedIslandTiles.append(IslandTile(tile,curBuildAreaOverrides[tile]))
+                continue
 
             curCurReducedSides:dict[int,bool] = {
                 r1 : any(((p == tile) and (r2.value == r1)) for p,r2 in curReducedSides) for r1 in range(4)

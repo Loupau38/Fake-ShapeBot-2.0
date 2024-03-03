@@ -65,19 +65,23 @@ Note : shapes with more than 4 layers and/or with more/less than 4 quadrants per
 
 Note : as a general rule, slash commands will always send private responses except if specified in the command's description or in a parameter
 
+#### Inputting a blueprint code in a command:
+
+If you have the blueprint code as text, paste it in the 'blueprint' parameter. If you have a `txt` or `spz2bp` file, upload it using the 'blueprint_file' parameter. Pro tip : if you have a blueprint code as text that is longer than 6000 characters, click the 'blueprint_file' parameter but instead of clicking the 'upload file' button, paste in the blueprint code text to convert it to a `txt` file. Note : if you provide a file and the 'blueprint' parameter is required, fill it in with dummy characters.
+
 ### Public commands
 
 - /view-shapes [message] : Will trigger the shape viewer like a regular message but will send the response back only to you and will also include any error messages
 
-- /change-blueprint-version [blueprint] [version] [blueprint_file=None] : Changes a blueprint's version and returns the new code. If the blueprint code is too big to be pasted, provide a file containing it in the 'blueprint_file' parameter and fill in the 'blueprint' parameter with dummy character(s)
+- /change-blueprint-version [blueprint] [version] [blueprint_file=None] [advanced=False] : Changes a blueprint's version and returns the new code. If 'advanced' is set to true, the blueprint will be fully decoded before changing the version (for exemple useful when loading a blueprint from an old version that produces an error ingame because it contains something with an old format)
 
 - /member-count : Displays the member count of the server it is executed in (with additional info such as online/offline count and percentage)
 
 - /operation-graph [instructions] [public=False] [see_shape_vars=False] : See the [/operation-graph documentation](https://github.com/Loupau38/Fake-ShapeBot-2.0/blob/main/operationGraphDoc.md)
 
-- /blueprint-info [blueprint] [advanced=False] [blueprint_file=None] : Will give the version, type, blueprint cost, building count, building scale size, platform count, platform scale size and platform unit count of the given blueprint. If 'advanced' is set to True, will also give the individual counts for every building and platforms. If the blueprint code is too big to be pasted, provide a file containing it in the 'blueprint_file' parameter and fill in the 'blueprint' parameter with dummy character(s)
+- /blueprint-info [blueprint] [advanced=False] [blueprint_file=None] : Will give the version, type, blueprint cost, building count, building scale size, platform count, platform scale size and platform unit count of the given blueprint. If 'advanced' is set to True, will also give the individual counts for every building and platforms
 
-- /research-viewer [level=0] [node=0] [public=False] : Without the 'level' or 'node' parameters set, displays the entire research tree. With the 'level' parameter set to a number starting from 1, displays the corresponding level (milestone + side goals). With the 'level' and 'node' parameter set to a number starting from 1, displays the corresponding node of the corresponding level (1 for the milestone then starting from 2 for the side goals). If 'public' is set to true, the result will be sent publicly in the channel the command was executed in. Error messages will also be sent publicly if this parameter is set to true. When viewing a single node, will display via text the node's name, id, description, goal shape, goal amount, unlocks, lock/unlock commands. Note : the version of the research tree is included in the bottom left of the images created by this command
+- /research-viewer [level=0] [node=0] [public=False] : Without the 'level' or 'node' parameters set, displays the entire research tree. With the 'level' parameter set to a number starting from 1, displays the corresponding level (milestone + side goals). With the 'level' and 'node' parameter set to a number starting from 1, displays the corresponding node of the corresponding level (1 for the milestone then starting from 2 for the side goals). If 'public' is set to true, the result will be sent publicly in the channel the command was executed in. Error messages will also be sent publicly if this parameter is set to true. When viewing a single node, will display via text the node's name, id, description, goal shape, goal amount, unlocks, lock/unlock commands. Note : the version of the research tree is included in the bottom left of the images created by this command. Important note : due to the `debug.export-research-metadata` command not having been reintroduced yet, the research tree is the one of alpha15.2-wiretest1
 
 - /msg [msg] [public=True] : A command for shortcuts to messages. Enter the message id in the 'msg' parameter. The 'public' parameter will determine if the message will be sent publicly in the channel the command was executed in or not ('True' by default !)
 

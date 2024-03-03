@@ -34,7 +34,7 @@ class BuildingEntry:
         self.type = type
         self.extra:typing.Any
         if extra is None:
-            self.extra = _getDefaultBuildingExtraData(type.id)
+            self.extra = _getDefaultEntryExtraData(type.id)
         else:
             self.extra = extra
 
@@ -46,7 +46,7 @@ class BuildingEntry:
         _omitKeyIfDefault(toReturn,"Y",self.pos.y)
         _omitKeyIfDefault(toReturn,"L",self.pos.z)
         _omitKeyIfDefault(toReturn,"R",self.rotation.value)
-        _omitKeyIfDefault(toReturn,"C",_encodeBuildingExtraData(self.extra,self.type.id))
+        _omitKeyIfDefault(toReturn,"C",_encodeEntryExtraData(self.extra,self.type.id))
         return toReturn
 
 class BuildingBlueprint:
@@ -70,11 +70,15 @@ class BuildingBlueprint:
         }
 
 class IslandEntry:
-    def __init__(self,pos:Pos,rotation:Rotation,type:gameInfos.islands.Island,buildingBP:BuildingBlueprint|None) -> None:
+    def __init__(self,pos:Pos,rotation:Rotation,type:gameInfos.islands.Island,buildingBP:BuildingBlueprint|None,extra:typing.Any) -> None:
         self.pos = pos
         self.rotation = rotation
         self.type = type
         self.buildingBP = buildingBP
+        if extra is None:
+            self.extra = _getDefaultEntryExtraData(type.id)
+        else:
+            self.extra = extra
 
     def _encode(self) -> dict:
         toReturn = {
@@ -83,6 +87,7 @@ class IslandEntry:
         _omitKeyIfDefault(toReturn,"X",self.pos.x)
         _omitKeyIfDefault(toReturn,"Y",self.pos.y)
         _omitKeyIfDefault(toReturn,"R",self.rotation.value)
+        _omitKeyIfDefault(toReturn,"C",_encodeEntryExtraData(self.extra,self.type.id))
         if self.buildingBP is not None:
             toReturn["B"] = self.buildingBP._encode()
         return toReturn
@@ -183,7 +188,7 @@ def _omitKeyIfDefault(dict:dict,key:str,value:int|str) -> None:
     if value not in (0,""):
         dict[key] = value
 
-def _decodeBuildingExtraData(raw:str,buildingType:str) -> typing.Any:
+def _decodeEntryExtraData(raw:str,entryType:str) -> typing.Any:
 
     def standardDecode(rawDecoded:bytes,emptyIsLengthNegative1:bool) -> str:
         try:
@@ -224,10 +229,10 @@ def _decodeBuildingExtraData(raw:str,buildingType:str) -> typing.Any:
     except Exception as e:
         raise BlueprintError(f"Can't decode from base64 ({e.__class__.__name__})")
 
-    if buildingType == "LabelDefaultInternalVariant":
+    if entryType == "LabelDefaultInternalVariant":
         return standardDecode(rawDecoded,False)
 
-    if buildingType == "ConstantSignalDefaultInternalVariant":
+    if entryType == "ConstantSignalDefaultInternalVariant":
 
         if len(rawDecoded) < 1:
             raise BlueprintError("String must be at least 1 byte long")
@@ -274,7 +279,7 @@ def _decodeBuildingExtraData(raw:str,buildingType:str) -> typing.Any:
             raise BlueprintError(f"Invalid fluid signal value : {e}")
         return {"type":"fluid","value":{"type":"paint","value":signalValueDecoded}}
 
-    if buildingType == "SandboxItemProducerDefaultInternalVariant":
+    if entryType == "SandboxItemProducerDefaultInternalVariant":
         shapeCode = standardDecode(rawDecoded,True)
         if shapeCode == "":
             return {"type":"empty"}
@@ -283,7 +288,7 @@ def _decodeBuildingExtraData(raw:str,buildingType:str) -> typing.Any:
         except BlueprintError as e:
             raise BlueprintError(f"Error while decoding shape generation string : {e}")
 
-    if buildingType == "SandboxFluidProducerDefaultInternalVariant":
+    if entryType == "SandboxFluidProducerDefaultInternalVariant":
         fluidCode = standardDecode(rawDecoded,True)
         if fluidCode == "":
             return {"type":"empty"}
@@ -293,15 +298,45 @@ def _decodeBuildingExtraData(raw:str,buildingType:str) -> typing.Any:
             raise BlueprintError(f"Invalid fluid : {e}")
         return {"type":"paint","value":fluidCode}
 
-    if buildingType in ("TrainStationLoaderInternalVariant","TrainStationUnloaderInternalVariant"):
+    if entryType in ("TrainStationLoaderInternalVariant","TrainStationUnloaderInternalVariant"):
+
         if rawDecoded == b"": # support for pre-alpha 15.2 blueprints
-            return ""
-        # train stations currently can have any text as their filter, add check when they get a valid color check
-        return standardDecode(rawDecoded,True)
+            return {"r":True,"g":True,"b":True}
+
+        if (len(rawDecoded) != 4
+            or rawDecoded[1:] != bytes([0,0,0])
+            or rawDecoded[0] > 7): # support for pre-alpha 16 blueprints
+            try:
+                oldColorText = standardDecode(rawDecoded,True)
+            except BlueprintError as e:
+                raise BlueprintError(f"Error while attempting to decode old format train station : {e}")
+            if oldColorText == "":
+                return {"r":True,"g":True,"b":True}
+            return {
+                "r" : "r" in oldColorText,
+                "g" : "g" in oldColorText,
+                "b" : "b" in oldColorText
+            }
+
+        encodedColor = rawDecoded[0]
+        return {
+            "r" : (encodedColor & 4) != 0,
+            "g" : (encodedColor & 2) != 0,
+            "b" : (encodedColor & 1) != 0
+        }
+
+    if entryType in ("Layout_SpaceBeltNode","Layout_RailNode"):
+        if len(rawDecoded) < 1:
+            raise BlueprintError("String must be at least 1 byte long")
+        layoutType = rawDecoded[0]
+        if layoutType > 3:
+            raise BlueprintError(f"Unknown space belt/rail layout type : {layoutType}")
+        return {"type":layoutType,"layout":rawDecoded[1:]}
+
 
     return None
 
-def _encodeBuildingExtraData(extra:typing.Any,buildingType:str) -> str:
+def _encodeEntryExtraData(extra:typing.Any,entryType:str) -> str:
 
     if extra is None:
         return ""
@@ -312,10 +347,10 @@ def _encodeBuildingExtraData(extra:typing.Any,buildingType:str) -> str:
     def standardEncode(string:str,emptyIsLengthNegative1:bool) -> str:
         return b64encode(utils.encodeStringWithLen(string.encode(),emptyIsLengthNegative1=emptyIsLengthNegative1))
 
-    if buildingType == "LabelDefaultInternalVariant":
+    if entryType == "LabelDefaultInternalVariant":
         return standardEncode(extra,False)
 
-    if buildingType == "ConstantSignalDefaultInternalVariant":
+    if entryType == "ConstantSignalDefaultInternalVariant":
 
         if extra["type"] in ("empty","null","conflict"):
             return b64encode(bytes([{"empty":0,"null":1,"conflict":2}[extra["type"]]]))
@@ -332,39 +367,55 @@ def _encodeBuildingExtraData(extra:typing.Any,buildingType:str) -> str:
         if extra["type"] == "fluid":
             return b64encode(bytes([7])+utils.encodeStringWithLen(extra["value"].encode()))
 
-    if buildingType == "SandboxItemProducerDefaultInternalVariant":
+    if entryType == "SandboxItemProducerDefaultInternalVariant":
         if extra["type"] == "empty":
             shapeCode = ""
         else:
             shapeCode = f"{extra['type']}:{extra['value']}"
         return standardEncode(shapeCode,True)
 
-    if buildingType == "SandboxFluidProducerDefaultInternalVariant":
+    if entryType == "SandboxFluidProducerDefaultInternalVariant":
         if extra["type"] == "empty":
             fluidCode = ""
         else:
             fluidCode = extra["value"]
         return standardEncode(fluidCode,True)
 
-    if buildingType in ("TrainStationLoaderInternalVariant","TrainStationUnloaderInternalVariant"):
-        return standardEncode(extra,True)
+    if entryType in ("TrainStationLoaderInternalVariant","TrainStationUnloaderInternalVariant"):
+        encodedColor = 0
+        if extra["r"]:
+            encodedColor += 4
+        if extra["g"]:
+            encodedColor += 2
+        if extra["b"]:
+            encodedColor += 1
+        return b64encode(bytes([encodedColor,0,0,0]))
 
-def _getDefaultBuildingExtraData(buildingType:str) -> typing.Any:
+    if entryType in ("Layout_SpaceBeltNode","Layout_RailNode"):
+        return b64encode(bytes([extra["type"]])+extra["layout"])
 
-    if buildingType == "LabelDefaultInternalVariant":
+def _getDefaultEntryExtraData(entryType:str) -> typing.Any:
+
+    if entryType == "LabelDefaultInternalVariant":
         return "Click to change text"
 
-    if buildingType == "ConstantSignalDefaultInternalVariant":
+    if entryType == "ConstantSignalDefaultInternalVariant":
         return {"type":"null"}
 
-    if buildingType == "SandboxItemProducerDefaultInternalVariant":
+    if entryType == "SandboxItemProducerDefaultInternalVariant":
         return {"type":"shape","value":"CuCuCuCu"}
 
-    if buildingType == "SandboxFluidProducerDefaultInternalVariant":
+    if entryType == "SandboxFluidProducerDefaultInternalVariant":
         return {"type":"paint","value":f"{COLOR_PREFIX}r"}
 
-    if buildingType in ("TrainStationLoaderInternalVariant","TrainStationUnloaderInternalVariant"):
-        return ""
+    if entryType in ("TrainStationLoaderInternalVariant","TrainStationUnloaderInternalVariant"):
+        return {"r":True,"g":True,"b":True}
+
+    if entryType in ("Layout_SpaceBeltNode","Layout_RailNode"):
+        return {
+            "type" : 1,
+            "layout" : bytes([0,0]) + (bytes([7,0,0,0]) if entryType == "Layout_RailNode" else bytes())
+        }
 
     return None
 
@@ -519,6 +570,13 @@ def _getValidBlueprint(blueprint:dict,mustBeBuildingBP:bool=False) -> dict:
                 "T" : t
             }
 
+            c = _getKeyValue(entry,"C",str,"")
+            try:
+                c = _decodeEntryExtraData(c,t)
+            except BlueprintError as e:
+                raise BlueprintError(f"{_ERR_MSG_PATH_SEP}C{_ERR_MSG_PATH_END}{e}")
+            validEntry["C"] = c
+
             if bpType == ISLAND_BP_TYPE:
                 b = entry.get("B",_defaultObj)
                 if b is not _defaultObj:
@@ -528,13 +586,6 @@ def _getValidBlueprint(blueprint:dict,mustBeBuildingBP:bool=False) -> dict:
                     except BlueprintError as e:
                         raise BlueprintError(f"{_ERR_MSG_PATH_SEP}B{e}")
                     validEntry["B"] = validB
-            else:
-                c = _getKeyValue(entry,"C",str,"")
-                try:
-                    c = _decodeBuildingExtraData(c,t)
-                except BlueprintError as e:
-                    raise BlueprintError(f"{_ERR_MSG_PATH_SEP}C{_ERR_MSG_PATH_END}{e}")
-                validEntry["C"] = c
 
             validBPEntries.append(validEntry)
 
@@ -582,7 +633,7 @@ def _decodeBuildingBP(buildings:list[dict[str,typing.Any]],moveBPCenter:bool=Tru
 
     return BuildingBlueprint(entryList)
 
-def _decodeIslandBP(islands:list[dict[str,int|str|dict]]) -> IslandBlueprint:
+def _decodeIslandBP(islands:list[dict[str,typing.Any]]) -> IslandBlueprint:
 
     entryList:list[IslandEntry] = []
     occupiedTiles:set[Pos] = set()
@@ -607,10 +658,11 @@ def _decodeIslandBP(islands:list[dict[str,int|str|dict]]) -> IslandBlueprint:
 
     for island in islands:
 
-        islandEntryInfos:dict[str,Pos|int|gameInfos.islands.Island] = {
+        islandEntryInfos:dict[str,Pos|int|gameInfos.islands.Island|typing.Any] = {
             "pos" : Pos(island["X"],island["Y"]),
             "r" : island["R"],
-            "t" : gameInfos.islands.allIslands[island["T"]]
+            "t" : gameInfos.islands.allIslands[island["T"]],
+            "c" : island["C"]
         }
 
         if island.get("B") is None:
@@ -618,7 +670,8 @@ def _decodeIslandBP(islands:list[dict[str,int|str|dict]]) -> IslandBlueprint:
                 islandEntryInfos["pos"],
                 Rotation(islandEntryInfos["r"]),
                 islandEntryInfos["t"],
-                None
+                None,
+                islandEntryInfos["c"]
             ))
             continue
 
@@ -647,7 +700,8 @@ def _decodeIslandBP(islands:list[dict[str,int|str|dict]]) -> IslandBlueprint:
             islandEntryInfos["pos"],
             Rotation(islandEntryInfos["r"]),
             islandEntryInfos["t"],
-            curBuildingBP
+            curBuildingBP,
+            islandEntryInfos["c"]
         ))
 
     return IslandBlueprint(entryList)

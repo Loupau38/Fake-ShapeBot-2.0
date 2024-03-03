@@ -1,5 +1,5 @@
 {
-    "GameVersion": "0.0.0-alpha15.2",
+    "GameVersion": "0.0.0-alpha16.1",
     "Buildings": [
         {
             "Id": "HubBuilding",
@@ -13,54 +13,6 @@
                             "Id": "HubDefaultInternalVariant",
                             "Tiles": [
                                 {}
-                            ]
-                        }
-                    ]
-                }
-            ]
-        },
-        {
-            "Id": "TunnelBuilding",
-            "Title": "Tunnel",
-            "Variants": [
-                {
-                    "Id": "TunnelEntranceVariant",
-                    "Title": "Tunnel Entrance",
-                    "InternalVariants": [
-                        {
-                            "Id": "TunnelEntranceInternalVariant",
-                            "Tiles": [
-                                {
-                                    "Y": -2
-                                },
-                                {
-                                    "Y": -1
-                                },
-                                {},
-                                {
-                                    "Y": 1
-                                }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "Id": "TunnelExitVariant",
-                    "Title": "Tunnel Exit",
-                    "InternalVariants": [
-                        {
-                            "Id": "TunnelExitInternalVariant",
-                            "Tiles": [
-                                {
-                                    "Y": -2
-                                },
-                                {
-                                    "Y": -1
-                                },
-                                {},
-                                {
-                                    "Y": 1
-                                }
                             ]
                         }
                     ]
@@ -107,6 +59,18 @@
                         },
                         {
                             "Id": "Splitter1To2RInternalVariant",
+                            "Tiles": [
+                                {}
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "Id": "Splitter1To3Variant",
+                    "Title": "3-Way Splitter",
+                    "InternalVariants": [
+                        {
+                            "Id": "Splitter1To3InternalVariant",
                             "Tiles": [
                                 {}
                             ]
@@ -584,7 +548,7 @@
                             "Tiles": [
                                 {},
                                 {
-                                    "Y": -1
+                                    "Z": 1
                                 }
                             ]
                         }
@@ -599,7 +563,7 @@
                             "Tiles": [
                                 {},
                                 {
-                                    "Y": -1
+                                    "Z": 1
                                 }
                             ]
                         }
@@ -651,42 +615,6 @@
                     "Id": "Pipe1LayerVariant",
                     "Title": "Pipe Up/Down",
                     "InternalVariants": [
-                        {
-                            "Id": "PipeDownBackwardInternalVariant",
-                            "Tiles": [
-                                {},
-                                {
-                                    "Z": -1
-                                }
-                            ]
-                        },
-                        {
-                            "Id": "PipeDownForwardInternalVariant",
-                            "Tiles": [
-                                {},
-                                {
-                                    "Z": -1
-                                }
-                            ]
-                        },
-                        {
-                            "Id": "PipeDownLeftInternalVariant",
-                            "Tiles": [
-                                {},
-                                {
-                                    "Z": -1
-                                }
-                            ]
-                        },
-                        {
-                            "Id": "PipeDownRightInternalVariant",
-                            "Tiles": [
-                                {},
-                                {
-                                    "Z": -1
-                                }
-                            ]
-                        },
                         {
                             "Id": "PipeUpBackwardInternalVariant",
                             "Tiles": [
@@ -925,6 +853,132 @@
             ]
         },
         {
+            "Id": "WireBuilding",
+            "Title": "Wire",
+            "Variants": [
+                {
+                    "Id": "WireDefaultVariant",
+                    "Title": "Wire",
+                    "InternalVariants": [
+                        {
+                            "Id": "WireDefaultForwardInternalVariant",
+                            "Tiles": [
+                                {}
+                            ]
+                        },
+                        {
+                            "Id": "WireDefaultLeftInternalVariant",
+                            "Tiles": [
+                                {}
+                            ]
+                        },
+                        {
+                            "Id": "WireDefaultRightInternalVariant",
+                            "Tiles": [
+                                {}
+                            ]
+                        },
+                        {
+                            "Id": "WireDefaultJunctionInternalVariant",
+                            "Tiles": [
+                                {}
+                            ]
+                        },
+                        {
+                            "Id": "WireDefaultCrossInternalVariant",
+                            "Tiles": [
+                                {}
+                            ]
+                        },
+                        {
+                            "Id": "WireDefault1UpBackwardInternalVariant",
+                            "Tiles": [
+                                {},
+                                {
+                                    "Z": 1
+                                }
+                            ]
+                        },
+                        {
+                            "Id": "WireDefault1UpForwardInternalVariant",
+                            "Tiles": [
+                                {},
+                                {
+                                    "Z": 1
+                                }
+                            ]
+                        },
+                        {
+                            "Id": "WireDefault1UpLeftInternalVariant",
+                            "Tiles": [
+                                {},
+                                {
+                                    "Z": 1
+                                }
+                            ]
+                        },
+                        {
+                            "Id": "WireDefault1UpRightInternalVariant",
+                            "Tiles": [
+                                {},
+                                {
+                                    "Z": 1
+                                }
+                            ]
+                        },
+                        {
+                            "Id": "WireDefault2UpBackwardInternalVariant",
+                            "Tiles": [
+                                {},
+                                {
+                                    "Z": 1
+                                },
+                                {
+                                    "Z": 2
+                                }
+                            ]
+                        },
+                        {
+                            "Id": "WireDefault2UpForwardInternalVariant",
+                            "Tiles": [
+                                {},
+                                {
+                                    "Z": 1
+                                },
+                                {
+                                    "Z": 2
+                                }
+                            ]
+                        },
+                        {
+                            "Id": "WireDefault2UpLeftInternalVariant",
+                            "Tiles": [
+                                {},
+                                {
+                                    "Z": 1
+                                },
+                                {
+                                    "Z": 2
+                                }
+                            ]
+                        },
+                        {
+                            "Id": "WireDefault2UpRightInternalVariant",
+                            "Tiles": [
+                                {},
+                                {
+                                    "Z": 1
+                                },
+                                {
+                                    "Z": 2
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
             "Id": "SandboxItemProducerBuilding",
             "Title": "Item Producer",
             "Variants": [
@@ -991,8 +1045,8 @@
             ]
         },
         {
-            "Id": "BeltReaderBuilding",
-            "Title": "Belt Reader",
+            "Id": "WireUtilityBuilding",
+            "Title": "Wire Utility",
             "Variants": [
                 {
                     "Id": "BeltReaderDefaultVariant",
@@ -1005,19 +1059,103 @@
                             ]
                         }
                     ]
+                },
+                {
+                    "Id": "ConstantSignalDefaultVariant",
+                    "Title": "Constant Signal",
+                    "InternalVariants": [
+                        {
+                            "Id": "ConstantSignalDefaultInternalVariant",
+                            "Tiles": [
+                                {}
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "Id": "BeltFilterDefaultVariant",
+                    "Title": "Belt Filter",
+                    "InternalVariants": [
+                        {
+                            "Id": "BeltFilterDefaultInternalVariant",
+                            "Tiles": [
+                                {}
+                            ]
+                        }
+                    ]
                 }
             ]
         },
         {
-            "Id": "ArtistPlaygroundBuilding",
-            "Title": "Test Building",
+            "Id": "LogicGateBuilding",
+            "Title": "Logic Gate",
             "Variants": [
                 {
-                    "Id": "ArtistPlaygroundBuildingVariant",
-                    "Title": "Test Building",
+                    "Id": "LogicGateAndVariant",
+                    "Title": "AND Gate",
                     "InternalVariants": [
                         {
-                            "Id": "ArtistPlaygroundBuildingInternalVariant",
+                            "Id": "LogicGateAndInternalVariant",
+                            "Tiles": [
+                                {}
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "Id": "LogicGateOrVariant",
+                    "Title": "OR Gate",
+                    "InternalVariants": [
+                        {
+                            "Id": "LogicGateOrInternalVariant",
+                            "Tiles": [
+                                {}
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "Id": "LogicGateNotVariant",
+                    "Title": "NOT Gate",
+                    "InternalVariants": [
+                        {
+                            "Id": "LogicGateNotInternalVariant",
+                            "Tiles": [
+                                {}
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "Id": "LogicGateXOrVariant",
+                    "Title": "XOR Gate",
+                    "InternalVariants": [
+                        {
+                            "Id": "LogicGateXOrInternalVariant",
+                            "Tiles": [
+                                {}
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "Id": "LogicGateCompareVariant",
+                    "Title": "Comparison",
+                    "InternalVariants": [
+                        {
+                            "Id": "LogicGateCompareInternalVariant",
+                            "Tiles": [
+                                {}
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "Id": "LogicGateIfVariant",
+                    "Title": "IF Gate",
+                    "InternalVariants": [
+                        {
+                            "Id": "LogicGateIfInternalVariant",
                             "Tiles": [
                                 {}
                             ]

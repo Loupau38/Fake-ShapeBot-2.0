@@ -1,5 +1,5 @@
 {
-    "GameVersion": "0.0.0-alpha15.2",
+    "GameVersion": "0.0.0-alpha16.1",
     "Islands": [
         {
             "Id": "Layout_1",
@@ -43,16 +43,16 @@
             "Tiles": [
                 {}
             ],
-            "RemovedNotches": [
-                {},
+            "RemovedNotches": [],
+            "ReducedSides": [],
+            "BuildAreaOverride": [
                 {
-                    "Direction_L": 1
-                },
-                {
-                    "Direction_L": 3
+                    "Tile": {},
+                    "Rects": [
+                        [0,0,0,0]
+                    ]
                 }
-            ],
-            "ReducedSides": []
+            ]
         },
         {
             "Id": "LayoutTunnelExit",
@@ -60,7 +60,47 @@
             "Tiles": [
                 {}
             ],
+            "RemovedNotches": [],
+            "ReducedSides": [],
+            "BuildAreaOverride": [
+                {
+                    "Tile": {},
+                    "Rects": [
+                        [0,0,0,0]
+                    ]
+                }
+            ]
+        },
+        {
+            "Id": "LayoutMinerCompact",
+            "Title": "Asteroid Miner",
+            "Tiles": [
+                {}
+            ],
             "RemovedNotches": [
+                {
+                    "Direction_L": 2
+                }
+            ],
+            "ReducedSides": []
+        },
+        {
+            "Id": "Layout_SpaceBeltNode",
+            "Title": "Space Belt",
+            "Tiles": [
+                {}
+            ],
+            "RemovedNotches": [],
+            "ReducedSides": []
+        },
+        {
+            "Id": "Layout_RailNode",
+            "Title": "Rail Island",
+            "Tiles": [
+                {}
+            ],
+            "RemovedNotches": [
+                {},
                 {
                     "Direction_L": 1
                 },
@@ -74,17 +114,42 @@
             "ReducedSides": []
         },
         {
-            "Id": "LayoutMinerCompact",
-            "Title": "Asteroid Miner",
+            "Id": "Layout_LeftTrainStation",
+            "Title": "Train Station",
             "Tiles": [
                 {}
             ],
-            "RemovedNotches": [
+            "RemovedNotches": [],
+            "ReducedSides": [],
+            "BuildAreaOverride": [
                 {
-                    "Direction_L": 1
+                    "Tile": {},
+                    "Rects": [
+                        [3,3,14,5],
+                        [8,2,4,1],
+                        [8,8,4,1]
+                    ]
                 }
+            ]
+        },
+        {
+            "Id": "Layout_RightTrainStation",
+            "Title": "Train Station (Mirrored)",
+            "Tiles": [
+                {}
             ],
-            "ReducedSides": []
+            "RemovedNotches": [],
+            "ReducedSides": [],
+            "BuildAreaOverride": [
+                {
+                    "Tile": {},
+                    "Rects": [
+                        [3,12,14,5],
+                        [8,11,4,1],
+                        [8,17,4,1]
+                    ]
+                }
+            ]
         },
         {
             "Id": "Layout_2",
@@ -257,9 +322,6 @@
             "Title": "Hub Platform",
             "Tiles": [
                 {
-                    "Y": -2
-                },
-                {
                     "X": -1,
                     "Y": -1
                 },
@@ -287,48 +349,10 @@
                 {
                     "X": 1,
                     "Y": 1
-                },
-                {
-                    "Y": 2
                 }
             ],
             "RemovedNotches": [],
-            "ReducedSides": [
-                {
-                    "Position_L": {
-                        "Y": -2
-                    }
-                },
-                {
-                    "Position_L": {
-                        "Y": -2
-                    },
-                    "Direction_L": 2
-                },
-                {
-                    "Position_L": {
-                        "Y": -2
-                    },
-                    "Direction_L": 3
-                },
-                {
-                    "Position_L": {
-                        "Y": 2
-                    }
-                },
-                {
-                    "Position_L": {
-                        "Y": 2
-                    },
-                    "Direction_L": 1
-                },
-                {
-                    "Position_L": {
-                        "Y": 2
-                    },
-                    "Direction_L": 2
-                }
-            ]
+            "ReducedSides": []
         }
     ]
 }

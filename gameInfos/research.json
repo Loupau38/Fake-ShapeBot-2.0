@@ -1,5 +1,5 @@
 {
-    "GameVersion": "0.0.0-alpha15.2",
+    "GameVersion": "0.0.0-alpha15.2-wiretest1",
     "Levels": [
         {
             "Node": {
@@ -753,7 +753,17 @@
                 "Description": "<color=#FF2C63>This content is work in progress and might get reworked at any time. Please give feedback in the shapez 2 discord!</color>\n\nPlaceholder upgrade, will give you nothing for now.",
                 "GoalShape": "CwRwcrcp:ccRwCwcb:cgcyCwRw:RwcrcpCw",
                 "GoalAmount": 500000,
-                "Unlocks": []
+                "Unlocks": [
+                    "WireDefaultVariant",
+                    "LogicGateAndVariant",
+                    "LogicGateOrVariant",
+                    "LogicGateIfVariant",
+                    "LogicGateXOrVariant",
+                    "LogicGateNotVariant",
+                    "LogicGateCompareVariant",
+                    "ConstantSignalDefaultVariant",
+                    "BeltFilterDefaultVariant"
+                ]
             },
             "SideGoals": []
         },
