@@ -8,9 +8,9 @@ Put your shape code and parameters in `{}`
 
 - Colorable :
   - C : Circle
-  - R : Rectangle/Square
-  - W : Windmill/Fan
+  - R : Square/Rectangle
   - S : Star/Spike
+  - W : Windmill/Fan
   - c : Crystal
 - Uncolorable :
   - P : Pin
@@ -92,6 +92,8 @@ If you have the blueprint code as text, paste it in the 'blueprint' parameter. I
   - all-buildings : Will create a blueprint containing all buildings, starting at X=0 and increasing (Y=0 for all, Z is 0 or increased so no building tiles are below 0). Note : this is intended for testing external blueprint related tools, pasting the blueprint ingame will result in errors and not placed buildings
   - all-platforms : Same as above except with platforms instead of buildings
 
+- /access-blueprint [message=None] [blueprint=None] [blueprint_file=None] : Access a blueprint. To input a blueprint, provide a message ID or link in the 'message' parameter or use the 'blueprint' or 'blueprint_file' parameters. Note : if a message ID is given, the command has to be executed in the same channel the message is in. The response will include blueprint infos like in /blueprint-info with 'advanced' set to false, a link to view the blueprint in [DontMash's 3D blueprint viewer](https://shapez.soren.codes/blueprint), as well as `txt` and `spz2bp` files containing the blueprint
+
 ### Admin commands
 
 - Pausing :\
@@ -126,9 +128,11 @@ If you have the blueprint code as text, paste it in the 'blueprint' parameter. I
 - /global-unpause : Unpauses the bot globally
 - /stop : Stops the bot
 
-## Small additional features
+## Additional message content related features
 
 - If the bot is mentioned, it should react with `:robot:`
 - If one (and only one) blueprint code is detected in a message and its attached files, the bot will react with the version of that blueprint
+- If a message contains one attachment and it's a screenshot containing the debug menu, the bot will send a message informing how to close that menu
+- Port of sbe's antispam : if a user sends 4 times the same message in a row at max 10 seconds interval, the bot will time them out for an hour and the messages in question will be deleted
 
 [Changelog](https://github.com/Loupau38/Fake-ShapeBot-2.0/blob/main/changelog.md)

@@ -17,6 +17,8 @@ UNKNOWN_ERROR_TEXT = "Unknown error happened"
 MESSAGE_TOO_LONG_TEXT = "Message too long"
 OWNER_ONLY_BADGE = "[Owner only]"
 ADMIN_ONLY_BADGE = "[Admin only]"
+SLASH_CMD_BP_PARAM_DESC = "The full blueprint code"
+SLASH_CMD_BP_FILE_PARAM_DESC = "A file containing the blueprint code"
 
 # shape viewer
 INITIAL_SHAPE_SIZE = 500
@@ -32,20 +34,30 @@ SHAPES_PER_ROW = 8
 MIN_SHAPE_SIZE = 10
 MAX_SHAPE_SIZE = 100
 DEFAULT_SHAPE_SIZE = 56
-VIEWER_3D_LINK_START = "https://shapez.soren.codes/shape?identifier="
-VIEWER_3D_CHAR_REPLACEMENT = {
-    ":" : "%3A"
-}
+SHAPE_3D_VIEWER_LINK_START = "https://shapez.soren.codes/shape?identifier="
 
 # game infos
 GI_RESEARCH_PATH = "./gameInfos/research.json"
 GI_BUILDINGS_PATH = "./gameInfos/buildings.json"
 GI_ISLANDS_PATH = "./gameInfos/islands.json"
 
+# antispam
+ANTISPAM_ENABLED = False
+ANTISPAM_MSG_COUNT_TRESHOLD = 4
+ANTISPAM_TIMEOUT_SECONDS = 3600
+
 # other
 MESSAGE_MAX_LENGTH = 2000
 DEFAULT_MAX_FILE_SIZE = 26_214_400 # 25 mebibytes
 INVALID_SHAPE_CODE_REACTION = "\u2753"
 BOT_MENTIONED_REACTION = "\U0001F916"
-IMAGE_FILE_TOO_BIG_PATH = "./imageFileTooBig.png"
+FILE_TOO_BIG_PATH = "./fileTooBig.png"
 MSG_COMMAND_MESSAGES_PATH = "./messages.json"
+BLUEPRINT_3D_VIEWER_LINK_START = "https://shapez.soren.codes/blueprint/view?identifier="
+LINK_CHAR_REPLACEMENT = {
+    ":" : "%3A",
+    "/" : "%2F",
+    "+" : "%2B",
+    "=" : "%3D",
+    "$" : "%24"
+}

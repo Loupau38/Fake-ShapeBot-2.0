@@ -1,3 +1,16 @@
+## 04 Mar 24
+- Add automatic messages support
+- Add debug menu auto message
+- Port antispam feature from sbe
+- Add all-shapes and all-colors /msg messages
+- Add /access-blueprint command
+  - Move blueprint info generation code to its own function
+  - Move message content and attachments concatenation code to its own function
+- Use global infos constants for 'blueprint' and 'blueprint_file' slash command parameter's description
+- Rename 'image file too big' to 'file too big'
+- Reorder shape names in readme
+- Fix /blueprint-creator not checking for permission to execute the command
+
 ## 03 Mar 24
 - Update for alphas : 15.2-wiretest1, 16-researchtest1, 16, 16.1 :
   - Add regular or modified version names in game infos

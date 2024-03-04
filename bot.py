@@ -12,6 +12,8 @@ import gameInfos
 import researchViewer
 import guildSettings
 import shapeCodeGenerator
+import autoMessages
+import datetime
 
 import discord
 import json
@@ -229,7 +231,7 @@ def detectBPVersion(potentialBPCodes:list[str]) -> list[str|int]|None:
 def safenString(string:str) -> str:
     return discord.utils.escape_mentions(string)
 
-async def getBPFromStringOrFile(string:str,file:discord.Attachment|None) -> str|None:
+async def getBPFromStringOrFile(string:str|None,file:discord.Attachment|None) -> str|None:
     if file is None:
         toReturn = string
     else:
@@ -259,11 +261,129 @@ def getCommandResponse(text:str,file:tuple[discord.File,int]|None,guild:discord.
 
     if file is not None:
         if isFileTooBig(file[1],guild):
-            kwargs["file"] = discord.File(globalInfos.IMAGE_FILE_TOO_BIG_PATH)
+            kwargs["file"] = discord.File(globalInfos.FILE_TOO_BIG_PATH)
         else:
             kwargs["file"] = file[0]
 
     return kwargs
+
+# port of sbe's antispam feature
+async def antiSpam(message:discord.Message) -> None:
+
+    global antiSpamLastMessages
+
+    if message.author.bot:
+        return
+
+    userId = message.author.id
+    curTime = datetime.datetime.now(datetime.timezone.utc)
+
+    for user in list(antiSpamLastMessages.keys()):
+        if (curTime - antiSpamLastMessages[user]["timestamp"]) > datetime.timedelta(seconds=10):
+            del antiSpamLastMessages[user]
+
+    curInfo = antiSpamLastMessages.get(userId)
+    if (curInfo is not None) and (curInfo["content"] == message.content):
+        curInfo["messages"].append(message)
+        curInfo["count"] += 1
+        curInfo["timestamp"] = curTime
+
+        if curInfo["count"] >= globalInfos.ANTISPAM_MSG_COUNT_TRESHOLD:
+            messages:list[discord.Message] = curInfo["messages"]
+            curInfo["messages"] = []
+
+            if not message.author.is_timed_out():
+                try:
+                    await message.author.timeout(
+                        datetime.timedelta(seconds=globalInfos.ANTISPAM_TIMEOUT_SECONDS),
+                        reason=f"antispam: {message.content}"
+                    )
+
+                    for msg in messages: # port difference : only delete if permission to timeout
+                        await msg.delete()
+                except discord.Forbidden:
+                    pass
+        return
+
+    newInfo = {
+        "content" : message.content,
+        "messages" : [message],
+        "count" : 1,
+        "timestamp" : curTime
+    }
+    antiSpamLastMessages[userId] = newInfo
+
+async def concatMsgContentAndAttachments(content:str,attachments:list[discord.Attachment]) -> str:
+    for file in attachments:
+        fileContent = await decodeAttachment(file)
+        if fileContent is None:
+            continue
+        content += fileContent
+    return content
+
+def getBPInfoText(blueprint:blueprints.Blueprint,advanced:bool) -> str:
+
+    def formatCounts(bp:blueprints.BuildingBlueprint|blueprints.IslandBlueprint|None,name:str) -> str:
+        output = f"\n**{name} counts :**\n"
+        if bp is None:
+            output += "None"
+        else:
+            if type(bp) == blueprints.BuildingBlueprint:
+                counts = bp.getBuildingCounts()
+                lines = []
+                for v,ivc in gameInfos.buildings.getCategorizedBuildingCounts(counts).items():
+                    lines.append(f"- `{gameInfos.buildings.allVariantLists[v].title}` : `{utils.sepInGroupsNumber(sum(sum(iv.values()) for iv in ivc.values()))}`")
+                    for iv,bc in ivc.items():
+                        lines.append(f"  - `{gameInfos.buildings.allInternalVariantLists[iv].title}` : `{utils.sepInGroupsNumber(sum(bc.values()))}`")
+                        for b,c in bc.items():
+                            lines.append(f"    - `{b}` : `{utils.sepInGroupsNumber(c)}`")
+                output += "\n".join(lines)
+            else:
+                counts = bp.getIslandCounts()
+                output += "\n".join(f"- `{gameInfos.islands.allIslands[k].title}` : `{utils.sepInGroupsNumber(v)}`" for k,v in counts.items())
+        return output
+
+    versionTxt = gameInfos.versions.versionNumToText(blueprint.version,advanced)
+    if versionTxt is None:
+        versionTxt = "Unknown"
+    elif advanced:
+        versionTxt = f"[{', '.join(f'`{txt}`' for txt in versionTxt)}]"
+    else:
+        versionTxt = f"`{versionTxt}`"
+    bpTypeTxt = "Platform" if blueprint.type == blueprints.ISLAND_BP_TYPE else "Building"
+    try:
+        bpCost = f"`{utils.sepInGroupsNumber(blueprint.getCost())}`"
+    except blueprints.BlueprintError as e:
+        bpCost = f"<Failed to compute (`{e.__cause__.__class__.__name__}`)>"
+
+    responseParts = [[
+        f"Version : `{blueprint.version}` / {versionTxt}",
+        f"Blueprint type : `{bpTypeTxt}`",
+        f"Blueprint cost : {bpCost}"
+    ]]
+
+    if blueprint.buildingBP is not None:
+        buildingSize = blueprint.buildingBP.getSize()
+        responseParts.append([
+            f"Building count : `{utils.sepInGroupsNumber(blueprint.buildingBP.getBuildingCount())}`",
+            f"Building size : `{buildingSize.width}`x`{buildingSize.height}`x`{buildingSize.depth}`"
+        ])
+
+    if blueprint.islandBP is not None:
+        islandSize = blueprint.islandBP.getSize()
+        responseParts.append([
+            f"Platform count : `{utils.sepInGroupsNumber(blueprint.islandBP.getIslandCount())}`",
+            f"Platform size : `{islandSize.width}`x`{islandSize.height}`",
+            f"Platform units : `{utils.sepInGroupsNumber(blueprint.islandBP.getTileCount())}`"
+        ])
+
+    finalOutput = "\n".join(", ".join(part) for part in responseParts)
+
+    if advanced:
+        finalOutput += formatCounts(blueprint.buildingBP,"Building")
+        finalOutput += formatCounts(blueprint.islandBP,"Platform")
+
+    return finalOutput
 
 ##################################################
 
@@ -293,24 +413,35 @@ def runDiscordBot() -> None:
         if message.author == client.user:
             return
 
+        if globalInfos.ANTISPAM_ENABLED:
+            await antiSpam(message)
+
         if await hasPermission(PermissionLvls.PUBLIC_FEATURE,message=message):
+
+            # shape viewer
             hasErrors, responseMsg, file = await useShapeViewer(message.content,False)
             if hasErrors:
                 await message.add_reaction(globalInfos.INVALID_SHAPE_CODE_REACTION)
             if (responseMsg != "") or (file is not None):
                 await message.channel.send(**getCommandResponse(responseMsg,file,message.guild,True))
 
+            # automatic messages
+            autoMsgResult = await autoMessages.checkMessage(message)
+            if autoMsgResult != []:
+                responseMsg = "\n".join(autoMsgResult)
+                try:
+                    await message.reply(safenString(responseMsg),mention_author=False)
+                except Exception:
+                    pass
+
         if await hasPermission(PermissionLvls.REACTION,message=message):
 
+            # equivalent of a /ping
             if globalInfos.BOT_ID in (user.id for user in message.mentions):
                 await message.add_reaction(globalInfos.BOT_MENTIONED_REACTION)
 
-            msgContent = message.content
-            for file in message.attachments:
-                fileContent = await decodeAttachment(file)
-                if fileContent is None:
-                    continue
-                msgContent += fileContent
+            # blueprint version reaction
+            msgContent = await concatMsgContentAndAttachments(message.content,message.attachments)
 
             bpReactions = detectBPVersion(blueprints.getPotentialBPCodesInString(msgContent))
             if bpReactions is not None:
@@ -503,9 +634,9 @@ def runDiscordBot() -> None:
 
     @tree.command(name="change-blueprint-version",description="Change a blueprint's version")
     @discord.app_commands.describe(
-        blueprint="The full blueprint code",
+        blueprint=globalInfos.SLASH_CMD_BP_PARAM_DESC,
         version=f"The blueprint version number (latest public : {gameInfos.versions.LATEST_PUBLIC_GAME_VERSION}, latest patreon only : {gameInfos.versions.LATEST_GAME_VERSION})",
-        blueprint_file="A file containing a blueprint code if it's too big to paste it directly (fill in the 'blueprint' parameter with dummy character(s))",
+        blueprint_file=globalInfos.SLASH_CMD_BP_FILE_PARAM_DESC,
         advanced="Wether or not to fully decode and encode the blueprint"
     )
     async def changeBlueprintVersionCommand(interaction:discord.Interaction,blueprint:str,version:int,blueprint_file:discord.Attachment|None=None,advanced:bool=False) -> None:
@@ -638,31 +769,11 @@ def runDiscordBot() -> None:
 
     @tree.command(name="blueprint-info",description="Get infos about a blueprint")
     @discord.app_commands.describe(
-        blueprint="The full blueprint code",
-        blueprint_file="A file containing a blueprint code if it's too big to paste it directly (fill in the 'blueprint' parameter with dummy character(s))"
+        blueprint=globalInfos.SLASH_CMD_BP_PARAM_DESC,
+        advanced="Wether or not to get extra infos about the blueprint",
+        blueprint_file=globalInfos.SLASH_CMD_BP_FILE_PARAM_DESC
     )
     async def blueprintInfoCommand(interaction:discord.Interaction,blueprint:str,advanced:bool=False,blueprint_file:discord.Attachment|None=None) -> None:
-
-        def formatCounts(bp:blueprints.BuildingBlueprint|blueprints.IslandBlueprint|None,name:str) -> str:
-            output = f"\n**{name} counts :**\n"
-            if bp is None:
-                output += "None"
-            else:
-                if type(bp) == blueprints.BuildingBlueprint:
-                    counts = bp.getBuildingCounts()
-                    lines = []
-                    for v,ivc in gameInfos.buildings.getCategorizedBuildingCounts(counts).items():
-                        lines.append(f"- `{gameInfos.buildings.allVariantLists[v].title}` : `{utils.sepInGroupsNumber(sum(sum(iv.values()) for iv in ivc.values()))}`")
-                        for iv,bc in ivc.items():
-                            lines.append(f"  - `{gameInfos.buildings.allInternalVariantLists[iv].title}` : `{utils.sepInGroupsNumber(sum(bc.values()))}`")
-                            for b,c in bc.items():
-                                lines.append(f"    - `{b}` : `{utils.sepInGroupsNumber(c)}`")
-                    output += "\n".join(lines)
-                else:
-                    counts = bp.getIslandCounts()
-                    output += "\n".join(f"- `{gameInfos.islands.allIslands[k].title}` : `{utils.sepInGroupsNumber(v)}`" for k,v in counts.items())
-            return output
-
         if exitCommandWithoutResponse(interaction):
             return
 
@@ -679,51 +790,12 @@ def runDiscordBot() -> None:
                 return
 
             try:
-
-                bp = blueprints.decodeBlueprint(toProcessBlueprint)
-
-                versionTxt = gameInfos.versions.versionNumToText(bp.version,advanced)
-                if versionTxt is None:
-                    versionTxt = "Unknown"
-                elif advanced:
-                    versionTxt = f"[{', '.join(f'`{txt}`' for txt in versionTxt)}]"
-                else:
-                    versionTxt = f"`{versionTxt}`"
-                bpTypeTxt = "Platform" if bp.type == blueprints.ISLAND_BP_TYPE else "Building"
-                try:
-                    bpCost = f"`{utils.sepInGroupsNumber(bp.getCost())}`"
-                except blueprints.BlueprintError as e:
-                    bpCost = f"Failed to compute (`{e.__cause__.__class__.__name__}`)"
-
-                responseParts = [[
-                    f"Version : `{bp.version}` / {versionTxt}",
-                    f"Blueprint type : `{bpTypeTxt}`",
-                    f"Blueprint cost : {bpCost}"
-                ]]
-
-                if bp.buildingBP is not None:
-                    buildingSize = bp.buildingBP.getSize()
-                    responseParts.append([
-                        f"Building count : `{utils.sepInGroupsNumber(bp.buildingBP.getBuildingCount())}`",
-                        f"Building size : `{buildingSize.width}`x`{buildingSize.height}`x`{buildingSize.depth}`"
-                    ])
-
-                if bp.islandBP is not None:
-                    islandSize = bp.islandBP.getSize()
-                    responseParts.append([
-                        f"Platform count : `{utils.sepInGroupsNumber(bp.islandBP.getIslandCount())}`",
-                        f"Platform size : `{islandSize.width}`x`{islandSize.height}`",
-                        f"Platform units : `{utils.sepInGroupsNumber(bp.islandBP.getTileCount())}`"
-                    ])
-
-                responseMsg = "\n".join(", ".join(part) for part in responseParts)
-
-                if advanced:
-                    responseMsg += formatCounts(bp.buildingBP,"Building")
-                    responseMsg += formatCounts(bp.islandBP,"Platform")
-
+                decodedBP = blueprints.decodeBlueprint(toProcessBlueprint)
             except blueprints.BlueprintError as e:
-                responseMsg = f"Error happened : {e}"
+                responseMsg = f"Error while decoding blueprint : {e}"
+                return
+
+            responseMsg = getBPInfoText(decodedBP,advanced)
 
         responseMsg:str
         await runCommand()
@@ -840,6 +912,10 @@ def runDiscordBot() -> None:
             nonlocal responseMsg, noErrors
             noErrors = False
 
+            if not await hasPermission(PermissionLvls.PRIVATE_FEATURE,interaction=interaction):
+                responseMsg = globalInfos.NO_PERMISSION_TEXT
+                return
+
             blueprintInfos:tuple[int,int,str] = (
                 gameInfos.versions.LATEST_MAJOR_VERSION,
                 gameInfos.versions.LATEST_GAME_VERSION,
@@ -926,6 +1002,121 @@ def runDiscordBot() -> None:
         await interaction.response.send_message(ephemeral=True,**getCommandResponse(responseMsg,None,interaction.guild,False,
             ("```","```") if noErrors else ("","")))
 
+    @tree.command(name="access-blueprint",description="Access a blueprint")
+    @discord.app_commands.describe(
+        message="A message ID or link",
+        blueprint=globalInfos.SLASH_CMD_BP_PARAM_DESC,
+        blueprint_file=globalInfos.SLASH_CMD_BP_FILE_PARAM_DESC
+    )
+    async def accessBlueprintCommand(interaction:discord.Interaction,message:str|None=None,blueprint:str|None=None,blueprint_file:discord.Attachment|None=None) -> None:
+        if exitCommandWithoutResponse(interaction):
+            return
+
+        async def runCommand() -> None:
+            nonlocal responseMsg, files
+            files = []
+
+            await interaction.response.defer(ephemeral=True)
+
+            if not await hasPermission(PermissionLvls.PRIVATE_FEATURE,interaction=interaction):
+                responseMsg = globalInfos.NO_PERMISSION_TEXT
+                return
+
+            if (message is None) and (blueprint is None) and (blueprint_file is None):
+                responseMsg = "A message or blueprint must be provided"
+                return
+
+            if message is None:
+                toProcessBlueprint = await getBPFromStringOrFile(blueprint,blueprint_file)
+                if toProcessBlueprint is None:
+                    responseMsg = "Error while processing blueprint file"
+                    return
+
+            else:
+
+                if message.count("/") == 0:
+                    msgChannel = interaction.channel
+                    msgId = message
+
+                else:
+                    *_, msgChannel, msgId = message.split("/")
+                    try:
+                        msgChannel = int(msgChannel)
+                    except ValueError:
+                        responseMsg = "Invalid channel ID"
+                        return
+                    msgChannel = client.get_channel(msgChannel)
+                    if msgChannel is None:
+                        responseMsg = "Unknown channel"
+                        return
+
+                try:
+                    msgId = int(msgId)
+                except ValueError:
+                    responseMsg = "Invalid message ID"
+                    return
+
+                try:
+                    fetchedMsg = await msgChannel.fetch_message(msgId)
+                except Exception:
+                    responseMsg = "Error while trying to fetch message"
+                    return
+
+                potentialBPCodes = blueprints.getPotentialBPCodesInString(
+                    await concatMsgContentAndAttachments(fetchedMsg.content,fetchedMsg.attachments)
+                )
+                if len(potentialBPCodes) != 1:
+                    responseMsg = "Message doesn't contain exactly one blueprint code"
+                    return
+
+                toProcessBlueprint = potentialBPCodes[0]
+
+            try:
+                decodedBP = blueprints.decodeBlueprint(toProcessBlueprint)
+            except blueprints.BlueprintError as e:
+                responseMsg = f"Error while decoding blueprint : {e}"
+                return
+
+            infoText = getBPInfoText(decodedBP,False)
+            infoText = "\n".join(f"> {l}" for l in infoText.split("\n"))
+
+            bpCodeLinkSafe = toProcessBlueprint
+            for old,new in globalInfos.LINK_CHAR_REPLACEMENT.items():
+                bpCodeLinkSafe = bpCodeLinkSafe.replace(old,new)
+            bpCode3dViewLink = f"{globalInfos.BLUEPRINT_3D_VIEWER_LINK_START}{bpCodeLinkSafe}"
+
+            responseMsg = "\n".join([
+                "**Blueprint Infos :**",
+                infoText,
+                "**Actions :**",
+                f"> [[View in 3D]](<{bpCode3dViewLink}>)"
+            ])
+
+            fileTooBig = False
+            toCreateFiles:list[tuple[str,str]] = []
+
+            if len(responseMsg) > globalInfos.MESSAGE_MAX_LENGTH:
+                toCreateFiles.append((infoText,"blueprint infos.txt"))
+                toCreateFiles.append((bpCode3dViewLink,"3D viewer link.txt"))
+                responseMsg = ""
+
+            toCreateFiles.append((toProcessBlueprint,"blueprint.txt"))
+            toCreateFiles.append((toProcessBlueprint,"blueprint.spz2bp"))
+
+            for fileContent,fileName in toCreateFiles:
+                file = msgToFile(fileContent,fileName,interaction.guild)
+                if file is None:
+                    fileTooBig = True
+                else:
+                    files.append(file)
+
+            if fileTooBig:
+                files.append(discord.File(globalInfos.FILE_TOO_BIG_PATH))
+
+        responseMsg:str; files:list[discord.File]
+        await runCommand()
+        await interaction.followup.send(responseMsg,files=files)
+
     with open(globalInfos.TOKEN_PATH) as f:
         token = f.read()
     client.run(token)
@@ -933,3 +1124,4 @@ def runDiscordBot() -> None:
 executedOnReady = False
 globalPaused = False
 msgCommandMessages:dict[str,str]
+antiSpamLastMessages:dict[int,dict[str,str|list[discord.Message]|int|datetime.datetime]] = {}

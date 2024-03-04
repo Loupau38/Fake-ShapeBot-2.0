@@ -85,9 +85,9 @@ def handleResponse(message:str) -> None|tuple[None|tuple[tuple[io.BytesIO,int],b
         viewer3dLinks = []
         for code in shapeCodes:
             linkSafeCode = code
-            for old,new in globalInfos.VIEWER_3D_CHAR_REPLACEMENT.items():
+            for old,new in globalInfos.LINK_CHAR_REPLACEMENT.items():
                 linkSafeCode = linkSafeCode.replace(old,new)
-            link = f"[{code}](<{globalInfos.VIEWER_3D_LINK_START}{linkSafeCode}>)"
+            link = f"[{code}](<{globalInfos.SHAPE_3D_VIEWER_LINK_START}{linkSafeCode}>)"
             viewer3dLinks.append(link)
 
     return (
