@@ -18,8 +18,9 @@ SHADOW_COLOR = (50,50,50,127)
 
 # according to 'dnSpy > ShapeMeshGenerator > GenerateShapeMesh()', this value should be 0.85
 # according to ingame screenshots, it should be 0.77
-# according to me, the closest is 0.8
-LAYER_SIZE_REDUCTION = 0.8
+# according to me, the closest to ingame is 0.8
+# but, to me, the best for this context is 0.75
+LAYER_SIZE_REDUCTION = 0.75
 DEFAULT_IMAGE_SIZE = 602
 DEFAULT_BG_CIRCLE_DIAMETER = 520
 DEFAULT_SHAPE_DIAMETER = 407

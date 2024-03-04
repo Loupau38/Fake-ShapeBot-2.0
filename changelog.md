@@ -9,7 +9,9 @@
 - Use global infos constants for 'blueprint' and 'blueprint_file' slash command parameter's description
 - Rename 'image file too big' to 'file too big'
 - Reorder shape names in readme
+- Tweak layer size reduction value in shape viewer
 - Fix /blueprint-creator not checking for permission to execute the command
+- Fix /blueprint-info having no description for the 'advanced' parameter
 
 ## 03 Mar 24
 - Update for alphas : 15.2-wiretest1, 16-researchtest1, 16, 16.1 :

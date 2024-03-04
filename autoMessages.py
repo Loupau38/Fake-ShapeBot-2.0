@@ -27,7 +27,7 @@ async def _debugMenuCheck(message:discord.Message) -> str|None:
     ]
 
     if len(message.attachments) != 1:
-        return
+        return None
 
     try:
         imageBytes = await message.attachments[0].read()
