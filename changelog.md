@@ -1,3 +1,10 @@
+## 05 Mar 24
+- Add usage cooldown functionality
+  - Move code to get the current time into its own function
+- Add back required nonlocal declaration in /blueprint-creator
+- Add more descriptive error message when executing /blueprint-creator with 'to_create' set to one of the 'item-producer-with' but without the 'extra' parameter set
+- Fix not all internal instances of term 'server' being replaced with 'guild'
+
 ## 04 Mar 24
 - Add automatic messages support
 - Add debug menu auto message

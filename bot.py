@@ -69,12 +69,15 @@ async def useShapeViewer(userMessage:str,sendErrors:bool) -> tuple[bool,str,tupl
         await globalLogError()
         return True, f"{globalInfos.UNKNOWN_ERROR_TEXT} ({e.__class__.__name__})" if sendErrors else "", None
 
+def getCurrentTime() -> datetime.datetime:
+    return datetime.datetime.now(datetime.timezone.utc)
+
 def isDisabledInGuild(guildId:int|None) -> bool:
 
-    if globalInfos.RESTRICT_TO_SERVERS is None:
+    if globalInfos.RESTRICT_TO_GUILDS is None:
         return False
 
-    if guildId in globalInfos.RESTRICT_TO_SERVERS:
+    if guildId in globalInfos.RESTRICT_TO_GUILDS:
         return False
 
     return True
@@ -88,6 +91,34 @@ def exitCommandWithoutResponse(interaction:discord.Interaction) -> bool:
         return True
 
     return False
+
+async def isInCooldown(userId:int,guildId:int|None) -> bool:
+
+    curTime = getCurrentTime()
+
+    async def inner() -> bool:
+
+        lastTriggered = usageCooldownLastTriggered.get(userId)
+
+        if lastTriggered is None:
+            return False
+
+        if guildId is None:
+            cooldown = globalInfos.NO_GUILD_USAGE_COOLDOWN_SECONDS
+        else:
+            cooldown = (await guildSettings.getGuildSettings(guildId))["usageCooldown"]
+
+        delta = curTime - lastTriggered
+
+        if delta < datetime.timedelta(seconds=cooldown):
+            return True
+
+        return False
+
+    toReturn = await inner()
+    if not toReturn:
+        usageCooldownLastTriggered[userId] = curTime
+    return toReturn
 
 class PermissionLvls:
 
@@ -138,6 +169,8 @@ async def hasPermission(requestedLvl:int,*,message:discord.Message|None=None,int
         return False
 
     if guildId is None:
+        if await isInCooldown(userId,guildId):
+            return False
         return requestedLvl < PermissionLvls.ADMIN
 
     curGuildSettings = await guildSettings.getGuildSettings(guildId)
@@ -157,6 +190,9 @@ async def hasPermission(requestedLvl:int,*,message:discord.Message|None=None,int
     else:
         if requestedLvl == PermissionLvls.ADMIN:
             return False
+
+    if await isInCooldown(userId,guildId):
+        return False
 
     if requestedLvl == PermissionLvls.PRIVATE_FEATURE:
         return True
@@ -276,7 +312,7 @@ async def antiSpam(message:discord.Message) -> None:
         return
 
     userId = message.author.id
-    curTime = datetime.datetime.now(datetime.timezone.utc)
+    curTime = getCurrentTime()
 
     for user in list(antiSpamLastMessages.keys()):
         if (curTime - antiSpamLastMessages[user]["timestamp"]) > datetime.timedelta(seconds=10):
@@ -619,6 +655,26 @@ def runDiscordBot() -> None:
             responseMsg = globalInfos.NO_PERMISSION_TEXT
         await interaction.response.send_message(responseMsg,ephemeral=True)
 
+    @tree.command(name="usage-cooldown",description=f"{globalInfos.ADMIN_ONLY_BADGE} Sets the cooldown for usage of the bot publicly and privatley")
+    @discord.app_commands.describe(cooldown="The cooldown in seconds")
+    async def usageCooldownCommand(interaction:discord.Interaction,cooldown:int) -> None:
+        if exitCommandWithoutResponse(interaction):
+            return
+        if await hasPermission(PermissionLvls.ADMIN,interaction=interaction):
+            if cooldown < 0:
+                responseMsg = "Cooldown value can't be negative"
+            else:
+                try:
+                    datetime.timedelta(seconds=cooldown)
+                except OverflowError:
+                    responseMsg = "Cooldown value too big"
+                else:
+                    await guildSettings.setGuildSetting(interaction.guild_id,"usageCooldown",cooldown)
+                    responseMsg = f"'usageCooldown' parameter has been set to {cooldown}"
+        else:
+            responseMsg = globalInfos.NO_PERMISSION_TEXT
+        await interaction.response.send_message(responseMsg,ephemeral=True)
+
     @tree.command(name="view-shapes",description="View shapes, useful if the bot says a shape code is invalid and you want to know why")
     @discord.app_commands.describe(message="The message like you would normally send it")
     async def viewShapesCommand(interaction:discord.Interaction,message:str) -> None:
@@ -909,7 +965,7 @@ def runDiscordBot() -> None:
             return
 
         async def runCommand() -> None:
-            nonlocal responseMsg, noErrors
+            nonlocal responseMsg, noErrors, to_create
             noErrors = False
 
             if not await hasPermission(PermissionLvls.PRIVATE_FEATURE,interaction=interaction):
@@ -923,6 +979,11 @@ def runDiscordBot() -> None:
             )
 
             if to_create.startswith("item-producer-w-"):
+
+                if extra == "":
+                    responseMsg = "This requires the 'extra' parameter to be set to a value"
+                    return
+
                 to_create = to_create.removeprefix("item-producer-w-")
 
                 if to_create in ("shape","shape-crate"):
@@ -1125,3 +1186,4 @@ executedOnReady = False
 globalPaused = False
 msgCommandMessages:dict[str,str]
 antiSpamLastMessages:dict[int,dict[str,str|list[discord.Message]|int|datetime.datetime]] = {}
+usageCooldownLastTriggered:dict[int,datetime.datetime] = {}

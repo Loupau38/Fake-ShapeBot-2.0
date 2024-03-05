@@ -6,13 +6,14 @@ _SETTINGS_DEFAULTS = {
     "paused" : False,
     "restrictToChannel" : None,
     "restrictToRoles" : [],
-    "restrictToRolesInverted" : False
+    "restrictToRolesInverted" : False,
+    "usageCooldown" : 0
 }
 
 def _saveSettings() -> None:
 
-    with open(globalInfos.ALL_SERVER_SETTINGS_PATH,"w",encoding="utf-8") as f:
-            json.dump(_guildSettings,f)
+    with open(globalInfos.GUILD_SETTINGS_PATH,"w",encoding="utf-8") as f:
+        json.dump(_guildSettings,f)
 
 def _createGuildDefaults(guildId:int) -> None:
 
@@ -26,7 +27,7 @@ def _load() -> None:
 
     try:
 
-        with open(globalInfos.ALL_SERVER_SETTINGS_PATH,encoding="utf-8") as f:
+        with open(globalInfos.GUILD_SETTINGS_PATH,encoding="utf-8") as f:
             _guildSettings = json.load(f)
 
     except FileNotFoundError:

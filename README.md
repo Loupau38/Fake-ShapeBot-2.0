@@ -105,6 +105,10 @@ If you have the blueprint code as text, paste it in the 'blueprint' parameter. I
   The bot will only send public messages on the channel it is restricted to
   - /restrict-to-channel [channel] : Sets the channel to restrict the bot to, don't include this parameter to clear it and not restrict the bot to any channel
 
+- Usage cooldown :\
+  If a user is in cooldown, they will not be able to use the bot's public, private and reaction features
+  - /usage-cooldown [cooldown] : Sets the usage cooldown in seconds
+
 - Restrict to roles :\
   If 'restrictToRolesInverted' is false, only users who have at least one role part of the 'restrictToRoles' list will be able to make the bot send public messages. If true, only users who have at least one role that isn't part of the list will be able to. In both cases, if the list is empty, every user will be able to.
   - /restrict-to-roles [operation] [role=None] : Modifys the 'restrictToRoles' list depending on the 'operation' parameter value :

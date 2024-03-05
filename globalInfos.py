@@ -5,14 +5,14 @@ BOT_ID = 1131514655404199936
 # owner only features
 OWNER_USERS = [579288989505421349]
 GLOBAL_LOG_CHANNEL = 1132693034673389659
-RESTRICT_TO_SERVERS = None # 'None' alone : enable everywhere, 'None' in the list : enable in DMs
+RESTRICT_TO_GUILDS = None # 'None' alone : enable everywhere, 'None' in the list : enable in DMs
 
-# server settings
-ALL_SERVER_SETTINGS_PATH = "./guildSettings.json"
+# guild settings
+GUILD_SETTINGS_PATH = "./guildSettings.json"
 MAX_ROLES_PER_LIST = 10
 
 # texts
-NO_PERMISSION_TEXT = "You don't have permission to do this"
+NO_PERMISSION_TEXT = "You don't have permission to do this or you are in cooldown"
 UNKNOWN_ERROR_TEXT = "Unknown error happened"
 MESSAGE_TOO_LONG_TEXT = "Message too long"
 OWNER_ONLY_BADGE = "[Owner only]"
@@ -47,12 +47,17 @@ ANTISPAM_MSG_COUNT_TRESHOLD = 4
 ANTISPAM_TIMEOUT_SECONDS = 3600
 
 # other
+
 MESSAGE_MAX_LENGTH = 2000
 DEFAULT_MAX_FILE_SIZE = 26_214_400 # 25 mebibytes
+NO_GUILD_USAGE_COOLDOWN_SECONDS = 5
+
 INVALID_SHAPE_CODE_REACTION = "\u2753"
 BOT_MENTIONED_REACTION = "\U0001F916"
+
 FILE_TOO_BIG_PATH = "./fileTooBig.png"
 MSG_COMMAND_MESSAGES_PATH = "./messages.json"
+
 BLUEPRINT_3D_VIEWER_LINK_START = "https://shapez.soren.codes/blueprint/view?identifier="
 LINK_CHAR_REPLACEMENT = {
     ":" : "%3A",
