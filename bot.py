@@ -94,31 +94,25 @@ def exitCommandWithoutResponse(interaction:discord.Interaction) -> bool:
 
 async def isInCooldown(userId:int,guildId:int|None) -> bool:
 
-    curTime = getCurrentTime()
+    lastTriggered = usageCooldownLastTriggered.get(userId)
 
-    async def inner() -> bool:
-
-        lastTriggered = usageCooldownLastTriggered.get(userId)
-
-        if lastTriggered is None:
-            return False
-
-        if guildId is None:
-            cooldown = globalInfos.NO_GUILD_USAGE_COOLDOWN_SECONDS
-        else:
-            cooldown = (await guildSettings.getGuildSettings(guildId))["usageCooldown"]
-
-        delta = curTime - lastTriggered
-
-        if delta < datetime.timedelta(seconds=cooldown):
-            return True
-
+    if lastTriggered is None:
         return False
 
-    toReturn = await inner()
-    if not toReturn:
-        usageCooldownLastTriggered[userId] = curTime
-    return toReturn
+    if guildId is None:
+        cooldown = globalInfos.NO_GUILD_USAGE_COOLDOWN_SECONDS
+    else:
+        cooldown = (await guildSettings.getGuildSettings(guildId))["usageCooldown"]
+
+    delta = getCurrentTime() - lastTriggered
+
+    if delta < datetime.timedelta(seconds=cooldown):
+        return True
+
+    return False
+
+def setUserCooldown(userId:int) -> None:
+    usageCooldownLastTriggered[userId] = getCurrentTime()
 
 class PermissionLvls:
 
@@ -153,74 +147,81 @@ async def hasPermission(requestedLvl:int,*,message:discord.Message|None=None,int
     else:
         raise ValueError("No message or interaction in 'hasPermission' function")
 
-    if (guildId is None) and (requestedLvl == PermissionLvls.ADMIN):
-        return False
+    async def inner() -> bool:
 
-    if userId in globalInfos.OWNER_USERS:
-        return True
-    else:
-        if requestedLvl == PermissionLvls.OWNER:
+        if (guildId is None) and (requestedLvl == PermissionLvls.ADMIN):
             return False
 
-    if globalPaused:
-        return False
+        if userId in globalInfos.OWNER_USERS:
+            return True
+        else:
+            if requestedLvl == PermissionLvls.OWNER:
+                return False
 
-    if isDisabledInGuild(guildId):
-        return False
+        if globalPaused:
+            return False
 
-    if guildId is None:
+        if isDisabledInGuild(guildId):
+            return False
+
+        if guildId is None:
+            if await isInCooldown(userId,guildId):
+                return False
+            return requestedLvl < PermissionLvls.ADMIN
+
+        curGuildSettings = await guildSettings.getGuildSettings(guildId)
+
+        if adminPerm:
+            isAdmin = True
+        else:
+            isAdmin = False
+            adminRoles = curGuildSettings["adminRoles"]
+            for role in userRoles:
+                if role.id in adminRoles:
+                    isAdmin = True
+                    break
+        if isAdmin:
+            if requestedLvl <= PermissionLvls.ADMIN:
+                return True
+        else:
+            if requestedLvl == PermissionLvls.ADMIN:
+                return False
+
         if await isInCooldown(userId,guildId):
             return False
-        return requestedLvl < PermissionLvls.ADMIN
 
-    curGuildSettings = await guildSettings.getGuildSettings(guildId)
-
-    if adminPerm:
-        isAdmin = True
-    else:
-        isAdmin = False
-        adminRoles = curGuildSettings["adminRoles"]
-        for role in userRoles:
-            if role.id in adminRoles:
-                isAdmin = True
-                break
-    if isAdmin:
-        if requestedLvl <= PermissionLvls.ADMIN:
+        if requestedLvl == PermissionLvls.PRIVATE_FEATURE:
             return True
-    else:
-        if requestedLvl == PermissionLvls.ADMIN:
+
+        if curGuildSettings["paused"]:
             return False
 
-    if await isInCooldown(userId,guildId):
-        return False
-
-    if requestedLvl == PermissionLvls.PRIVATE_FEATURE:
-        return True
-
-    if curGuildSettings["paused"]:
-        return False
-
-    if requestedLvl == PermissionLvls.REACTION:
-        return True
-
-    # requestedLvl = public feature
-
-    if curGuildSettings["restrictToChannel"] not in (None,channelId):
-        return False
-
-    restrictToRoles = curGuildSettings["restrictToRoles"]
-    if restrictToRoles == []:
-        return True
-
-    restrictToRolesInverted = curGuildSettings["restrictToRolesInverted"]
-    for role in userRoles:
-        roleInRestrictToRoles = role.id in restrictToRoles
-        if restrictToRolesInverted and (not roleInRestrictToRoles):
-            return True
-        if (not restrictToRolesInverted) and roleInRestrictToRoles:
+        if requestedLvl == PermissionLvls.REACTION:
             return True
 
-    return False
+        # requestedLvl = public feature
+
+        if curGuildSettings["restrictToChannel"] not in (None,channelId):
+            return False
+
+        restrictToRoles = curGuildSettings["restrictToRoles"]
+        if restrictToRoles == []:
+            return True
+
+        restrictToRolesInverted = curGuildSettings["restrictToRolesInverted"]
+        for role in userRoles:
+            roleInRestrictToRoles = role.id in restrictToRoles
+            if restrictToRolesInverted and (not roleInRestrictToRoles):
+                return True
+            if (not restrictToRolesInverted) and roleInRestrictToRoles:
+                return True
+
+        return False
+
+    toReturn = await inner()
+    if toReturn:
+        setUserCooldown(userId)
+    return toReturn
 
 def msgToFile(msg:str,filename:str,guild:discord.Guild|None) -> discord.File|None:
     msgBytes = msg.encode()
@@ -304,11 +305,14 @@ def getCommandResponse(text:str,file:tuple[discord.File,int]|None,guild:discord.
     return kwargs
 
 # port of sbe's antispam feature
-async def antiSpam(message:discord.Message) -> None:
+async def antiSpam(message:discord.Message) -> None|bool:
 
     global antiSpamLastMessages
 
     if message.author.bot:
+        return
+
+    if not globalInfos.ANTISPAM_ENABLED:
         return
 
     userId = message.author.id
@@ -337,6 +341,8 @@ async def antiSpam(message:discord.Message) -> None:
 
                     for msg in messages: # port difference : only delete if permission to timeout
                         await msg.delete()
+
+                    return True
                 except discord.Forbidden:
                     pass
         return
@@ -449,10 +455,11 @@ def runDiscordBot() -> None:
         if message.author == client.user:
             return
 
-        if globalInfos.ANTISPAM_ENABLED:
-            await antiSpam(message)
+        if (await antiSpam(message)) is True:
+            return
 
-        if await hasPermission(PermissionLvls.PUBLIC_FEATURE,message=message):
+        publicPerm = await hasPermission(PermissionLvls.PUBLIC_FEATURE,message=message)
+        if publicPerm:
 
             # shape viewer
             hasErrors, responseMsg, file = await useShapeViewer(message.content,False)
@@ -470,7 +477,7 @@ def runDiscordBot() -> None:
                 except Exception:
                     pass
 
-        if await hasPermission(PermissionLvls.REACTION,message=message):
+        if publicPerm or (await hasPermission(PermissionLvls.REACTION,message=message)):
 
             # equivalent of a /ping
             if globalInfos.BOT_ID in (user.id for user in message.mentions):
