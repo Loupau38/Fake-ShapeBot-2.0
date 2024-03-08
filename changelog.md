@@ -1,3 +1,14 @@
+## 08 Mar 24
+- Update for alpha 17 :
+  - Add version in game infos
+  - Update buildings and islands in game infos
+  - Update shape viewer :
+    - Update windmill and crystal look
+    - Update black and shape border color
+    - Update /msg all-shapes
+- Rewrite shape viewer code
+- Fix island metadata for tunnel entrance and exit containing unnecessary 0 width/height rectangles in their build area override
+
 ## 05 Mar 24
 - Add usage cooldown functionality
   - Move code to get the current time into its own function

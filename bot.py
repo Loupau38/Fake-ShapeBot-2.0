@@ -436,8 +436,6 @@ def runDiscordBot() -> None:
     client = discord.Client(intents=discord.Intents.all(),activity=discord.Game("shapez 2"))
     tree = discord.app_commands.CommandTree(client)
 
-    shapeViewer.preRenderQuadrants()
-
     with open(globalInfos.MSG_COMMAND_MESSAGES_PATH,encoding="utf-8") as f:
         msgCommandMessages = json.load(f)
 

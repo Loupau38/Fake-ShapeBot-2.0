@@ -1,5 +1,5 @@
 {
-    "GameVersion": "0.0.0-alpha16.1",
+    "GameVersion": "0.0.0-alpha17",
     "Buildings": [
         {
             "Id": "HubBuilding",
@@ -463,21 +463,6 @@
                             ]
                         }
                     ]
-                },
-                {
-                    "Id": "UnstackerDefaultVariant",
-                    "Title": "Unstacker",
-                    "InternalVariants": [
-                        {
-                            "Id": "UnstackerDefaultInternalVariant",
-                            "Tiles": [
-                                {},
-                                {
-                                    "Z": 1
-                                }
-                            ]
-                        }
-                    ]
                 }
             ]
         },
@@ -549,6 +534,13 @@
                                 {},
                                 {
                                     "Z": 1
+                                },
+                                {
+                                    "X": -1
+                                },
+                                {
+                                    "X": -1,
+                                    "Z": 1
                                 }
                             ]
                         }
@@ -563,6 +555,13 @@
                             "Tiles": [
                                 {},
                                 {
+                                    "Z": 1
+                                },
+                                {
+                                    "X": 1
+                                },
+                                {
+                                    "X": 1,
                                     "Z": 1
                                 }
                             ]
@@ -817,7 +816,14 @@
                         {
                             "Id": "CrystalGeneratorDefaultInternalVariant",
                             "Tiles": [
-                                {}
+                                {},
+                                {
+                                    "Y": -1
+                                },
+                                {
+                                    "Y": -1,
+                                    "Z": 1
+                                }
                             ]
                         }
                     ]
@@ -975,6 +981,30 @@
                             ]
                         }
                     ]
+                },
+                {
+                    "Id": "WireTransmitterSenderVariant",
+                    "Title": "Wire Transmitter",
+                    "InternalVariants": [
+                        {
+                            "Id": "WireTransmitterSenderInternalVariant",
+                            "Tiles": [
+                                {}
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "Id": "WireTransmitterReceiverVariant",
+                    "Title": "Wire Receiver",
+                    "InternalVariants": [
+                        {
+                            "Id": "WireTransmitterReceiverInternalVariant",
+                            "Tiles": [
+                                {}
+                            ]
+                        }
+                    ]
                 }
             ]
         },
@@ -1083,6 +1113,30 @@
                             ]
                         }
                     ]
+                },
+                {
+                    "Id": "DisplayDefaultVariant",
+                    "Title": "Display",
+                    "InternalVariants": [
+                        {
+                            "Id": "DisplayDefaultInternalVariant",
+                            "Tiles": [
+                                {}
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "Id": "ButtonDefaultVariant",
+                    "Title": "Button",
+                    "InternalVariants": [
+                        {
+                            "Id": "ButtonDefaultInternalVariant",
+                            "Tiles": [
+                                {}
+                            ]
+                        }
+                    ]
                 }
             ]
         },
@@ -1156,6 +1210,48 @@
                     "InternalVariants": [
                         {
                             "Id": "LogicGateIfInternalVariant",
+                            "Tiles": [
+                                {}
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "Id": "VirtualProcessorBuilding",
+            "Title": "Virtual Processors",
+            "Variants": [
+                {
+                    "Id": "VirtualRotatorDefaultVariant",
+                    "Title": "Virtual Rotator",
+                    "InternalVariants": [
+                        {
+                            "Id": "VirtualRotatorDefaultInternalVariant",
+                            "Tiles": [
+                                {}
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "Id": "VirtualAnalyzerDefaultVariant",
+                    "Title": "Virtual Analyzer",
+                    "InternalVariants": [
+                        {
+                            "Id": "VirtualAnalyzerDefaultInternalVariant",
+                            "Tiles": [
+                                {}
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "Id": "VirtualUnstackerDefaultVariant",
+                    "Title": "Virtual Unstacker",
+                    "InternalVariants": [
+                        {
+                            "Id": "VirtualUnstackerDefaultInternalVariant",
                             "Tiles": [
                                 {}
                             ]

@@ -1,5 +1,5 @@
 {
-    "GameVersion": "0.0.0-alpha16.1",
+    "GameVersion": "0.0.0-alpha17",
     "Islands": [
         {
             "Id": "Layout_1",
@@ -48,9 +48,7 @@
             "BuildAreaOverride": [
                 {
                     "Tile": {},
-                    "Rects": [
-                        [0,0,0,0]
-                    ]
+                    "Rects": []
                 }
             ]
         },
@@ -65,9 +63,7 @@
             "BuildAreaOverride": [
                 {
                     "Tile": {},
-                    "Rects": [
-                        [0,0,0,0]
-                    ]
+                    "Rects": []
                 }
             ]
         },
@@ -77,12 +73,33 @@
             "Tiles": [
                 {}
             ],
-            "RemovedNotches": [
+            "RemovedNotches": [],
+            "ReducedSides": [
+                {
+                    "Direction_L": 1
+                },
                 {
                     "Direction_L": 2
+                },
+                {
+                    "Direction_L": 3
                 }
+            ]
+        },
+        {
+            "Id": "ChainMiner",
+            "Title": "Chain Miner",
+            "Tiles": [
+                {}
             ],
-            "ReducedSides": []
+            "RemovedNotches": [],
+            "ReducedSides": [],
+            "BuildAreaOverride": [
+                {
+                    "Tile": {},
+                    "Rects": []
+                }
+            ]
         },
         {
             "Id": "Layout_SpaceBeltNode",
@@ -125,9 +142,24 @@
                 {
                     "Tile": {},
                     "Rects": [
-                        [3,3,14,5],
-                        [8,2,4,1],
-                        [8,8,4,1]
+                        [
+                            3,
+                            3,
+                            14,
+                            5
+                        ],
+                        [
+                            8,
+                            2,
+                            4,
+                            1
+                        ],
+                        [
+                            8,
+                            8,
+                            4,
+                            1
+                        ]
                     ]
                 }
             ]
@@ -144,9 +176,24 @@
                 {
                     "Tile": {},
                     "Rects": [
-                        [3,12,14,5],
-                        [8,11,4,1],
-                        [8,17,4,1]
+                        [
+                            3,
+                            12,
+                            14,
+                            5
+                        ],
+                        [
+                            8,
+                            11,
+                            4,
+                            1
+                        ],
+                        [
+                            8,
+                            17,
+                            4,
+                            1
+                        ]
                     ]
                 }
             ]
@@ -162,28 +209,6 @@
             ],
             "RemovedNotches": [],
             "ReducedSides": []
-        },
-        {
-            "Id": "LayoutMiner",
-            "Title": "Large Asteroid Miner",
-            "Tiles": [
-                {},
-                {
-                    "X": 1
-                }
-            ],
-            "RemovedNotches": [],
-            "ReducedSides": [
-                {
-                    "Direction_L": 1
-                },
-                {
-                    "Direction_L": 2
-                },
-                {
-                    "Direction_L": 3
-                }
-            ]
         },
         {
             "Id": "LayoutFluidExtractor",
