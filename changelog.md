@@ -14,6 +14,9 @@
 - Add /set-antispam-alert-channel to allow having a channel where alerts are sent when the antispam is triggered
 - Fix guild settings not setting a default value to a setting if the guild already has other settings set
 
+- Fix readme formatting
+- Fix usage cooldown not being per server
+
 ## 08 Mar 24
 - Update for alpha 17 :
   - Add version in game infos

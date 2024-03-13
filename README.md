@@ -108,7 +108,8 @@ If you have the blueprint code as text, paste it in the 'blueprint' parameter. I
   If a user is in cooldown, they will not be able to use the bot's public, private and reaction features
   - /usage-cooldown [cooldown] : Sets the usage cooldown in seconds
 
-- Antispam (see [below](#additional-message-content-related-features)) :\
+- Antispam :\
+  See [below](#additional-message-content-related-features)
   - /set-antispam-enabled [value] : Sets if the antispam feature should be enabled on this server
   - /set-antispam-alert-channel [channel] : Sets the channel where an alert should be sent when the antispam is triggered, don't include this parameter to clear it and not have an alert channel
 

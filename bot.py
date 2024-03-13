@@ -93,7 +93,7 @@ def exitCommandWithoutResponse(interaction:discord.Interaction) -> bool:
 
 async def isInCooldown(userId:int,guildId:int|None) -> bool:
 
-    lastTriggered = usageCooldownLastTriggered.get(userId)
+    lastTriggered = usageCooldownLastTriggered.get((userId,guildId))
 
     if lastTriggered is None:
         return False
@@ -110,8 +110,8 @@ async def isInCooldown(userId:int,guildId:int|None) -> bool:
 
     return False
 
-def setUserCooldown(userId:int) -> None:
-    usageCooldownLastTriggered[userId] = getCurrentTime()
+def setUserCooldown(userId:int,guildId:int|None) -> None:
+    usageCooldownLastTriggered[(userId,guildId)] = getCurrentTime()
 
 class PermissionLvls:
 
@@ -219,7 +219,7 @@ async def hasPermission(requestedLvl:int,*,message:discord.Message|None=None,int
 
     toReturn = await inner()
     if toReturn:
-        setUserCooldown(userId)
+        setUserCooldown(userId,guildId)
     return toReturn
 
 def msgToFile(msg:str,filename:str,guild:discord.Guild|None) -> discord.File|None:
@@ -1232,4 +1232,4 @@ executedOnReady = False
 globalPaused = False
 msgCommandMessages:dict[str,str]
 antiSpamLastMessages:dict[tuple[int,int],dict[str,str|list[discord.Message]|int|datetime.datetime]] = {}
-usageCooldownLastTriggered:dict[int,datetime.datetime] = {}
+usageCooldownLastTriggered:dict[tuple[int,int],datetime.datetime] = {}
