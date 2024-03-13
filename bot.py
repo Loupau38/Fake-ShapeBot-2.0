@@ -5,7 +5,6 @@ del os
 import responses
 import globalInfos
 import blueprints
-import shapeViewer
 import operationGraph
 import utils
 import gameInfos
@@ -13,7 +12,6 @@ import researchViewer
 import guildSettings
 import shapeCodeGenerator
 import autoMessages
-import datetime
 
 import discord
 import json
@@ -21,6 +19,7 @@ import sys
 import traceback
 import io
 import typing
+import datetime
 
 async def globalLogMessage(message:str) -> None:
     if globalInfos.GLOBAL_LOG_CHANNEL is None:
@@ -304,26 +303,51 @@ def getCommandResponse(text:str,file:tuple[discord.File,int]|None,guild:discord.
 
     return kwargs
 
-# port of sbe's antispam feature
+# port of sbe's antispam feature with difference of being separated per server and possiblity of sending an alert when triggered
 async def antiSpam(message:discord.Message) -> None|bool:
+
+    async def sendAlert() -> None:
+
+        curAlertChannel = curGuildSettings["antispamAlertChannel"]
+        if curAlertChannel is None:
+            return
+
+        curAlertChannel = client.get_channel(curAlertChannel)
+        if curAlertChannel is None:
+            return
+
+        alertMsg = f"{message.author.mention} triggered the antispam :"
+        msgContentFile = msgToFile(msgContent,"messageContent.txt",curAlertChannel.guild)
+        if msgContentFile is None:
+            alertMsg += " <couldn't put message content in a file>"
+
+        await curAlertChannel.send(alertMsg,file=msgContentFile)
 
     global antiSpamLastMessages
 
     if message.author.bot:
         return
 
-    if not globalInfos.ANTISPAM_ENABLED:
+    if message.guild is None:
+        return
+
+    curGuildSettings = await guildSettings.getGuildSettings(message.guild.id)
+
+    if not curGuildSettings["antispamEnabled"]:
         return
 
     userId = message.author.id
+    guildId = message.guild.id
+    curGuildMember = (userId,guildId)
+    msgContent = message.content
     curTime = getCurrentTime()
 
-    for user in list(antiSpamLastMessages.keys()):
-        if (curTime - antiSpamLastMessages[user]["timestamp"]) > datetime.timedelta(seconds=10):
-            del antiSpamLastMessages[user]
+    for guildMember in list(antiSpamLastMessages.keys()):
+        if (curTime - antiSpamLastMessages[guildMember]["timestamp"]) > datetime.timedelta(seconds=10):
+            del antiSpamLastMessages[guildMember]
 
-    curInfo = antiSpamLastMessages.get(userId)
-    if (curInfo is not None) and (curInfo["content"] == message.content):
+    curInfo = antiSpamLastMessages.get(curGuildMember)
+    if (curInfo is not None) and (curInfo["content"] == msgContent):
         curInfo["messages"].append(message)
         curInfo["count"] += 1
         curInfo["timestamp"] = curTime
@@ -334,26 +358,30 @@ async def antiSpam(message:discord.Message) -> None|bool:
 
             if not message.author.is_timed_out():
                 try:
+
                     await message.author.timeout(
                         datetime.timedelta(seconds=globalInfos.ANTISPAM_TIMEOUT_SECONDS),
-                        reason=f"antispam: {message.content}"
+                        reason=f"antispam: {msgContent}"
                     )
 
                     for msg in messages: # port difference : only delete if permission to timeout
                         await msg.delete()
 
-                    return True
                 except discord.Forbidden:
                     pass
+
+                else:
+                    await sendAlert()
+                    return True
         return
 
     newInfo = {
-        "content" : message.content,
+        "content" : msgContent,
         "messages" : [message],
         "count" : 1,
         "timestamp" : curTime
     }
-    antiSpamLastMessages[userId] = newInfo
+    antiSpamLastMessages[curGuildMember] = newInfo
 
 async def concatMsgContentAndAttachments(content:str,attachments:list[discord.Attachment]) -> str:
     for file in attachments:
@@ -483,7 +511,6 @@ def runDiscordBot() -> None:
 
             # blueprint version reaction
             msgContent = await concatMsgContentAndAttachments(message.content,message.attachments)
-
             bpReactions = detectBPVersion(blueprints.getPotentialBPCodesInString(msgContent))
             if bpReactions is not None:
                 for reaction in bpReactions:
@@ -500,15 +527,51 @@ def runDiscordBot() -> None:
         else:
             await interaction.response.send_message(responseMsg,ephemeral=True)
 
+    # owner only commands
+
+    @tree.command(name="stop",description=f"{globalInfos.OWNER_ONLY_BADGE} Stops the bot")
+    async def stopCommand(interaction:discord.Interaction) -> None:
+        if await hasPermission(PermissionLvls.OWNER,interaction=interaction):
+            try:
+                await interaction.response.send_message("Stopping bot",ephemeral=True)
+            except Exception:
+                print("Error while attempting to comfirm bot stopping")
+            await client.close()
+        else:
+            await interaction.response.send_message(globalInfos.NO_PERMISSION_TEXT,ephemeral=True)
+
+    @tree.command(name="global-pause",description=f"{globalInfos.OWNER_ONLY_BADGE} Globally pauses the bot")
+    async def globalPauseCommand(interaction:discord.Interaction) -> None:
+        global globalPaused
+        if await hasPermission(PermissionLvls.OWNER,interaction=interaction):
+            globalPaused = True
+            responseMsg = "Bot is now globally paused"
+        else:
+            responseMsg = globalInfos.NO_PERMISSION_TEXT
+        await interaction.response.send_message(responseMsg,ephemeral=True)
+
+    @tree.command(name="global-unpause",description=f"{globalInfos.OWNER_ONLY_BADGE} Globally unpauses the bot")
+    async def globalUnpauseCommand(interaction:discord.Interaction) -> None:
+        global globalPaused
+        if await hasPermission(PermissionLvls.OWNER,interaction=interaction):
+            globalPaused = False
+            responseMsg = "Bot is now globally unpaused"
+        else:
+            responseMsg = globalInfos.NO_PERMISSION_TEXT
+        await interaction.response.send_message(responseMsg,ephemeral=True)
+
+    # admin only commands
+
     class RegisterCommandType:
         SINGLE_CHANNEL = "singleChannel"
         ROLE_LIST = "roleList"
+        BOOL_VALUE = "boolValue"
 
     def registerAdminCommand(type_:str,cmdName:str,guildSettingsKey:str,cmdDesc:str="") -> None:
 
         if type_ == RegisterCommandType.SINGLE_CHANNEL:
 
-            @tree.command(name=cmdName,description=cmdDesc)
+            @tree.command(name=cmdName,description=f"{globalInfos.ADMIN_ONLY_BADGE} {cmdDesc}")
             @discord.app_commands.describe(channel="The channel. Don't provide this parameter to clear it")
             async def generatedCommand(interaction:discord.Interaction,channel:discord.TextChannel|discord.Thread|None=None) -> None:
                 if exitCommandWithoutResponse(interaction):
@@ -526,9 +589,22 @@ def runDiscordBot() -> None:
                     responseMsg = globalInfos.NO_PERMISSION_TEXT
                 await interaction.response.send_message(responseMsg,ephemeral=True)
 
+        elif type_ == RegisterCommandType.BOOL_VALUE:
+
+            @tree.command(name=cmdName,description=f"{globalInfos.ADMIN_ONLY_BADGE} {cmdDesc}")
+            async def generatedCommand(interaction:discord.Interaction,value:bool) -> None:
+                if exitCommandWithoutResponse(interaction):
+                    return
+                if await hasPermission(PermissionLvls.ADMIN,interaction=interaction):
+                    await guildSettings.setGuildSetting(interaction.guild_id,guildSettingsKey,value)
+                    responseMsg = f"'{guildSettingsKey}' parameter has been set to {value}"
+                else:
+                    responseMsg = globalInfos.NO_PERMISSION_TEXT
+                await interaction.response.send_message(responseMsg,ephemeral=True)
+
         elif type_ == RegisterCommandType.ROLE_LIST:
 
-            @tree.command(name=cmdName,description=f"{globalInfos.ADMIN_ONLY_BADGE} modifys the '{guildSettingsKey}' list")
+            @tree.command(name=cmdName,description=f"{globalInfos.ADMIN_ONLY_BADGE} Modifys the '{guildSettingsKey}' list")
             @discord.app_commands.describe(role="Only provide this if using 'add' or 'remove' subcommand")
             async def generatedCommand(interaction:discord.Interaction,
                 operation:typing.Literal["add","remove","view","clear"],role:discord.Role|None=None) -> None:
@@ -582,83 +658,46 @@ def runDiscordBot() -> None:
                 await interaction.response.send_message(responseMsg,ephemeral=True)
 
         else:
-            print(f"Unknown type : '{type_}' in 'registerAdminCommand' function")
+            raise ValueError(f"Unknown type : '{type_}' in 'registerAdminCommand' function")
 
-    @tree.command(name="stop",description=f"{globalInfos.OWNER_ONLY_BADGE} stops the bot")
-    async def stopCommand(interaction:discord.Interaction) -> None:
-        if await hasPermission(PermissionLvls.OWNER,interaction=interaction):
-            try:
-                await interaction.response.send_message("Stopping bot",ephemeral=True)
-            except Exception:
-                print("Error while attempting to comfirm bot stopping")
-            await client.close()
-        else:
-            await interaction.response.send_message(globalInfos.NO_PERMISSION_TEXT,ephemeral=True)
-
-    @tree.command(name="global-pause",description=f"{globalInfos.OWNER_ONLY_BADGE} globally pauses the bot")
-    async def globalPauseCommand(interaction:discord.Interaction) -> None:
-        global globalPaused
-        if await hasPermission(PermissionLvls.OWNER,interaction=interaction):
-            globalPaused = True
-            responseMsg = "Bot is now globally paused"
-        else:
-            responseMsg = globalInfos.NO_PERMISSION_TEXT
-        await interaction.response.send_message(responseMsg,ephemeral=True)
-
-    @tree.command(name="global-unpause",description=f"{globalInfos.OWNER_ONLY_BADGE} globally unpauses the bot")
-    async def globalUnpauseCommand(interaction:discord.Interaction) -> None:
-        global globalPaused
-        if await hasPermission(PermissionLvls.OWNER,interaction=interaction):
-            globalPaused = False
-            responseMsg = "Bot is now globally unpaused"
-        else:
-            responseMsg = globalInfos.NO_PERMISSION_TEXT
-        await interaction.response.send_message(responseMsg,ephemeral=True)
-
-    @tree.command(name="pause",description=f"{globalInfos.ADMIN_ONLY_BADGE} pauses the bot on this server")
-    async def pauseCommand(interaction:discord.Interaction) -> None:
-        if exitCommandWithoutResponse(interaction):
-            return
-        if await hasPermission(PermissionLvls.ADMIN,interaction=interaction):
-            await guildSettings.setGuildSetting(interaction.guild_id,"paused",True)
-            responseMsg = "Bot is now paused on this server"
-        else:
-            responseMsg = globalInfos.NO_PERMISSION_TEXT
-        await interaction.response.send_message(responseMsg,ephemeral=True)
-
-    @tree.command(name="unpause",description=f"{globalInfos.ADMIN_ONLY_BADGE} unpauses the bot on this server")
-    async def unpauseCommand(interaction:discord.Interaction) -> None:
-        if exitCommandWithoutResponse(interaction):
-            return
-        if await hasPermission(PermissionLvls.ADMIN,interaction=interaction):
-            await guildSettings.setGuildSetting(interaction.guild_id,"paused",False)
-            responseMsg = "Bot is now unpaused on this server"
-        else:
-            responseMsg = globalInfos.NO_PERMISSION_TEXT
-        await interaction.response.send_message(responseMsg,ephemeral=True)
-
-    registerAdminCommand(RegisterCommandType.SINGLE_CHANNEL,
+    registerAdminCommand(
+        RegisterCommandType.SINGLE_CHANNEL,
         "restrict-to-channel",
         "restrictToChannel",
-        f"{globalInfos.ADMIN_ONLY_BADGE} restricts the use of the bot in public messages to one channel only")
+        "Restricts the use of the bot in public messages to one channel only"
+    )
+
+    registerAdminCommand(
+        RegisterCommandType.SINGLE_CHANNEL,
+        "set-antispam-alert-channel",
+        "antispamAlertChannel",
+        "Sets the channel for alerting when the antispam is triggered"
+    )
+
+    registerAdminCommand(
+        RegisterCommandType.BOOL_VALUE,
+        "restrict-to-roles-set-inverted",
+        "restrictToRolesInverted",
+        "Sets if the restrict to roles list should be inverted"
+    )
+
+    registerAdminCommand(
+        RegisterCommandType.BOOL_VALUE,
+        "set-paused",
+        "paused",
+        "Sets if the bot should be paused on this server"
+    )
+
+    registerAdminCommand(
+        RegisterCommandType.BOOL_VALUE,
+        "set-antispam-enabled",
+        "antispamEnabled",
+        "Sets if the antispam feature should be enabled on this server"
+    )
 
     registerAdminCommand(RegisterCommandType.ROLE_LIST,"admin-roles","adminRoles")
 
     registerAdminCommand(RegisterCommandType.ROLE_LIST,"restrict-to-roles","restrictToRoles")
-
-    @tree.command(name="restrict-to-roles-set-inverted",description=f"{globalInfos.ADMIN_ONLY_BADGE} sets if the restrict to roles list should be inverted")
-    @discord.app_commands.describe(
-        inverted="If True : only users who have at least one role that isn't part of the list will be able to use public message features, if False : only users who have at least one role that is part of the list will be able to use public message features"
-    )
-    async def restrictToRolesSetInvertedCommand(interaction:discord.Interaction,inverted:bool) -> None:
-        if exitCommandWithoutResponse(interaction):
-            return
-        if await hasPermission(PermissionLvls.ADMIN,interaction=interaction):
-            await guildSettings.setGuildSetting(interaction.guild_id,"restrictToRolesInverted",inverted)
-            responseMsg = f"'restrictToRolesInverted' parameter has been set to {inverted}"
-        else:
-            responseMsg = globalInfos.NO_PERMISSION_TEXT
-        await interaction.response.send_message(responseMsg,ephemeral=True)
 
     @tree.command(name="usage-cooldown",description=f"{globalInfos.ADMIN_ONLY_BADGE} Sets the cooldown for usage of the bot publicly and privatley")
     @discord.app_commands.describe(cooldown="The cooldown in seconds")
@@ -679,6 +718,8 @@ def runDiscordBot() -> None:
         else:
             responseMsg = globalInfos.NO_PERMISSION_TEXT
         await interaction.response.send_message(responseMsg,ephemeral=True)
+
+    # public commands
 
     @tree.command(name="view-shapes",description="View shapes, useful if the bot says a shape code is invalid and you want to know why")
     @discord.app_commands.describe(message="The message like you would normally send it")
@@ -734,7 +775,7 @@ def runDiscordBot() -> None:
             ("```","```") if noErrors else ("","")))
 
     @tree.command(name="member-count",description="Display the number of members in this server")
-    async def MemberCountCommand(interaction:discord.Interaction) -> None:
+    async def memberCountCommand(interaction:discord.Interaction) -> None:
         if exitCommandWithoutResponse(interaction):
             return
 
@@ -1190,5 +1231,5 @@ def runDiscordBot() -> None:
 executedOnReady = False
 globalPaused = False
 msgCommandMessages:dict[str,str]
-antiSpamLastMessages:dict[int,dict[str,str|list[discord.Message]|int|datetime.datetime]] = {}
+antiSpamLastMessages:dict[tuple[int,int],dict[str,str|list[discord.Message]|int|datetime.datetime]] = {}
 usageCooldownLastTriggered:dict[int,datetime.datetime] = {}

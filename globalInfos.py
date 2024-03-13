@@ -42,7 +42,6 @@ GI_BUILDINGS_PATH = "./gameInfos/buildings.json"
 GI_ISLANDS_PATH = "./gameInfos/islands.json"
 
 # antispam
-ANTISPAM_ENABLED = False
 ANTISPAM_MSG_COUNT_TRESHOLD = 4
 ANTISPAM_TIMEOUT_SECONDS = 3600
 

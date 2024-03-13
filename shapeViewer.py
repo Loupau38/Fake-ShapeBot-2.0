@@ -24,12 +24,14 @@ PIN_COLOR = (135,164,185)
 # according to me, the closest to ingame is 0.8
 # but, to me, the best for this context is 0.75
 LAYER_SIZE_REDUCTION = 0.75
+
+# below are sizes in pixels taken from a screenshot of the ingame shape viewer
 DEFAULT_IMAGE_SIZE = 602
 DEFAULT_BG_CIRCLE_DIAMETER = 520
 DEFAULT_SHAPE_DIAMETER = 407
 DEFAULT_BORDER_SIZE = 15
-FAKE_SURFACE_SIZE = globalInfos.INITIAL_SHAPE_SIZE
 
+FAKE_SURFACE_SIZE = globalInfos.INITIAL_SHAPE_SIZE
 SIZE_CHANGE_RATIO = FAKE_SURFACE_SIZE / DEFAULT_IMAGE_SIZE
 SHAPE_SIZE = DEFAULT_SHAPE_DIAMETER * SIZE_CHANGE_RATIO
 SHAPE_BORDER_SIZE = round(DEFAULT_BORDER_SIZE*SIZE_CHANGE_RATIO)
@@ -50,7 +52,8 @@ def _drawQuadrant(quadShape:str,quadColor:str,shapeSize:float,quadIndex:int,laye
     withBorderQuadSize = round(curQuadSize+borderSize)
     quadSurface = pygame.Surface(
         (withBorderQuadSize,)*2,
-        pygame.SRCALPHA)
+        pygame.SRCALPHA
+    )
     quadSurfaceForBorder = quadSurface.copy()
 
     drawShadow = layerIndex != 0
@@ -62,35 +65,38 @@ def _drawQuadrant(quadShape:str,quadColor:str,shapeSize:float,quadIndex:int,laye
 
     if quadShape == "C":
 
-        pygame.draw.circle(quadSurface,color,
+        pygame.draw.circle(quadSurface,color, # main circle
             (halfBorderSize,withBorderQuadSize-halfBorderSize),
             curQuadSize,
             draw_top_right=True
         )
 
-        pygame.draw.circle(quadSurfaceForBorder,borderColor,
+        pygame.draw.circle(quadSurfaceForBorder,borderColor, # circle border
             (halfBorderSize,withBorderQuadSize-halfBorderSize),
             curQuadSize+halfBorderSize,
             borderSize,
-            draw_top_right=True)
-        pygame.draw.line(quadSurfaceForBorder,borderColor,
+            draw_top_right=True
+        )
+        pygame.draw.line(quadSurfaceForBorder,borderColor, # left border
             (halfBorderSize,0),
             (halfBorderSize,withBorderQuadSize),
-            borderSize)
-        pygame.draw.line(quadSurfaceForBorder,borderColor,
+            borderSize
+        )
+        pygame.draw.line(quadSurfaceForBorder,borderColor, # down border
             (0,withBorderQuadSize-halfBorderSize),
             (withBorderQuadSize,withBorderQuadSize-halfBorderSize),
-            borderSize)
+            borderSize
+        )
 
         return quadSurface, quadSurfaceForBorder
 
     if quadShape == "R":
 
-        pygame.draw.rect(quadSurface,color,
+        pygame.draw.rect(quadSurface,color, # main rect
             pygame.Rect(halfBorderSize,halfBorderSize,curQuadSize,curQuadSize)
         )
 
-        pygame.draw.rect(quadSurfaceForBorder,borderColor,
+        pygame.draw.rect(quadSurfaceForBorder,borderColor, # rect border
             pygame.Rect(0,0,withBorderQuadSize,withBorderQuadSize),
             borderSize
         )
@@ -102,42 +108,44 @@ def _drawQuadrant(quadShape:str,quadColor:str,shapeSize:float,quadIndex:int,laye
         points = [(curQuadSize,0),(curQuadSize/2,curQuadSize),(0,curQuadSize),(0,curQuadSize/2)]
         points = [(halfBorderSize+x,halfBorderSize+y) for x,y in points]
 
-        pygame.draw.polygon(quadSurface,color,points)
+        pygame.draw.polygon(quadSurface,color,points) # main polygon
 
-        pygame.draw.polygon(quadSurfaceForBorder,borderColor,points,borderSize)
+        pygame.draw.polygon(quadSurfaceForBorder,borderColor,points,borderSize) # border polygon
         for point in points:
-            pygame.draw.circle(quadSurfaceForBorder,borderColor,point,halfBorderSize-1)
+            pygame.draw.circle(quadSurfaceForBorder,borderColor,point,halfBorderSize-1) # fill in the missing vertices
 
         return quadSurface, quadSurfaceForBorder
 
     if quadShape == "W":
 
-        arcCenter = (withBorderQuadSize*1.4,-withBorderQuadSize*0.4)
-        arcRadius = withBorderQuadSize * 1.18
-        sideLength = withBorderQuadSize/3.75
+        arcCenter = (halfBorderSize+(curQuadSize*1.4),halfBorderSize+(curQuadSize*-0.4))
+        arcRadius = curQuadSize * 1.18
+        sideLength = curQuadSize / 3.75
 
-        pygame.draw.rect(quadSurface,color,
+        pygame.draw.rect(quadSurface,color, # first fill in the whole quadrant
             pygame.Rect(halfBorderSize,halfBorderSize,curQuadSize,curQuadSize)
         )
-        pygame.draw.circle(quadSurface,EMPTY_COLOR,arcCenter,arcRadius)
+        pygame.draw.circle(quadSurface,EMPTY_COLOR,arcCenter,arcRadius) # then carve out a circle
 
-        pygame.draw.circle(quadSurfaceForBorder,borderColor,arcCenter,arcRadius+halfBorderSize,borderSize)
-        pygame.draw.line(quadSurfaceForBorder,borderColor,
+        pygame.draw.circle(quadSurfaceForBorder,borderColor,arcCenter,arcRadius+halfBorderSize,borderSize) # arc border
+        pygame.draw.line(quadSurfaceForBorder,borderColor, # left border
             (halfBorderSize,0),
             (halfBorderSize,withBorderQuadSize),
-            borderSize)
-        pygame.draw.line(quadSurfaceForBorder,borderColor,
+            borderSize
+        )
+        pygame.draw.line(quadSurfaceForBorder,borderColor, # down border
             (0,withBorderQuadSize-halfBorderSize),
             (withBorderQuadSize,withBorderQuadSize-halfBorderSize),
-            borderSize)
-        pygame.draw.line(quadSurfaceForBorder,borderColor,
-            (0,halfBorderSize),
+            borderSize
+        )
+        pygame.draw.line(quadSurfaceForBorder,borderColor, # top edge border
+            (halfBorderSize,halfBorderSize),
             (halfBorderSize+sideLength,halfBorderSize),
             borderSize
         )
-        pygame.draw.line(quadSurfaceForBorder,borderColor,
+        pygame.draw.line(quadSurfaceForBorder,borderColor, # right edge border
             (withBorderQuadSize-halfBorderSize,withBorderQuadSize-halfBorderSize-sideLength),
-            (withBorderQuadSize-halfBorderSize,withBorderQuadSize),
+            (withBorderQuadSize-halfBorderSize,withBorderQuadSize-halfBorderSize),
             borderSize
         )
 
@@ -149,9 +157,9 @@ def _drawQuadrant(quadShape:str,quadColor:str,shapeSize:float,quadIndex:int,laye
         pinRadius = curQuadSize/6
 
         if drawShadow:
-            pygame.draw.circle(quadSurface,SHADOW_COLOR,pinCenter,pinRadius+halfBorderSize)
+            pygame.draw.circle(quadSurface,SHADOW_COLOR,pinCenter,pinRadius+halfBorderSize) # shadow
 
-        pygame.draw.circle(quadSurface,PIN_COLOR,pinCenter,pinRadius)
+        pygame.draw.circle(quadSurface,PIN_COLOR,pinCenter,pinRadius) # main circle
 
         return quadSurface, None
 
@@ -171,25 +179,25 @@ def _drawQuadrant(quadShape:str,quadColor:str,shapeSize:float,quadIndex:int,laye
         )
 
         if drawShadow:
-            pygame.draw.circle(quadSurface,SHADOW_COLOR,
+            pygame.draw.circle(quadSurface,SHADOW_COLOR, # shadow
                 (halfBorderSize,withBorderQuadSize-halfBorderSize),
                 curQuadSize+halfBorderSize,
                 borderSize,
                 draw_top_right=True
             )
 
-        pygame.draw.circle(quadSurface,color,
+        pygame.draw.circle(quadSurface,color, # main circle
             (halfBorderSize,withBorderQuadSize-halfBorderSize),
             curQuadSize,
             draw_top_right=True
         )
-        pygame.draw.arc(quadSurface,darkenedColor,
+        pygame.draw.arc(quadSurface,darkenedColor, # 1st darkened area
             darkenedAreasRect,
             startAngle1,
             stopAngle1,
             math.ceil(curQuadSize)
         )
-        pygame.draw.arc(quadSurface,darkenedColor,
+        pygame.draw.arc(quadSurface,darkenedColor, # 2nd darkened area
             darkenedAreasRect,
             startAngle2,
             stopAngle2,

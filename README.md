@@ -98,8 +98,7 @@ If you have the blueprint code as text, paste it in the 'blueprint' parameter. I
 
 - Pausing :\
   While paused, the bot will not send any public messages on the server
-  - /pause : Pauses the bot
-  - /unpause : Unpauses the bot
+  - /set-paused [value] : Sets if the bot should be paused
 
 - Restrict to channel :\
   The bot will only send public messages on the channel it is restricted to
@@ -109,6 +108,10 @@ If you have the blueprint code as text, paste it in the 'blueprint' parameter. I
   If a user is in cooldown, they will not be able to use the bot's public, private and reaction features
   - /usage-cooldown [cooldown] : Sets the usage cooldown in seconds
 
+- Antispam (see [below](#additional-message-content-related-features)) :\
+  - /set-antispam-enabled [value] : Sets if the antispam feature should be enabled on this server
+  - /set-antispam-alert-channel [channel] : Sets the channel where an alert should be sent when the antispam is triggered, don't include this parameter to clear it and not have an alert channel
+
 - Restrict to roles :\
   If 'restrictToRolesInverted' is false, only users who have at least one role part of the 'restrictToRoles' list will be able to make the bot send public messages. If true, only users who have at least one role that isn't part of the list will be able to. In both cases, if the list is empty, every user will be able to.
   - /restrict-to-roles [operation] [role=None] : Modifys the 'restrictToRoles' list depending on the 'operation' parameter value :
@@ -116,7 +119,7 @@ If you have the blueprint code as text, paste it in the 'blueprint' parameter. I
     - remove : Removes a role from the list
     - view : View the list
     - clear : Clears the list
-  - /restrict-to-roles-set-inverted [inverted] : Sets the 'restrictToRolesInverted' parameter
+  - /restrict-to-roles-set-inverted [value] : Sets the 'restrictToRolesInverted' parameter
 
 - Admin roles :\
   Only users who have a role part of the 'adminRoles' list or who have the administrator permission will be able to use admin commands
@@ -137,6 +140,6 @@ If you have the blueprint code as text, paste it in the 'blueprint' parameter. I
 - If the bot is mentioned, it should react with `:robot:`
 - If one (and only one) blueprint code is detected in a message and its attached files, the bot will react with the version of that blueprint
 - If a message contains one attachment and it's a screenshot containing the debug menu, the bot will send a message informing how to close that menu
-- Port of sbe's antispam : if a user sends 4 times the same message in a row at max 10 seconds interval, the bot will time them out for an hour and the messages in question will be deleted
+- Port of sbe's antispam : if a user sends 4 times in a row the same message in the same server at max 10 seconds interval, the bot will time them out for an hour and the messages in question will be deleted
 
 [Changelog](https://github.com/Loupau38/Fake-ShapeBot-2.0/blob/main/changelog.md)

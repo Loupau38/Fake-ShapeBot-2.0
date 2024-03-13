@@ -1,3 +1,19 @@
+## 13 Mar 24
+- Tweaks to shape viewer :
+  - Reduce windmill side border length to avoid extra border pixels
+  - Add comments to say what each draw function draws
+  - Fix some inconsistent formatting
+  - Fix some windmill dimentions being based on quad size with border instead of without
+- Tweaks to bot module formatting
+- Capitalize command descriptions that start with a badge
+- Add bool value to `registerAdminCommands()`
+  - Make /restrict-to-roles-set-inverted use it
+  - Convert /pause and /unpause to /set-paused and use it
+- Add /set-antispam-enabled to have antispam be enabled or not per server
+  - Modify antispam to keep track of messages per server and not globally
+- Add /set-antispam-alert-channel to allow having a channel where alerts are sent when the antispam is triggered
+- Fix guild settings not setting a default value to a setting if the guild already has other settings set
+
 ## 08 Mar 24
 - Update for alpha 17 :
   - Add version in game infos
