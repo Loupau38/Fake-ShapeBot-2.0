@@ -303,9 +303,10 @@ def _decodeEntryExtraData(raw:str,entryType:str) -> typing.Any:
         if rawDecoded == b"": # support for pre-alpha 15.2 blueprints
             return {"r":True,"g":True,"b":True}
 
-        if (len(rawDecoded) != 4
-            or rawDecoded[1:] != bytes([0,0,0])
-            or rawDecoded[0] > 7): # support for pre-alpha 16 blueprints
+        if len(rawDecoded) == 4:
+            encodedColor = int.from_bytes(rawDecoded,"little")
+
+        if (len(rawDecoded) != 4) or (encodedColor > 7): # support for pre-alpha 16 blueprints
             try:
                 oldColorText = standardDecode(rawDecoded,True)
             except BlueprintError as e:
@@ -318,12 +319,21 @@ def _decodeEntryExtraData(raw:str,entryType:str) -> typing.Any:
                 "b" : "b" in oldColorText
             }
 
-        encodedColor = rawDecoded[0]
         return {
             "r" : (encodedColor & 4) != 0,
             "g" : (encodedColor & 2) != 0,
             "b" : (encodedColor & 1) != 0
         }
+
+    if entryType == "ButtonDefaultInternalVariant":
+
+        if len(rawDecoded) != 1:
+            raise BlueprintError("String must be 1 byte long")
+
+        if rawDecoded[0] > 1:
+            raise BlueprintError("Byte must be either 0 or 1")
+
+        return bool(rawDecoded[0])
 
     if entryType in ("Layout_SpaceBeltNode","Layout_RailNode"):
         if len(rawDecoded) < 1:
@@ -389,7 +399,10 @@ def _encodeEntryExtraData(extra:typing.Any,entryType:str) -> str:
             encodedColor += 2
         if extra["b"]:
             encodedColor += 1
-        return b64encode(bytes([encodedColor,0,0,0]))
+        return b64encode(encodedColor.to_bytes(4,"little"))
+
+    if entryType == "ButtonDefaultInternalVariant":
+        return b64encode(bytes([int(extra)]))
 
     if entryType in ("Layout_SpaceBeltNode","Layout_RailNode"):
         return b64encode(bytes([extra["type"]])+extra["layout"])
@@ -410,6 +423,9 @@ def _getDefaultEntryExtraData(entryType:str) -> typing.Any:
 
     if entryType in ("TrainStationLoaderInternalVariant","TrainStationUnloaderInternalVariant"):
         return {"r":True,"g":True,"b":True}
+
+    if entryType == "ButtonDefaultInternalVariant":
+        return False
 
     if entryType in ("Layout_SpaceBeltNode","Layout_RailNode"):
         return {

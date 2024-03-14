@@ -69,7 +69,7 @@ async def useShapeViewer(userMessage:str,sendErrors:bool) -> tuple[bool,str,tupl
         return True, f"{globalInfos.UNKNOWN_ERROR_TEXT} ({e.__class__.__name__})" if sendErrors else "", None
 
 def getCurrentTime() -> datetime.datetime:
-    return datetime.datetime.now(datetime.timezone.utc)
+    return discord.utils.utcnow()
 
 def isDisabledInGuild(guildId:int|None) -> bool:
 
@@ -238,7 +238,7 @@ async def decodeAttachment(file:discord.Attachment) -> str|None:
 
 def isFileTooBig(fileSize:int,guild:discord.Guild|None) -> bool:
     if guild is None:
-        return fileSize > globalInfos.DEFAULT_MAX_FILE_SIZE
+        return fileSize > discord.utils.DEFAULT_FILE_SIZE_LIMIT_BYTES
     return fileSize > guild.filesize_limit
 
 def detectBPVersion(potentialBPCodes:list[str]) -> list[str|int]|None:
@@ -361,7 +361,7 @@ async def antiSpam(message:discord.Message) -> None|bool:
 
                     await message.author.timeout(
                         datetime.timedelta(seconds=globalInfos.ANTISPAM_TIMEOUT_SECONDS),
-                        reason=f"antispam: {msgContent}"
+                        reason=f"antispam: {msgContent}" # seems like no errors happen if the reason string is more than the 512 char limit in discord's UI
                     )
 
                     for msg in messages: # port difference : only delete if permission to timeout

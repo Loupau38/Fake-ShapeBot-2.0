@@ -1,3 +1,8 @@
+## 14 Mar 24
+- Use 'discord.utils' constants and methods instead of custom ones
+- Change train station additional data decoding in blueprints to treat the number as a little endian int16 which is more likely what's used by the game
+- Fix not having updated to support buttons additional data in blueprints
+
 ## 13 Mar 24
 - Tweaks to shape viewer :
   - Reduce windmill side border length to avoid extra border pixels
