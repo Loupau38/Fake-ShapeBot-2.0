@@ -327,13 +327,10 @@ def _decodeEntryExtraData(raw:str,entryType:str) -> typing.Any:
 
     if entryType == "ButtonDefaultInternalVariant":
 
-        if len(rawDecoded) != 1:
-            raise BlueprintError("String must be 1 byte long")
+        if len(rawDecoded) < 1:
+            raise BlueprintError("String must be at least 1 byte long")
 
-        if rawDecoded[0] > 1:
-            raise BlueprintError("Byte must be either 0 or 1")
-
-        return bool(rawDecoded[0])
+        return rawDecoded[0] != 0
 
     if entryType in ("Layout_SpaceBeltNode","Layout_RailNode"):
         if len(rawDecoded) < 1:
@@ -342,7 +339,6 @@ def _decodeEntryExtraData(raw:str,entryType:str) -> typing.Any:
         if layoutType > 3:
             raise BlueprintError(f"Unknown space belt/rail layout type : {layoutType}")
         return {"type":layoutType,"layout":rawDecoded[1:]}
-
 
     return None
 
@@ -406,6 +402,8 @@ def _encodeEntryExtraData(extra:typing.Any,entryType:str) -> str:
 
     if entryType in ("Layout_SpaceBeltNode","Layout_RailNode"):
         return b64encode(bytes([extra["type"]])+extra["layout"])
+
+    raise ValueError(f"Attempt to encode extra data of entry that shouldn't have any ({entryType})")
 
 def _getDefaultEntryExtraData(entryType:str) -> typing.Any:
 
@@ -527,11 +525,8 @@ def _decodeBlueprintFirstPart(rawBlueprint:str) -> tuple[dict,int]:
     return decodedBP, majorVersion
 
 def _encodeBlueprintLastPart(blueprint:dict,majorVersion:int) -> str:
-    try:
-        blueprint = base64.b64encode(gzip.compress(json.dumps(blueprint,indent=2).encode())).decode()
-        blueprint = PREFIX + SEPARATOR + str(majorVersion) + SEPARATOR + blueprint + SUFFIX
-    except Exception as e:
-        raise BlueprintError(f"Error while encoding blueprint (dict to fully encoded part) ({e.__class__.__name__})")
+    blueprint = base64.b64encode(gzip.compress(json.dumps(blueprint,indent=2).encode())).decode()
+    blueprint = PREFIX + SEPARATOR + str(majorVersion) + SEPARATOR + blueprint + SUFFIX
     return blueprint
 
 def _getValidBlueprint(blueprint:dict,mustBeBuildingBP:bool=False) -> dict:
@@ -760,10 +755,7 @@ def decodeBlueprint(rawBlueprint:str) -> Blueprint:
     return Blueprint(majorVersion,version,bpType,decodedDecodedBP)
 
 def encodeBlueprint(blueprint:Blueprint) -> str:
-    try:
-        encodedBP, majorVersion = blueprint._encode()
-    except Exception as e:
-        raise BlueprintError(f"Error while encoding blueprint (objects to dict part) ({e.__class__.__name__})")
+    encodedBP, majorVersion = blueprint._encode()
     return _encodeBlueprintLastPart(encodedBP,majorVersion)
 
 def getPotentialBPCodesInString(string:str) -> list[str]:

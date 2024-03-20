@@ -56,9 +56,21 @@ async def useShapeViewer(userMessage:str,sendErrors:bool) -> tuple[bool,str,tupl
                 (image, imageSize), spoiler, resultingShapeCodes, viewer3dLinks = response
                 file = discord.File(image,"shapes.png",spoiler=spoiler)
                 if resultingShapeCodes is not None:
-                    msgParts.append("**Resulting shape codes :**\n"+" ".join(f"{{{code}}}" for code in resultingShapeCodes))
+                    msgParts.append(
+                        "**Resulting shape codes :**\n"+
+                        "\n".join(
+                            " ".join(f"{{{code}}}" for code in codeGroup)
+                            for codeGroup in discord.utils.as_chunks(resultingShapeCodes,globalInfos.SHAPES_PER_ROW)
+                        )
+                    )
                 if viewer3dLinks is not None:
-                    msgParts.append("**3D viewer links :**\n"+"\n".join(viewer3dLinks))
+                    msgParts.append(
+                        "**3D viewer links :**\n"+
+                        "\n".join(
+                            " ".join(f"{{{link}}}" for link in linkGroup)
+                            for linkGroup in discord.utils.as_chunks(viewer3dLinks,globalInfos.SHAPES_PER_ROW)
+                        )
+                    )
 
         responseMsg = "\n\n".join(msgParts)
 
@@ -477,46 +489,50 @@ def runDiscordBot() -> None:
 
     @client.event
     async def on_message(message:discord.Message) -> None:
+        try:
 
-        if message.author == client.user:
-            return
+            if message.author == client.user:
+                return
 
-        if (await antiSpam(message)) is True:
-            return
+            if (await antiSpam(message)) is True:
+                return
 
-        publicPerm = await hasPermission(PermissionLvls.PUBLIC_FEATURE,message=message)
-        if publicPerm:
+            publicPerm = await hasPermission(PermissionLvls.PUBLIC_FEATURE,message=message)
+            if publicPerm:
 
-            # shape viewer
-            hasErrors, responseMsg, file = await useShapeViewer(message.content,False)
-            if hasErrors:
-                await message.add_reaction(globalInfos.INVALID_SHAPE_CODE_REACTION)
-            if (responseMsg != "") or (file is not None):
-                await message.channel.send(**getCommandResponse(responseMsg,file,message.guild,True))
+                # shape viewer
+                hasErrors, responseMsg, file = await useShapeViewer(message.content,False)
+                if hasErrors:
+                    await message.add_reaction(globalInfos.INVALID_SHAPE_CODE_REACTION)
+                if (responseMsg != "") or (file is not None):
+                    await message.channel.send(**getCommandResponse(responseMsg,file,message.guild,True))
 
-            # automatic messages
-            autoMsgResult = await autoMessages.checkMessage(message)
-            if autoMsgResult != []:
-                responseMsg = "\n".join(autoMsgResult)
-                try:
-                    await message.reply(safenString(responseMsg),mention_author=False)
-                except Exception:
-                    pass
+                # automatic messages
+                autoMsgResult = await autoMessages.checkMessage(message)
+                if autoMsgResult != []:
+                    responseMsg = "\n".join(autoMsgResult)
+                    try:
+                        await message.reply(safenString(responseMsg),mention_author=False)
+                    except Exception:
+                        pass
 
-        if publicPerm or (await hasPermission(PermissionLvls.REACTION,message=message)):
+            if publicPerm or (await hasPermission(PermissionLvls.REACTION,message=message)):
 
-            # equivalent of a /ping
-            if globalInfos.BOT_ID in (user.id for user in message.mentions):
-                await message.add_reaction(globalInfos.BOT_MENTIONED_REACTION)
+                # equivalent of a /ping
+                if globalInfos.BOT_ID in (user.id for user in message.mentions):
+                    await message.add_reaction(globalInfos.BOT_MENTIONED_REACTION)
 
-            # blueprint version reaction
-            msgContent = await concatMsgContentAndAttachments(message.content,message.attachments)
-            bpReactions = detectBPVersion(blueprints.getPotentialBPCodesInString(msgContent))
-            if bpReactions is not None:
-                for reaction in bpReactions:
-                    if type(reaction) == int:
-                        reaction = client.get_emoji(reaction)
-                    await message.add_reaction(reaction)
+                # blueprint version reaction
+                msgContent = await concatMsgContentAndAttachments(message.content,message.attachments)
+                bpReactions = detectBPVersion(blueprints.getPotentialBPCodesInString(msgContent))
+                if bpReactions is not None:
+                    for reaction in bpReactions:
+                        if type(reaction) == int:
+                            reaction = client.get_emoji(reaction)
+                        await message.add_reaction(reaction)
+
+        except Exception:
+            await globalLogError()
 
     @tree.error
     async def on_error(interaction:discord.Interaction,error:discord.app_commands.AppCommandError) -> None:
@@ -832,7 +848,7 @@ def runDiscordBot() -> None:
         public="Errors will be sent publicly if this is True! Sets if the result is sent publicly in the channel",
         see_shape_vars="Wether or not to send the shape codes that were affected to every shape variable"
     )
-    async def operationGraphCommand(interaction:discord.Interaction,instructions:str,public:bool=False,see_shape_vars:bool=False) -> None:
+    async def operationGraphCommand(interaction:discord.Interaction,instructions:str,public:bool=False,see_shape_vars:bool=False,spoiler:bool=False) -> None:
         if exitCommandWithoutResponse(interaction):
             return
 
@@ -857,7 +873,7 @@ def runDiscordBot() -> None:
                 return
 
             (image, imageSize), shapeVarValues = responseOrError
-            file = discord.File(image,"graph.png")
+            file = discord.File(image,"graph.png",spoiler=spoiler)
             if see_shape_vars:
                 responseMsg = "\n".join(f"- {k} : {{{v}}}" for k,v in shapeVarValues.items())
             else:

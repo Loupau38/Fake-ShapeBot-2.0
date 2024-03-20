@@ -1,3 +1,15 @@
+## 20 Mar 24
+- Update shape viewer response text formatting
+- Make private non shape operation functions from shape operations module
+- Make private `preRenderAllNames()` function from research viewer module
+- Change button additional data decoding to be like ingame
+- Remove try excepts to let blueprint encoding exceptions propagate up
+- Add error logging to `on_message` event
+- Add 'spoiler' parameter to /operation-graph
+- Fix not having removed /operation-graph unstack operation
+- Fix readme wording
+- Fix display parameters and shape codes in shape viewer being accepted where they shouldn't
+
 ## 14 Mar 24
 - Use 'discord.utils' constants and methods instead of custom ones
 - Change train station additional data decoding in blueprints to treat the number as a little endian int16 which is more likely what's used by the game

@@ -24,7 +24,7 @@ LEVEL_SHAPE_PREFIXES = ["level","lvl","m"]
 def getPotentialShapeCodesFromMessage(message:str) -> list[str]:
     if (message == "") or (SHAPE_CODE_OPENING not in message):
         return []
-    openingSplits = message.split(SHAPE_CODE_OPENING)
+    openingSplits = message.split(SHAPE_CODE_OPENING)[1:]
     potentialShapeCodes = []
     for split in openingSplits:
         if SHAPE_CODE_CLOSING in split:
@@ -36,7 +36,7 @@ def getPotentialShapeCodesFromMessage(message:str) -> list[str]:
 def getPotentialDisplayParamsFromMessage(message:str) -> list[tuple]:
     if (message == "") or (DISPLAY_PARAM_PREFIX not in message):
         return []
-    prefixSplits = message.split(DISPLAY_PARAM_PREFIX)
+    prefixSplits = message.split(DISPLAY_PARAM_PREFIX)[1:]
     potentialDisplayParams = []
     for split in prefixSplits:
         if DISPLAY_PARAM_EXIT_CHAR in split:

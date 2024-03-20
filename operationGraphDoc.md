@@ -67,12 +67,9 @@ Examples : `1:r90cw:2`, `3,7:stack:5`, `10,15:sh:4,21`, `6,r:paint:11`
   - 2 inputs : shape, color
   - 1 output
   - Replaces empty quadrants and pins with crystals of the given color
-- unstack :
-  - 1 input
-  - 2 outputs : bottom shape, top shape
-  - Separates the top layer of the shape from the rest of it
 
 ## Additional parameters
 
 - `public` (default : false) : When true, the resulting graph will be sent publicly in the channel the command was executed in. Error messages will also be sent publicly if this parameter is set to true.
 - `see_shape_vars` (default : false) : For every shape on the graph, the corresponding shape variable number will be displayed and the shape code associated with every shape variable will be sent via text.
+- `spoiler` (default : false) : Wether or not to mark the resulting image as spoiler

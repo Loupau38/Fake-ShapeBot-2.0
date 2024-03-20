@@ -6,10 +6,12 @@ import utils
 from utils import OutputString
 import pygame
 import io
+import typing
 
 class Operation:
 
-    def __init__(self,numInputs:int,numOutputs:int,fullName:str,func,colorInputIndexes:list[int]|None=None) -> None:
+    def __init__(self,numInputs:int,numOutputs:int,fullName:str,
+        func:typing.Callable[...,list[shapeOperations.Shape]],colorInputIndexes:list[int]|None=None) -> None:
         self.numInputs = numInputs
         self.numOutputs = numOutputs
         self.fullName = fullName
@@ -76,8 +78,7 @@ OPERATIONS:dict[str,Operation] = {
     "paint" : Operation(2,1,"Top paint",shapeOperations.topPaint,[1]),
     "fpaint" : Operation(2,1,"Full paint",shapeOperations.fullPaint,[1]),
     "pin" : Operation(1,1,"Push pin",shapeOperations.pushPin),
-    "crystal" : Operation(2,1,"Generate crystals",shapeOperations.genCrystal,[1]),
-    "unstack" : Operation(1,2,"Unstack",shapeOperations.unstack)
+    "crystal" : Operation(2,1,"Generate crystals",shapeOperations.genCrystal,[1])
 }
 
 for k,v in OPERATIONS.items():

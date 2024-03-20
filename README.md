@@ -77,7 +77,7 @@ If you have the blueprint code as text, paste it in the 'blueprint' parameter. I
 
 - /member-count : Displays the member count of the server it is executed in (with additional info such as online/offline count and percentage)
 
-- /operation-graph [instructions] [public=False] [see_shape_vars=False] : See the [/operation-graph documentation](https://github.com/Loupau38/Fake-ShapeBot-2.0/blob/main/operationGraphDoc.md)
+- /operation-graph [instructions] [public=False] [see_shape_vars=False] [spoiler=False] : See the [/operation-graph documentation](https://github.com/Loupau38/Fake-ShapeBot-2.0/blob/main/operationGraphDoc.md)
 
 - /blueprint-info [blueprint] [advanced=False] [blueprint_file=None] : Will give the version, type, blueprint cost, building count, building scale size, platform count, platform scale size and platform unit count of the given blueprint. If 'advanced' is set to True, will also give the individual counts for every building and platforms
 
@@ -102,7 +102,7 @@ If you have the blueprint code as text, paste it in the 'blueprint' parameter. I
 
 - Restrict to channel :\
   The bot will only send public messages on the channel it is restricted to
-  - /restrict-to-channel [channel] : Sets the channel to restrict the bot to, don't include this parameter to clear it and not restrict the bot to any channel
+  - /restrict-to-channel [channel] : Sets the channel to restrict the bot to, don't include the 'channel' parameter to clear it and not restrict the bot to any channel
 
 - Usage cooldown :\
   If a user is in cooldown, they will not be able to use the bot's public, private and reaction features
@@ -111,7 +111,7 @@ If you have the blueprint code as text, paste it in the 'blueprint' parameter. I
 - Antispam :\
   See [below](#additional-message-content-related-features)
   - /set-antispam-enabled [value] : Sets if the antispam feature should be enabled on this server
-  - /set-antispam-alert-channel [channel] : Sets the channel where an alert should be sent when the antispam is triggered, don't include this parameter to clear it and not have an alert channel
+  - /set-antispam-alert-channel [channel] : Sets the channel where an alert should be sent when the antispam is triggered, don't include the 'channel' parameter to clear it and not have an alert channel
 
 - Restrict to roles :\
   If 'restrictToRolesInverted' is false, only users who have at least one role part of the 'restrictToRoles' list will be able to make the bot send public messages. If true, only users who have at least one role that isn't part of the list will be able to. In both cases, if the list is empty, every user will be able to.

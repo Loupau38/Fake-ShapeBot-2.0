@@ -18,14 +18,14 @@ SHAPE_SIZE = 100
 RECT_BORDER_RADIUS = 30
 MARGIN = 5
 
-def preRenderAllNames() -> tuple[dict[str,pygame.Surface],int]:
+def _preRenderAllNames() -> tuple[dict[str,pygame.Surface],int]:
     nodeNames:dict[str,pygame.Surface] = {}
     for lvl in gameInfos.research.reserachTree:
         for n in [lvl.milestone,*lvl.sideGoals]:
             nodeNames[n.id] = utils.decodedFormatToPygameSurf(utils.decodeUnityFormat(n.title),NODE_FONT,NODE_FONT_BOLD,1,TEXT_COLOR)
     return nodeNames, SHAPE_SIZE+max(n.get_width() for n in nodeNames.values())+MARGIN
 
-_preRenderedNodeNames, _nodeWidth = preRenderAllNames()
+_preRenderedNodeNames, _nodeWidth = _preRenderAllNames()
 _nodeHeight = SHAPE_SIZE
 _maxSideGoalsInLevel = max(len(lvl.sideGoals) for lvl in gameInfos.research.reserachTree)
 _levelNumMaxHeight = max(NODE_FONT.render(str(num),1,TEXT_COLOR).get_height() for num in range(1,len(gameInfos.research.reserachTree)+1))
