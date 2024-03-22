@@ -1,5 +1,5 @@
 {
-    "GameVersion": "0.0.0-alpha17",
+    "GameVersion": "0.0.0-alpha18",
     "Buildings": [
         {
             "Id": "HubBuilding",
@@ -753,6 +753,9 @@
                                 {},
                                 {
                                     "Z": 1
+                                },
+                                {
+                                    "X": -1
                                 }
                             ]
                         }
@@ -768,6 +771,13 @@
                                 {},
                                 {
                                     "Z": 1
+                                },
+                                {
+                                    "Y": 1
+                                },
+                                {
+                                    "X": 1,
+                                    "Y": 1
                                 }
                             ]
                         }
@@ -1252,6 +1262,90 @@
                     "InternalVariants": [
                         {
                             "Id": "VirtualUnstackerDefaultInternalVariant",
+                            "Tiles": [
+                                {}
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "Id": "VirtualStackerDefaultVariant",
+                    "Title": "Virtual Stacker",
+                    "InternalVariants": [
+                        {
+                            "Id": "VirtualStackerDefaultInternalVariant",
+                            "Tiles": [
+                                {}
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "Id": "VirtualShapePackerDefaultVariant",
+                    "Title": "Virtual Shape Packer",
+                    "InternalVariants": [
+                        {
+                            "Id": "VirtualShapePackerDefaultInternalVariant",
+                            "Tiles": [
+                                {}
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "Id": "VirtualShapeUnpackerDefaultVariant",
+                    "Title": "Virtual Shape Unpacker",
+                    "InternalVariants": [
+                        {
+                            "Id": "VirtualShapeUnpackerDefaultInternalVariant",
+                            "Tiles": [
+                                {}
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "Id": "VirtualFluidPackerDefaultVariant",
+                    "Title": "Virtual Fluid Packer",
+                    "InternalVariants": [
+                        {
+                            "Id": "VirtualFluidPackerDefaultInternalVariant",
+                            "Tiles": [
+                                {}
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "Id": "VirtualFluidUnpackerDefaultVariant",
+                    "Title": "Virtual Fluid Unpacker",
+                    "InternalVariants": [
+                        {
+                            "Id": "VirtualFluidUnpackerDefaultInternalVariant",
+                            "Tiles": [
+                                {}
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "Id": "VirtualHalfCutterDefaultVariant",
+                    "Title": "Virtual Halves Destroyer",
+                    "InternalVariants": [
+                        {
+                            "Id": "VirtualHalfCutterDefaultInternalVariant",
+                            "Tiles": [
+                                {}
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "Id": "VirtualPainterDefaultVariant",
+                    "Title": "Virtual Painter",
+                    "InternalVariants": [
+                        {
+                            "Id": "VirtualPainterDefaultInternalVariant",
                             "Tiles": [
                                 {}
                             ]

@@ -16,9 +16,10 @@ GAME_VERSIONS = {
     1033 : ["a15.2","a15.3d"],
     1036 : ["a16"],
     1038 : ["a16","a16.1"],
-    1040 : ["a17"]
+    1040 : ["a17"],
+    1042 : ["a18"]
 }
-LATEST_GAME_VERSION = 1040
+LATEST_GAME_VERSION = 1042
 LATEST_PUBLIC_GAME_VERSION = 1033
 LATEST_MAJOR_VERSION = 1
 

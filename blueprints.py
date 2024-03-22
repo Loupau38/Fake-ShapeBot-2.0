@@ -300,26 +300,30 @@ def _decodeEntryExtraData(raw:str,entryType:str) -> typing.Any:
 
     if entryType in ("TrainStationLoaderInternalVariant","TrainStationUnloaderInternalVariant"):
 
+        defaultReturn = {"r":True,"g":True,"b":True,"w":True}
+
         if rawDecoded == b"": # support for pre-alpha 15.2 blueprints
-            return {"r":True,"g":True,"b":True}
+            return defaultReturn
 
         if len(rawDecoded) == 4:
             encodedColor = int.from_bytes(rawDecoded,"little")
 
-        if (len(rawDecoded) != 4) or (encodedColor > 7): # support for pre-alpha 16 blueprints
+        if (len(rawDecoded) != 4) or (encodedColor > 15): # support for pre-alpha 16 blueprints
             try:
                 oldColorText = standardDecode(rawDecoded,True)
             except BlueprintError as e:
                 raise BlueprintError(f"Error while attempting to decode old format train station : {e}")
             if oldColorText == "":
-                return {"r":True,"g":True,"b":True}
+                return defaultReturn
             return {
                 "r" : "r" in oldColorText,
                 "g" : "g" in oldColorText,
-                "b" : "b" in oldColorText
+                "b" : "b" in oldColorText,
+                "w" : "w" in oldColorText
             }
 
         return {
+            "w" : (encodedColor & 8) != 0,
             "r" : (encodedColor & 4) != 0,
             "g" : (encodedColor & 2) != 0,
             "b" : (encodedColor & 1) != 0
@@ -389,6 +393,8 @@ def _encodeEntryExtraData(extra:typing.Any,entryType:str) -> str:
 
     if entryType in ("TrainStationLoaderInternalVariant","TrainStationUnloaderInternalVariant"):
         encodedColor = 0
+        if extra["w"]:
+            encodedColor += 8
         if extra["r"]:
             encodedColor += 4
         if extra["g"]:
@@ -420,7 +426,7 @@ def _getDefaultEntryExtraData(entryType:str) -> typing.Any:
         return {"type":"paint","value":f"{COLOR_PREFIX}r"}
 
     if entryType in ("TrainStationLoaderInternalVariant","TrainStationUnloaderInternalVariant"):
-        return {"r":True,"g":True,"b":True}
+        return {"r":True,"g":True,"b":True,"w":True}
 
     if entryType == "ButtonDefaultInternalVariant":
         return False
@@ -525,7 +531,7 @@ def _decodeBlueprintFirstPart(rawBlueprint:str) -> tuple[dict,int]:
     return decodedBP, majorVersion
 
 def _encodeBlueprintLastPart(blueprint:dict,majorVersion:int) -> str:
-    blueprint = base64.b64encode(gzip.compress(json.dumps(blueprint,indent=2).encode())).decode()
+    blueprint = base64.b64encode(gzip.compress(json.dumps(blueprint,separators=(",",":")).encode())).decode()
     blueprint = PREFIX + SEPARATOR + str(majorVersion) + SEPARATOR + blueprint + SUFFIX
     return blueprint
 
@@ -607,7 +613,7 @@ def _getValidBlueprint(blueprint:dict,mustBeBuildingBP:bool=False) -> dict:
 
     return validBP
 
-def _decodeBuildingBP(buildings:list[dict[str,typing.Any]],moveBPCenter:bool=True) -> BuildingBlueprint:
+def _decodeBuildingBP(buildings:list[dict[str,typing.Any]]) -> BuildingBlueprint:
 
     entryList:list[BuildingEntry] = []
     occupiedTiles:set[Pos] = set()
@@ -620,21 +626,17 @@ def _decodeBuildingBP(buildings:list[dict[str,typing.Any]],moveBPCenter:bool=Tru
         for curTile in curTiles:
 
             if curTile in occupiedTiles:
-                raise BlueprintError(f"Error while placing tile of '{building['T']}' at {curTile} (raw) : another tile is already placed there")
+                raise BlueprintError(f"Error while placing tile of '{building['T']}' at {curTile} : another tile is already placed there")
 
             occupiedTiles.add(curTile)
 
-    minX, minY, minZ = [min(e.__dict__[k] for e in occupiedTiles) for k in ("x","y","z")]
+    minZ = min(e.z for e in occupiedTiles)
     maxZ = max(e.z for e in occupiedTiles)
 
     if maxZ-minZ+1 > NUM_LAYERS:
         raise BlueprintError(f"Cannot have more than {NUM_LAYERS} layers")
 
     for b in buildings:
-        if moveBPCenter:
-            b["X"] -= minX
-            b["Y"] -= minY
-            b["L"] -= minZ
         entryList.append(BuildingEntry(
             Pos(b["X"],b["Y"],b["L"]),
             Rotation(b["R"]),
@@ -657,15 +659,9 @@ def _decodeIslandBP(islands:list[dict[str,typing.Any]]) -> IslandBlueprint:
         for curTile in curTiles:
 
             if curTile in occupiedTiles:
-                raise BlueprintError(f"Error while placing tile of '{island['T']}' at {curTile} (raw) : another tile is already placed there")
+                raise BlueprintError(f"Error while placing tile of '{island['T']}' at {curTile} : another tile is already placed there")
 
             occupiedTiles.add(curTile)
-
-    minX, minY = [min(e.__dict__[k] for e in occupiedTiles) for k in ("x","y")]
-
-    for i in islands:
-        i["X"] -= minX
-        i["Y"] -= minY
 
     for island in islands:
 
@@ -687,10 +683,10 @@ def _decodeIslandBP(islands:list[dict[str,typing.Any]]) -> IslandBlueprint:
             continue
 
         try:
-            curBuildingBP = _decodeBuildingBP(island["B"]["Entries"],False)
+            curBuildingBP = _decodeBuildingBP(island["B"]["Entries"])
         except BlueprintError as e:
             raise BlueprintError(
-                f"Error while creating building blueprint representation of '{islandEntryInfos['t'].id}' at {islandEntryInfos['pos']} (rectified) : {e}")
+                f"Error while creating building blueprint representation of '{islandEntryInfos['t'].id}' at {islandEntryInfos['pos']} : {e}")
 
         curIslandBuildArea = [a.rotateCW(islandEntryInfos["r"],ISLAND_ROTATION_CENTER) for a in islandEntryInfos["t"].totalBuildArea]
 
@@ -705,7 +701,7 @@ def _decodeIslandBP(islands:list[dict[str,typing.Any]]) -> IslandBlueprint:
                     break
             if not inArea:
                 raise BlueprintError(
-                    f"Error in '{islandEntryInfos['t'].id}' at {islandEntryInfos['pos']} (rectified) : tile of building '{curBuilding.type.id}' at {pos} (raw) is not inside its platform build area")
+                    f"Error in '{islandEntryInfos['t'].id}' at {islandEntryInfos['pos']} : tile of building '{curBuilding.type.id}' at {pos} is not inside its platform build area")
 
         entryList.append(IslandEntry(
             islandEntryInfos["pos"],

@@ -1,5 +1,5 @@
 {
-    "GameVersion": "0.0.0-alpha17",
+    "GameVersion": "0.0.0-alpha18",
     "Islands": [
         {
             "Id": "Layout_1",
@@ -44,13 +44,7 @@
                 {}
             ],
             "RemovedNotches": [],
-            "ReducedSides": [],
-            "BuildAreaOverride": [
-                {
-                    "Tile": {},
-                    "Rects": []
-                }
-            ]
+            "ReducedSides": []
         },
         {
             "Id": "LayoutTunnelExit",
@@ -59,13 +53,7 @@
                 {}
             ],
             "RemovedNotches": [],
-            "ReducedSides": [],
-            "BuildAreaOverride": [
-                {
-                    "Tile": {},
-                    "Rects": []
-                }
-            ]
+            "ReducedSides": []
         },
         {
             "Id": "LayoutMinerCompact",
@@ -116,25 +104,23 @@
             "Tiles": [
                 {}
             ],
-            "RemovedNotches": [
-                {},
+            "RemovedNotches": [],
+            "ReducedSides": [],
+            "BuildAreaOverride": [
                 {
-                    "Direction_L": 1
-                },
-                {
-                    "Direction_L": 2
-                },
-                {
-                    "Direction_L": 3
+                    "Tile": {},
+                    "Rects": []
                 }
-            ],
-            "ReducedSides": []
+            ]
         },
         {
             "Id": "Layout_LeftTrainStation",
             "Title": "Train Station",
             "Tiles": [
-                {}
+                {},
+                {
+                    "Y": -1
+                }
             ],
             "RemovedNotches": [],
             "ReducedSides": [],
@@ -144,18 +130,24 @@
                     "Rects": [
                         [
                             3,
-                            3,
+                            0,
                             14,
-                            5
+                            8
                         ],
                         [
+                            3,
                             8,
-                            2,
                             4,
                             1
                         ],
                         [
                             8,
+                            8,
+                            4,
+                            1
+                        ],
+                        [
+                            13,
                             8,
                             4,
                             1
@@ -168,7 +160,10 @@
             "Id": "Layout_RightTrainStation",
             "Title": "Train Station (Mirrored)",
             "Tiles": [
-                {}
+                {},
+                {
+                    "Y": 1
+                }
             ],
             "RemovedNotches": [],
             "ReducedSides": [],
@@ -180,7 +175,13 @@
                             3,
                             12,
                             14,
-                            5
+                            8
+                        ],
+                        [
+                            3,
+                            11,
+                            4,
+                            1
                         ],
                         [
                             8,
@@ -189,12 +190,27 @@
                             1
                         ],
                         [
-                            8,
-                            17,
+                            13,
+                            11,
                             4,
                             1
                         ]
                     ]
+                }
+            ]
+        },
+        {
+            "Id": "TrainProducer",
+            "Title": "Train Deployer",
+            "Tiles": [
+                {}
+            ],
+            "RemovedNotches": [],
+            "ReducedSides": [],
+            "BuildAreaOverride": [
+                {
+                    "Tile": {},
+                    "Rects": []
                 }
             ]
         },
@@ -219,8 +235,7 @@
                     "X": 1
                 }
             ],
-            "RemovedNotches": [],
-            "ReducedSides": [
+            "RemovedNotches": [
                 {
                     "Direction_L": 1
                 },
@@ -230,7 +245,8 @@
                 {
                     "Direction_L": 3
                 }
-            ]
+            ],
+            "ReducedSides": []
         },
         {
             "Id": "Layout_3_L",

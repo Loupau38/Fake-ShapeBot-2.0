@@ -1,3 +1,11 @@
+## 22 Mar 24
+- Update for alpha 18 :
+  - Add version in game infos
+  - Update buildings and islands in game infos
+  - Support for white train color in blueprints
+  - Remove json whitespace in blueprint encoding
+- No longer rectify blueprint center on blueprint encoding
+
 ## 20 Mar 24
 - Update shape viewer response text formatting
 - Make private non shape operation functions from shape operations module
@@ -20,10 +28,10 @@
   - Reduce windmill side border length to avoid extra border pixels
   - Add comments to say what each draw function draws
   - Fix some inconsistent formatting
-  - Fix some windmill dimentions being based on quad size with border instead of without
+  - Fix some windmill dimensions being based on quad size with border instead of without
 - Tweaks to bot module formatting
 - Capitalize command descriptions that start with a badge
-- Add bool value to `registerAdminCommands()`
+- Add bool value to `registerAdminCommand()`
   - Make /restrict-to-roles-set-inverted use it
   - Convert /pause and /unpause to /set-paused and use it
 - Add /set-antispam-enabled to have antispam be enabled or not per server
