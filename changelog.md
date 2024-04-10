@@ -1,3 +1,14 @@
+## 10 Apr 24
+- Add `exitCommandWithoutResponse()` function to owner only commands if executed without owner permission
+- Use font files instead of system fonts
+- Add Docker things
+- Add /msg patreon and sharebp
+- Antispam small tweaks :
+  - Use global infos constant for time interval between messages
+  - Use `dict.pop(key)` instead of `del dict[key]`
+  - Ignore exception for if failure to delete a message due to it already having been deleted
+- Fix not having a check for if the decoded value is a json object in blueprint decoding
+
 ## 22 Mar 24
 - Update for alpha 18 :
   - Add version in game infos
@@ -38,7 +49,7 @@
   - Modify antispam to keep track of messages per server and not globally
 - Add /set-antispam-alert-channel to allow having a channel where alerts are sent when the antispam is triggered
 - Fix guild settings not setting a default value to a setting if the guild already has other settings set
-
+<br><br>
 - Fix readme formatting
 - Fix usage cooldown not being per server
 

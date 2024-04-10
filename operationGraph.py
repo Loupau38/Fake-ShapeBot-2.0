@@ -85,7 +85,7 @@ for k,v in OPERATIONS.items():
     v.image = pygame.image.load(f"{IMAGES_START_PATH}{k}.png")
 
 pygame.font.init()
-SHAPE_VAR_FONT = pygame.font.SysFont("arial",30)
+SHAPE_VAR_FONT = pygame.font.Font(globalInfos.FONT_PATH,30)
 SHAPE_VAR_COLOR = (255,255,255)
 
 def getInstructionsFromText(text:str) -> tuple[bool,list[Instruction]|str|OutputString]:

@@ -1,6 +1,7 @@
 import gameInfos
 import shapeViewer
 import utils
+import globalInfos
 import pygame
 import io
 
@@ -10,9 +11,9 @@ NODE_COLOR = (29,54,74)
 TEXT_COLOR = (255,255,255)
 
 pygame.font.init()
-VERSION_FONT = pygame.font.SysFont("arial",10,True)
-NODE_FONT = pygame.font.SysFont("arial",30)
-NODE_FONT_BOLD = pygame.font.SysFont("arial",30,True)
+VERSION_FONT = pygame.font.Font(globalInfos.FONT_BOLD_PATH,10)
+NODE_FONT = pygame.font.Font(globalInfos.FONT_PATH,30)
+NODE_FONT_BOLD = pygame.font.Font(globalInfos.FONT_BOLD_PATH,30)
 
 SHAPE_SIZE = 100
 RECT_BORDER_RADIUS = 30

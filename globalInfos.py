@@ -44,6 +44,7 @@ GI_ISLANDS_PATH = "./gameInfos/islands.json"
 # antispam
 ANTISPAM_MSG_COUNT_TRESHOLD = 4
 ANTISPAM_TIMEOUT_SECONDS = 3600
+ANTISPAM_TIME_INTERVAL_SECONDS = 10
 
 # other
 
@@ -55,6 +56,8 @@ BOT_MENTIONED_REACTION = "\U0001F916"
 
 FILE_TOO_BIG_PATH = "./fileTooBig.png"
 MSG_COMMAND_MESSAGES_PATH = "./messages.json"
+FONT_PATH = "./Barlow-Regular.ttf"
+FONT_BOLD_PATH = "./Barlow-Bold.ttf"
 
 BLUEPRINT_3D_VIEWER_LINK_START = "https://shapez.soren.codes/blueprint/view?identifier="
 LINK_CHAR_REPLACEMENT = {

@@ -519,6 +519,9 @@ def _decodeBlueprintFirstPart(rawBlueprint:str) -> tuple[dict,int]:
         except Exception as e:
             raise BlueprintError(f"Can't parse json ({e.__class__.__name__})")
 
+        if type(decodedBP) != dict:
+            raise BlueprintError("Decoded value isn't a json object")
+
         try:
             _getKeyValue(decodedBP,"V",int)
             _getKeyValue(decodedBP,"BP",dict)

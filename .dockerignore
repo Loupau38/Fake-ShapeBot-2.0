@@ -1,0 +1,8 @@
+**/__pycache__/
+.git/
+gameInfos/extractGameInfos.py
+.gitignore
+changelog.md
+operationGraphDoc.md
+README.md
+todo.txt

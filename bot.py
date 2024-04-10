@@ -355,8 +355,8 @@ async def antiSpam(message:discord.Message) -> None|bool:
     curTime = getCurrentTime()
 
     for guildMember in list(antiSpamLastMessages.keys()):
-        if (curTime - antiSpamLastMessages[guildMember]["timestamp"]) > datetime.timedelta(seconds=10):
-            del antiSpamLastMessages[guildMember]
+        if (curTime - antiSpamLastMessages[guildMember]["timestamp"]) > datetime.timedelta(seconds=globalInfos.ANTISPAM_TIME_INTERVAL_SECONDS):
+            antiSpamLastMessages.pop(guildMember)
 
     curInfo = antiSpamLastMessages.get(curGuildMember)
     if (curInfo is not None) and (curInfo["content"] == msgContent):
@@ -379,7 +379,7 @@ async def antiSpam(message:discord.Message) -> None|bool:
                     for msg in messages: # port difference : only delete if permission to timeout
                         await msg.delete()
 
-                except discord.Forbidden:
+                except (discord.Forbidden,discord.NotFound):
                     pass
 
                 else:
@@ -554,6 +554,8 @@ def runDiscordBot() -> None:
                 print("Error while attempting to comfirm bot stopping")
             await client.close()
         else:
+            if exitCommandWithoutResponse(interaction):
+                return
             await interaction.response.send_message(globalInfos.NO_PERMISSION_TEXT,ephemeral=True)
 
     @tree.command(name="global-pause",description=f"{globalInfos.OWNER_ONLY_BADGE} Globally pauses the bot")
@@ -563,6 +565,8 @@ def runDiscordBot() -> None:
             globalPaused = True
             responseMsg = "Bot is now globally paused"
         else:
+            if exitCommandWithoutResponse(interaction):
+                return
             responseMsg = globalInfos.NO_PERMISSION_TEXT
         await interaction.response.send_message(responseMsg,ephemeral=True)
 
@@ -573,6 +577,8 @@ def runDiscordBot() -> None:
             globalPaused = False
             responseMsg = "Bot is now globally unpaused"
         else:
+            if exitCommandWithoutResponse(interaction):
+                return
             responseMsg = globalInfos.NO_PERMISSION_TEXT
         await interaction.response.send_message(responseMsg,ephemeral=True)
 
