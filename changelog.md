@@ -1,3 +1,29 @@
+## 12 Apr 24
+- Update for alpha 19 :
+  - Add version in game infos
+  - Update buildings and islands in game infos
+    - Change island ordering in json file from size to ingame toolbar placement
+  - Add colorblind pattern functionality to shape viewer :
+    - Add /cb display parameter
+    - Add 'colorblind' parameter to /operation-graph
+  - Change purple to magenta :
+    - Update shape colors constant in global infos
+    - Remove `m` -> `p` shape code character replacement
+    - Update /msg all-colors
+    - Update readme
+    - Update color characters in shape viewer
+    - Update shapes in game infos research
+  - Remove train station building additional data support in blueprints
+  - Support for space pipe additional data in blueprints
+  - Remove shape and fluid crates in blueprints additional data and in /blueprint-creator
+  - Remove full paint operation in /operation-graph
+  - Update uncolored color in shape viewer
+    - Update /msg all-shapes
+- Use external file for buildings to replace in extract game infos script
+- Fix /operation-graph having no description for the 'spoiler' parameter
+- Fix operation graph doc not including mention of 'spoiler' parameter at the start
+- Fix 'whether' being spelled 'wether' in operation graph doc and command descriptions
+
 ## 10 Apr 24
 - Add `exitCommandWithoutResponse()` function to owner only commands if executed without owner permission
 - Use font files instead of system fonts

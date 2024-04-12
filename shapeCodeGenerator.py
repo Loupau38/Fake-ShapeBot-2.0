@@ -123,7 +123,7 @@ def generateShapeCodes(potentialShapeCode:str) -> tuple[list[str]|str,bool]:
     for prefix in LEVEL_SHAPE_PREFIXES:
         if potentialShapeCode.startswith(prefix):
             invalidLvl = False
-            level = potentialShapeCode[len(prefix):]
+            level = potentialShapeCode.removeprefix(prefix)
             try:
                 level = int(level)
                 if (level < 1) or (level > len(gameInfos.research.reserachTree)):

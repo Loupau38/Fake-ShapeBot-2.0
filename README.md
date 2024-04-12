@@ -23,7 +23,7 @@ Put your shape code and parameters in `{}`
 - g : Green
 - b : Blue
 - c : Cyan
-- p/m : Purple/Magenta
+- m : Magenta
 - y : Yellow
 - w : White
 - k : Black
@@ -58,6 +58,7 @@ Display parameters must be put outside of the `{}`, have a `/` in front of them 
 - /spoiler : Will mark the resulting image as spoiler
 - /result : Will additionally send the generated shape codes
 - /3d : Will additionally send links to [DontMash's 3D shape viewer](https://shapez.soren.codes/shape)
+- /cb : Will draw colorblind patterns on the generated shapes
 
 Note : shapes with more than 4 layers and/or with more/less than 4 quadrants per layer are supported
 
@@ -77,7 +78,7 @@ If you have the blueprint code as text, paste it in the 'blueprint' parameter. I
 
 - /member-count : Displays the member count of the server it is executed in (with additional info such as online/offline count and percentage)
 
-- /operation-graph [instructions] [public=False] [see_shape_vars=False] [spoiler=False] : See the [/operation-graph documentation](https://github.com/Loupau38/Fake-ShapeBot-2.0/blob/main/operationGraphDoc.md)
+- /operation-graph [instructions] [public=False] [see_shape_vars=False] [spoiler=False] [colorblind=False] : See the [/operation-graph documentation](https://github.com/Loupau38/Fake-ShapeBot-2.0/blob/main/operationGraphDoc.md)
 
 - /blueprint-info [blueprint] [advanced=False] [blueprint_file=None] : Will give the version, type, blueprint cost, building count, building scale size, platform count, platform scale size and platform unit count of the given blueprint. If 'advanced' is set to True, will also give the individual counts for every building and platforms
 
@@ -87,8 +88,6 @@ If you have the blueprint code as text, paste it in the 'blueprint' parameter. I
 
 - /blueprint-creator [to_create] [extra=""] : A command for creating blueprints. The created blueprint will depend on the 'to_create' parameter :
   - item-producer-w-shape : Will create a blueprint containing an item producer producing the shape code in the 'extra' parameter. Standard shape code generation can be used, e.g. `C+fill`
-  - item-producer-w-shape-crate : Same as above except the shape will be contained in a crate instead
-  - item-producer-w-fluid-crate : Same as above except a fluid crate will be produced instead, with the fluid's one letter color code inside the 'extra' parameter
   - all-buildings : Will create a blueprint containing all buildings, starting at X=0 and increasing (Y=0 for all, Z is 0 or increased so no building tiles are below 0). Note : this is intended for testing external blueprint related tools, pasting the blueprint ingame will result in errors and not placed buildings
   - all-platforms : Same as above except with platforms instead of buildings
 

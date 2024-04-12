@@ -484,7 +484,7 @@
                     "Id": "RSPumpAndPackingSpeed2",
                     "Title": "Pump & Packing Speed <b>2</b>",
                     "Description": "Increases fluid packing & pump speed by additive 50 %.",
-                    "GoalShape": "RuRuRuRu:Sp----Sp:CpCpCpCp:--CuCu--",
+                    "GoalShape": "RuRuRuRu:Sm----Sm:CmCmCmCm:--CuCu--",
                     "GoalAmount": 60000,
                     "Unlocks": [
                         "PumpAndPackingSpeed +50%"
@@ -534,7 +534,7 @@
                     "Id": "RSCuttingSpeed4",
                     "Title": "Cutting Speed <b>4</b>",
                     "Description": "Increases cutting speed by additive 50 %.",
-                    "GoalShape": "CbRrRbCr:Sp----Sp:CpCpCpCp:--CwCw--",
+                    "GoalShape": "CbRrRbCr:Sm----Sm:CmCmCmCm:--CwCw--",
                     "GoalAmount": 150000,
                     "Unlocks": [
                         "CutterSpeed +50%"
@@ -544,7 +544,7 @@
                     "Id": "RNHubSize2",
                     "Title": "More Vortex Inputs <b>2</b>",
                     "Description": "Increases the size of the Vortex to allow for more inputs.",
-                    "GoalShape": "CwRwCw--:Cp--CpCw:CwCpCwSp",
+                    "GoalShape": "CwRwCw--:Cm--CmCw:CwCmCwSm",
                     "GoalAmount": 200000,
                     "Unlocks": []
                 }
@@ -555,7 +555,7 @@
                 "Id": "RNPinPusher",
                 "Title": "Pin Pusher",
                 "Description": "Entirely <color=#FFA036>replaces the NORTHEAST</color> quarter of a shape with a support pin used in shape stacking.",
-                "GoalShape": "RrCrRrCr:RwCwRwCw:CpCpCpCp:--Sy--Sy",
+                "GoalShape": "RrCrRrCr:RwCwRwCw:CmCmCmCm:--Sy--Sy",
                 "GoalAmount": 150000,
                 "Unlocks": [
                     "PinPusherDefaultVariant"
@@ -614,7 +614,7 @@
                     "Id": "RSMixingSpeed1",
                     "Title": "Color Mixing Speed <b>1</b>",
                     "Description": "Increases color mixing speed by additive 100 %.",
-                    "GoalShape": "RpP-P-P-:--WrP-P-:----CyP-:------Sg",
+                    "GoalShape": "RmP-P-P-:--WrP-P-:----CyP-:------Sg",
                     "GoalAmount": 150000,
                     "Unlocks": [
                         "MixerSpeed +100%"
@@ -632,7 +632,7 @@
                     "Id": "RSPaintingSpeed3",
                     "Title": "Painting Speed <b>3</b>",
                     "Description": "Increases painting speed by additive 50 %.",
-                    "GoalShape": "CpRyCcCw",
+                    "GoalShape": "CmRyCcCw",
                     "GoalAmount": 240000,
                     "Unlocks": [
                         "PainterSpeed +50%"
@@ -645,7 +645,7 @@
                 "Id": "RNCrystals",
                 "Title": "Crystals",
                 "Description": "Allows fluids to be crystallized inside empty shape quarters.",
-                "GoalShape": "RwCbCgCr:CyCcRwCp",
+                "GoalShape": "RwCbCgCr:CyCcRwCm",
                 "GoalAmount": 240000,
                 "Unlocks": [
                     "CrystalGeneratorDefaultVariant"
@@ -666,7 +666,7 @@
                     "Id": "RNChunkLimit5",
                     "Title": "Platform Limit <b>5</b>",
                     "Description": "Increase the maximum amount of space platform units you can place.",
-                    "GoalShape": "crcpcycc:crcpcycc:CuCuCuCu:SwSwSwSw",
+                    "GoalShape": "crcmcycc:crcmcycc:CuCuCuCu:SwSwSwSw",
                     "GoalAmount": 240000,
                     "Unlocks": []
                 },
@@ -687,7 +687,7 @@
                 "Id": "RNDummyNodeA1",
                 "Title": "Vortex Technology <b>1</b>",
                 "Description": "<color=#FF2C63>This content is work in progress and might get reworked at any time. Please give feedback in the shapez 2 discord!</color>\n\nExperimental technology for vortex creation & containment.",
-                "GoalShape": "cwCbCgCr:CyCccwCp",
+                "GoalShape": "cwCbCgCr:CyCccwCm",
                 "GoalAmount": 300000,
                 "Unlocks": []
             },
@@ -723,7 +723,7 @@
                 "Id": "RNDummyNodeB1",
                 "Title": "Dimensional Generator <b>1</b>",
                 "Description": "<color=#FF2C63>This content is work in progress and might get reworked at any time. Please give feedback in the shapez 2 discord!</color>\n\nExperimental technology for creating interconnected pocket universes.",
-                "GoalShape": "CrRpcwcw:cwRbCccw:cwcwCgRy:CpcwcwRr",
+                "GoalShape": "CrRmcwcw:cwRbCccw:cwcwCgRy:CmcwcwRr",
                 "GoalAmount": 360000,
                 "Unlocks": []
             },
@@ -732,7 +732,7 @@
                     "Id": "RNChunkLimit6",
                     "Title": "Platform Limit <b>6</b>",
                     "Description": "Increase the maximum amount of space platform units you can place.",
-                    "GoalShape": "crcpcyP-:crcpcyP-:cycrcpRw",
+                    "GoalShape": "crcmcyP-:crcmcyP-:cycrcmRw",
                     "GoalAmount": 600000,
                     "Unlocks": []
                 },
@@ -751,7 +751,7 @@
                 "Id": "RNWires",
                 "Title": "Wires",
                 "Description": "<color=#FF2C63>This content is work in progress and might get reworked at any time. Please give feedback in the shapez 2 discord!</color>\n\nPlaceholder upgrade, will give you nothing for now.",
-                "GoalShape": "CwRwcrcp:ccRwCwcb:cgcyCwRw:RwcrcpCw",
+                "GoalShape": "CwRwcrcm:ccRwCwcb:cgcyCwRw:RwcrcmCw",
                 "GoalAmount": 500000,
                 "Unlocks": [
                     "WireDefaultVariant",

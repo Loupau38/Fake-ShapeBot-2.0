@@ -3,12 +3,12 @@ import pygame
 import math
 
 COLORS:dict[str,tuple[int,int,int]] = {
-    "u" : (187,187,186),
+    "u" : (164,158,165),
     "r" : (255,0,0),
     "g" : (0,255,0),
     "b" : (0,0,255),
     "c" : (0,255,255),
-    "p" : (255,0,255),
+    "m" : (255,0,255),
     "y" : (255,255,0),
     "w" : (255,255,255),
     "k" : (35,35,35)
@@ -18,6 +18,7 @@ BG_CIRCLE_COLOR = (31,41,61,25)
 SHADOW_COLOR = (50,50,50,127)
 EMPTY_COLOR = (0,0,0,0)
 PIN_COLOR = (135,164,185)
+COLORBLIND_PATTERN_COLOR = (0,0,0)
 
 # according to 'dnSpy > ShapeMeshGenerator > GenerateShapeMesh()', this value should be 0.85
 # according to ingame screenshots, it should be 0.77
@@ -37,6 +38,59 @@ SHAPE_SIZE = DEFAULT_SHAPE_DIAMETER * SIZE_CHANGE_RATIO
 SHAPE_BORDER_SIZE = round(DEFAULT_BORDER_SIZE*SIZE_CHANGE_RATIO)
 BG_CIRCLE_DIAMETER = DEFAULT_BG_CIRCLE_DIAMETER * SIZE_CHANGE_RATIO
 
+COLORBLIND_NUM_PATTERNS = 13
+COLORBLIND_PATTERN_SPACING = (FAKE_SURFACE_SIZE) / (COLORBLIND_NUM_PATTERNS-1)
+COLORBLIND_PATTERN_WIDTH = COLORBLIND_PATTERN_SPACING * 0.25
+
+def _preRenderColorblindPatterns() -> None:
+
+    global _colorblindPatterns
+    surfaceSize = FAKE_SURFACE_SIZE
+    redSurface = pygame.Surface((surfaceSize,surfaceSize),pygame.SRCALPHA)
+    greenSurface = redSurface.copy()
+    blueSurface = redSurface.copy()
+
+    for i in range(COLORBLIND_NUM_PATTERNS):
+        pygame.draw.line(
+            redSurface,
+            COLORBLIND_PATTERN_COLOR,
+            (i*COLORBLIND_PATTERN_SPACING,0),
+            (i*COLORBLIND_PATTERN_SPACING,surfaceSize),
+            round(COLORBLIND_PATTERN_WIDTH)
+        )
+
+    for x in range(COLORBLIND_NUM_PATTERNS-1):
+        for y in range(COLORBLIND_NUM_PATTERNS):
+            pygame.draw.rect(
+                greenSurface,
+                COLORBLIND_PATTERN_COLOR,
+                pygame.Rect(
+                    (x*COLORBLIND_PATTERN_SPACING) + (COLORBLIND_PATTERN_SPACING/2) - (COLORBLIND_PATTERN_WIDTH/2),
+                    (y*COLORBLIND_PATTERN_SPACING) - (COLORBLIND_PATTERN_WIDTH/2),
+                    COLORBLIND_PATTERN_WIDTH,
+                    COLORBLIND_PATTERN_WIDTH
+                )
+            )
+
+    for i in range((COLORBLIND_NUM_PATTERNS*2)-1):
+        pygame.draw.line(
+            blueSurface,
+            COLORBLIND_PATTERN_COLOR,
+            ((i-COLORBLIND_NUM_PATTERNS+1)*COLORBLIND_PATTERN_SPACING,0),
+            (i*COLORBLIND_PATTERN_SPACING,surfaceSize),
+            round(COLORBLIND_PATTERN_WIDTH)
+        )
+
+    _colorblindPatterns = {
+        "r" : redSurface,
+        "g" : greenSurface,
+        "b" : blueSurface
+    }
+
+
+_colorblindPatterns:dict[str,pygame.Surface]
+_preRenderColorblindPatterns()
+
 def _getScaledShapeSize(shapeSize:float,layerIndex:int) -> float:
     return shapeSize * (LAYER_SIZE_REDUCTION**layerIndex)
 
@@ -51,7 +105,7 @@ def _drawQuadrant(quadShape:str,quadColor:str,shapeSize:float,quadIndex:int,laye
 
     withBorderQuadSize = round(curQuadSize+borderSize)
     quadSurface = pygame.Surface(
-        (withBorderQuadSize,)*2,
+        (withBorderQuadSize,withBorderQuadSize),
         pygame.SRCALPHA
     )
     quadSurfaceForBorder = quadSurface.copy()
@@ -208,7 +262,35 @@ def _drawQuadrant(quadShape:str,quadColor:str,shapeSize:float,quadIndex:int,laye
 
     raise ValueError(f"Unknown shape type : {quadShape}")
 
-def _rotateAndBlitSurf(toRotate:pygame.Surface,blitTo:pygame.Surface,numQuads:int,quadIndex:int,layerIndex:int,shapeSize:float) -> None:
+def _drawColorblindPatterns(layerSurface:pygame.Surface,color:str) -> None:
+
+    curMask = pygame.mask.from_surface(layerSurface,200)
+
+    for colors,pattern in zip(
+        (["r","m","y","w"],["g","y","c","w"],["b","c","m","w"]),
+        _colorblindPatterns.values()
+    ):
+        if color not in colors:
+            continue
+
+        curPattern = pygame.Surface(layerSurface.get_size(),pygame.SRCALPHA)
+        _blitCentered(pattern,curPattern)
+
+        curPatternMasked = pygame.Surface(curPattern.get_size(),pygame.SRCALPHA)
+        curMask.to_surface(curPatternMasked,curPattern,unsetcolor=None)
+
+        layerSurface.blit(curPatternMasked,(0,0))
+
+def _blitCentered(blitFrom:pygame.Surface,blitTo:pygame.Surface) -> None:
+    blitTo.blit(
+        blitFrom,
+        (
+            (blitTo.get_width()/2) - (blitFrom.get_width()/2),
+            (blitTo.get_height()/2) - (blitFrom.get_height()/2)
+        )
+    )
+
+def _rotateSurf(toRotate:pygame.Surface,numQuads:int,quadIndex:int,layerIndex:int,shapeSize:float) -> pygame.Surface:
     curShapeSize = _getScaledShapeSize(shapeSize,layerIndex)
     tempSurf = pygame.Surface(
         (curShapeSize+SHAPE_BORDER_SIZE,)*2,
@@ -216,12 +298,9 @@ def _rotateAndBlitSurf(toRotate:pygame.Surface,blitTo:pygame.Surface,numQuads:in
     )
     tempSurf.blit(toRotate,(curShapeSize/2,0))
     tempSurf = pygame.transform.rotate(tempSurf,-((360/numQuads)*quadIndex))
-    blitTo.blit(tempSurf,(
-        (blitTo.get_width()/2)-(tempSurf.get_width()/2),
-        (blitTo.get_height()/2)-(tempSurf.get_height()/2)
-    ))
+    return tempSurf
 
-def renderShape(shapeCode:str,surfaceSize:int) -> pygame.Surface:
+def renderShape(shapeCode:str,surfaceSize:int,colorblindPatterns:bool=False) -> pygame.Surface:
 
     decomposedShapeCode = shapeCode.split(globalInfos.SHAPE_LAYER_SEPARATOR)
     numQuads = int(len(decomposedShapeCode[0])/2)
@@ -242,13 +321,16 @@ def renderShape(shapeCode:str,surfaceSize:int) -> pygame.Surface:
             if quadSurface is None:
                 continue
 
-            _rotateAndBlitSurf(quadSurface,returnSurface,numQuads,quadIndex,layerIndex,SHAPE_SIZE)
+            rotatedLayer = _rotateSurf(quadSurface,numQuads,quadIndex,layerIndex,SHAPE_SIZE)
+            if colorblindPatterns:
+                _drawColorblindPatterns(rotatedLayer,quad[1])
+            _blitCentered(rotatedLayer,returnSurface)
 
         for quadIndex, border in enumerate(quadBorders):
 
             if border is None:
                 continue
 
-            _rotateAndBlitSurf(border,returnSurface,numQuads,quadIndex,layerIndex,SHAPE_SIZE)
+            _blitCentered(_rotateSurf(border,numQuads,quadIndex,layerIndex,SHAPE_SIZE),returnSurface)
 
     return pygame.transform.smoothscale(returnSurface,(surfaceSize,surfaceSize)) # pygame doesn't work well at low resolution so render at size 500 then downscale to the desired size

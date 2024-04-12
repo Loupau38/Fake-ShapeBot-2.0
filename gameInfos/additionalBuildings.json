@@ -1,0 +1,230 @@
+[
+    {
+        "Id": "HubBuilding",
+        "Title": "Hub",
+        "Variants": [
+            {
+                "Id": "HubDefaultVariant",
+                "Title": "Hub",
+                "InternalVariants": [
+                    {
+                        "Id": "HubDefaultInternalVariant",
+                        "Tiles": [
+                            {}
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "Id": "TrainStationExchangerBuilding",
+        "Title": "[[building.TrainStationExchangerBuilding.title]]",
+        "Variants": [
+            {
+                "Id": "TrainStationShapeLoaderVariant",
+                "Title": "[[building-variant.TrainStationShapeLoaderVariant.title]]",
+                "InternalVariants": [
+                    {
+                        "Id": "TrainStationShapeLoaderInternalVariant",
+                        "Tiles": [
+                            {},
+                            {
+                                "Y": 1
+                            },
+                            {
+                                "Y": 2
+                            },
+                            {
+                                "Y": 3
+                            },
+                            {
+                                "Z": 1
+                            },
+                            {
+                                "Y": 1,
+                                "Z": 1
+                            },
+                            {
+                                "Y": 2,
+                                "Z": 1
+                            },
+                            {
+                                "Y": 3,
+                                "Z": 1
+                            },
+                            {
+                                "Z": 2
+                            },
+                            {
+                                "Y": 1,
+                                "Z": 2
+                            },
+                            {
+                                "Y": 2,
+                                "Z": 2
+                            },
+                            {
+                                "Y": 3,
+                                "Z": 2
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "Id": "TrainStationShapeUnloaderVariant",
+                "Title": "[[building-variant.TrainStationShapeUnloaderVariant.title]]",
+                "InternalVariants": [
+                    {
+                        "Id": "TrainStationShapeUnloaderInternalVariant",
+                        "Tiles": [
+                            {},
+                            {
+                                "Y": 1
+                            },
+                            {
+                                "Y": 2
+                            },
+                            {
+                                "Y": 3
+                            },
+                            {
+                                "Z": 1
+                            },
+                            {
+                                "Y": 1,
+                                "Z": 1
+                            },
+                            {
+                                "Y": 2,
+                                "Z": 1
+                            },
+                            {
+                                "Y": 3,
+                                "Z": 1
+                            },
+                            {
+                                "Z": 2
+                            },
+                            {
+                                "Y": 1,
+                                "Z": 2
+                            },
+                            {
+                                "Y": 2,
+                                "Z": 2
+                            },
+                            {
+                                "Y": 3,
+                                "Z": 2
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "Id": "TrainStationFluidLoaderVariant",
+                "Title": "[[building-variant.TrainStationFluidLoaderVariant.title]]",
+                "InternalVariants": [
+                    {
+                        "Id": "TrainStationFluidLoaderInternalVariant",
+                        "Tiles": [
+                            {},
+                            {
+                                "Y": 1
+                            },
+                            {
+                                "Y": 2
+                            },
+                            {
+                                "Y": 3
+                            },
+                            {
+                                "Z": 1
+                            },
+                            {
+                                "Y": 1,
+                                "Z": 1
+                            },
+                            {
+                                "Y": 2,
+                                "Z": 1
+                            },
+                            {
+                                "Y": 3,
+                                "Z": 1
+                            },
+                            {
+                                "Z": 2
+                            },
+                            {
+                                "Y": 1,
+                                "Z": 2
+                            },
+                            {
+                                "Y": 2,
+                                "Z": 2
+                            },
+                            {
+                                "Y": 3,
+                                "Z": 2
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "Id": "TrainStationFluidUnloaderVariant",
+                "Title": "[[building-variant.TrainStationFluidUnloaderVariant.title]]",
+                "InternalVariants": [
+                    {
+                        "Id": "TrainStationFluidUnloaderInternalVariant",
+                        "Tiles": [
+                            {},
+                            {
+                                "Y": 1
+                            },
+                            {
+                                "Y": 2
+                            },
+                            {
+                                "Y": 3
+                            },
+                            {
+                                "Z": 1
+                            },
+                            {
+                                "Y": 1,
+                                "Z": 1
+                            },
+                            {
+                                "Y": 2,
+                                "Z": 1
+                            },
+                            {
+                                "Y": 3,
+                                "Z": 1
+                            },
+                            {
+                                "Z": 2
+                            },
+                            {
+                                "Y": 1,
+                                "Z": 2
+                            },
+                            {
+                                "Y": 2,
+                                "Z": 2
+                            },
+                            {
+                                "Y": 3,
+                                "Z": 2
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+]

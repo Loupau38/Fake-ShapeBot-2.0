@@ -22,12 +22,10 @@ SLASH_CMD_BP_FILE_PARAM_DESC = "A file containing the blueprint code"
 
 # shape viewer
 INITIAL_SHAPE_SIZE = 500
-SHAPE_COLORS = ["u","r","g","b","c","p","y","w","k"]
+SHAPE_COLORS = ["u","r","g","b","c","m","y","w","k"]
 SHAPE_LAYER_SEPARATOR = ":"
 SHAPE_NOTHING_CHAR = "-"
-SHAPE_CHAR_REPLACEMENT = {
-    "m" : "p" # change magenta to purple
-}
+SHAPE_CHAR_REPLACEMENT = {} # unused but kept just in case
 
 # display parameters
 SHAPES_PER_ROW = 8

@@ -208,20 +208,12 @@ def _decodeEntryExtraData(raw:str,entryType:str) -> typing.Any:
             raise BlueprintError(f"Unknown color : '{color}'")
 
     def getValidShapeGenerator(string:str) -> dict[str,str]:
-        for crateOrNot in ("","crate"):
-            if string.startswith(f"shape{crateOrNot}:"):
-                string = string.removeprefix(f"shape{crateOrNot}:")
-                error, valid = shapeCodeGenerator.isShapeCodeValid(string)
-                if not valid:
-                    raise BlueprintError(f"Invalid shape code : {error}")
-                return {"type":f"shape{crateOrNot}","value":string}
-        if string.startswith("fluidcrate:"):
-            string = string.removeprefix("fluidcrate:")
-            try:
-                checkIfValidColor(string)
-            except BlueprintError as e:
-                raise BlueprintError(f"Invalid color code : {e}")
-            return {"type":"fluidcrate","value":string}
+        if string.startswith("shape:"):
+            string = string.removeprefix("shape:")
+            error, valid = shapeCodeGenerator.isShapeCodeValid(string)
+            if not valid:
+                raise BlueprintError(f"Invalid shape code : {error}")
+            return {"type":f"shape","value":string}
         raise BlueprintError("Invalid shape creation string")
 
     try:
@@ -298,36 +290,38 @@ def _decodeEntryExtraData(raw:str,entryType:str) -> typing.Any:
             raise BlueprintError(f"Invalid fluid : {e}")
         return {"type":"paint","value":fluidCode}
 
-    if entryType in ("TrainStationLoaderInternalVariant","TrainStationUnloaderInternalVariant"):
+    # same color encoding format is used in rails, keeping code for that in case it can be useful in the future
 
-        defaultReturn = {"r":True,"g":True,"b":True,"w":True}
+    # if entryType in ("TrainStationLoaderInternalVariant","TrainStationUnloaderInternalVariant"):
 
-        if rawDecoded == b"": # support for pre-alpha 15.2 blueprints
-            return defaultReturn
+    #     defaultReturn = {"r":True,"g":True,"b":True,"w":True}
 
-        if len(rawDecoded) == 4:
-            encodedColor = int.from_bytes(rawDecoded,"little")
+    #     if rawDecoded == b"": # support for pre-alpha 15.2 blueprints
+    #         return defaultReturn
 
-        if (len(rawDecoded) != 4) or (encodedColor > 15): # support for pre-alpha 16 blueprints
-            try:
-                oldColorText = standardDecode(rawDecoded,True)
-            except BlueprintError as e:
-                raise BlueprintError(f"Error while attempting to decode old format train station : {e}")
-            if oldColorText == "":
-                return defaultReturn
-            return {
-                "r" : "r" in oldColorText,
-                "g" : "g" in oldColorText,
-                "b" : "b" in oldColorText,
-                "w" : "w" in oldColorText
-            }
+    #     if len(rawDecoded) == 4:
+    #         encodedColor = int.from_bytes(rawDecoded,"little")
 
-        return {
-            "w" : (encodedColor & 8) != 0,
-            "r" : (encodedColor & 4) != 0,
-            "g" : (encodedColor & 2) != 0,
-            "b" : (encodedColor & 1) != 0
-        }
+    #     if (len(rawDecoded) != 4) or (encodedColor > 15): # support for pre-alpha 16 blueprints
+    #         try:
+    #             oldColorText = standardDecode(rawDecoded,True)
+    #         except BlueprintError as e:
+    #             raise BlueprintError(f"Error while attempting to decode old format train station : {e}")
+    #         if oldColorText == "":
+    #             return defaultReturn
+    #         return {
+    #             "r" : "r" in oldColorText,
+    #             "g" : "g" in oldColorText,
+    #             "b" : "b" in oldColorText,
+    #             "w" : "w" in oldColorText
+    #         }
+
+    #     return {
+    #         "w" : (encodedColor & 8) != 0,
+    #         "r" : (encodedColor & 4) != 0,
+    #         "g" : (encodedColor & 2) != 0,
+    #         "b" : (encodedColor & 1) != 0
+    #     }
 
     if entryType == "ButtonDefaultInternalVariant":
 
@@ -336,12 +330,12 @@ def _decodeEntryExtraData(raw:str,entryType:str) -> typing.Any:
 
         return rawDecoded[0] != 0
 
-    if entryType in ("Layout_SpaceBeltNode","Layout_RailNode"):
+    if entryType in ("Layout_SpaceBeltNode","Layout_SpacePipeNode","Layout_RailNode"):
         if len(rawDecoded) < 1:
             raise BlueprintError("String must be at least 1 byte long")
         layoutType = rawDecoded[0]
         if layoutType > 3:
-            raise BlueprintError(f"Unknown space belt/rail layout type : {layoutType}")
+            raise BlueprintError(f"Unknown space belt/pipe/rail layout type : {layoutType}")
         return {"type":layoutType,"layout":rawDecoded[1:]}
 
     return None
@@ -391,22 +385,22 @@ def _encodeEntryExtraData(extra:typing.Any,entryType:str) -> str:
             fluidCode = extra["value"]
         return standardEncode(fluidCode,True)
 
-    if entryType in ("TrainStationLoaderInternalVariant","TrainStationUnloaderInternalVariant"):
-        encodedColor = 0
-        if extra["w"]:
-            encodedColor += 8
-        if extra["r"]:
-            encodedColor += 4
-        if extra["g"]:
-            encodedColor += 2
-        if extra["b"]:
-            encodedColor += 1
-        return b64encode(encodedColor.to_bytes(4,"little"))
+    # if entryType in ("TrainStationLoaderInternalVariant","TrainStationUnloaderInternalVariant"):
+    #     encodedColor = 0
+    #     if extra["w"]:
+    #         encodedColor += 8
+    #     if extra["r"]:
+    #         encodedColor += 4
+    #     if extra["g"]:
+    #         encodedColor += 2
+    #     if extra["b"]:
+    #         encodedColor += 1
+    #     return b64encode(encodedColor.to_bytes(4,"little"))
 
     if entryType == "ButtonDefaultInternalVariant":
         return b64encode(bytes([int(extra)]))
 
-    if entryType in ("Layout_SpaceBeltNode","Layout_RailNode"):
+    if entryType in ("Layout_SpaceBeltNode","Layout_SpacePipeNode","Layout_RailNode"):
         return b64encode(bytes([extra["type"]])+extra["layout"])
 
     raise ValueError(f"Attempt to encode extra data of entry that shouldn't have any ({entryType})")
@@ -425,13 +419,13 @@ def _getDefaultEntryExtraData(entryType:str) -> typing.Any:
     if entryType == "SandboxFluidProducerDefaultInternalVariant":
         return {"type":"paint","value":f"{COLOR_PREFIX}r"}
 
-    if entryType in ("TrainStationLoaderInternalVariant","TrainStationUnloaderInternalVariant"):
-        return {"r":True,"g":True,"b":True,"w":True}
+    # if entryType in ("TrainStationLoaderInternalVariant","TrainStationUnloaderInternalVariant"):
+    #     return {"r":True,"g":True,"b":True,"w":True}
 
     if entryType == "ButtonDefaultInternalVariant":
         return False
 
-    if entryType in ("Layout_SpaceBeltNode","Layout_RailNode"):
+    if entryType in ("Layout_SpaceBeltNode","Layout_SpacePipeNode","Layout_RailNode"):
         return {
             "type" : 1,
             "layout" : bytes([0,0]) + (bytes([7,0,0,0]) if entryType == "Layout_RailNode" else bytes())

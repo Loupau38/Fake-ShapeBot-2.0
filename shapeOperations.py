@@ -254,9 +254,6 @@ def topPaint(shape:Shape,color:str) -> list[Shape]:
     newLayers.append([Quadrant(q.shape,q.color if q.shape in UNPAINTABLE_SHAPES else color) for q in shape.layers[-1]])
     return [Shape(newLayers)]
 
-def fullPaint(shape:Shape,color:str) -> list[Shape]:
-    return [Shape([[Quadrant(q.shape,q.color if q.shape in UNPAINTABLE_SHAPES else color) for q in l] for l in shape.layers])]
-
 def pushPin(shape:Shape) -> list[Shape]:
 
     layers = shape.layers

@@ -76,7 +76,6 @@ OPERATIONS:dict[str,Operation] = {
     "sh" : Operation(2,2,"Swap halves",shapeOperations.swapHalves),
     "stack" : Operation(2,1,"Stack",shapeOperations.stack),
     "paint" : Operation(2,1,"Top paint",shapeOperations.topPaint,[1]),
-    "fpaint" : Operation(2,1,"Full paint",shapeOperations.fullPaint,[1]),
     "pin" : Operation(1,1,"Push pin",shapeOperations.pushPin),
     "crystal" : Operation(2,1,"Generate crystals",shapeOperations.genCrystal,[1])
 }
@@ -187,7 +186,7 @@ def getInstructionsFromText(text:str) -> tuple[bool,list[Instruction]|str|Output
 
     return True,decodedInstructions
 
-def genOperationGraph(instructions:list[Instruction],showShapeVars:bool) -> tuple[bool,str|OutputString|tuple[tuple[io.BytesIO,int],dict[int,str]]]:
+def genOperationGraph(instructions:list[Instruction],showShapeVars:bool,colorblindPatterns:bool=False) -> tuple[bool,str|OutputString|tuple[tuple[io.BytesIO,int],dict[int,str]]]:
 
     seenInputVars = []
     seenOutputVars = []
@@ -249,7 +248,7 @@ def genOperationGraph(instructions:list[Instruction],showShapeVars:bool) -> tupl
     wasProcessingInstructionIndex = None
 
     def renderShape(shapeCode) -> pygame.Surface:
-        return shapeViewer.renderShape(shapeCode,GRAPH_NODE_SIZE)
+        return shapeViewer.renderShape(shapeCode,GRAPH_NODE_SIZE,colorblindPatterns)
 
     def newId() -> int:
         nonlocal curId

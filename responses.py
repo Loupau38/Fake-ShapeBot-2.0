@@ -31,7 +31,8 @@ DISPLAY_PARAMS:dict[str,DisplayParam] = {
         rangeStart=globalInfos.MIN_SHAPE_SIZE,
         rangeStop=globalInfos.MAX_SHAPE_SIZE),
     "result" : DisplayParam("bool",False),
-    "3d" : DisplayParam("bool",False)
+    "3d" : DisplayParam("bool",False),
+    "cb" : DisplayParam("bool",False)
 }
 
 def handleResponse(message:str) -> None|tuple[None|tuple[tuple[io.BytesIO,int],bool,None|list[str],None|list[str]],bool,list[str]]:
@@ -76,7 +77,7 @@ def handleResponse(message:str) -> None|tuple[None|tuple[tuple[io.BytesIO,int],b
     renderedShapesCache = {}
     for i,code in enumerate(shapeCodes):
         if renderedShapesCache.get(code) is None:
-            renderedShapesCache[code] = shapeViewer.renderShape(code,size)
+            renderedShapesCache[code] = shapeViewer.renderShape(code,size,curDisplayParams["cb"])
         divMod = divmod(i,globalInfos.SHAPES_PER_ROW)
         finalImage.blit(renderedShapesCache[code],(size*divMod[1],size*divMod[0]))
 

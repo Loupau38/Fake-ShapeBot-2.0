@@ -1,9 +1,9 @@
 {
-    "GameVersion": "0.0.0-alpha18",
+    "GameVersion": "0.0.0-alpha19",
     "Islands": [
         {
-            "Id": "Layout_1",
-            "Title": "1x1 Platform",
+            "Id": "Layout_SpaceBeltNode",
+            "Title": "Space Belt",
             "Tiles": [
                 {}
             ],
@@ -11,8 +11,8 @@
             "ReducedSides": []
         },
         {
-            "Id": "Layout_1_Forward",
-            "Title": "Forwarder",
+            "Id": "Layout_SpaceBeltTunnel_Entrance",
+            "Title": "Space Tunnel Entrance",
             "Tiles": [
                 {}
             ],
@@ -20,8 +20,8 @@
             "ReducedSides": []
         },
         {
-            "Id": "Layout_1_RightTurn",
-            "Title": "Right Turn",
+            "Id": "Layout_SpaceBeltTunnel_Exit",
+            "Title": "Space Tunnel Exit",
             "Tiles": [
                 {}
             ],
@@ -29,8 +29,8 @@
             "ReducedSides": []
         },
         {
-            "Id": "Layout_1_LeftTurn",
-            "Title": "Left Turn",
+            "Id": "Layout_SpacePipeNode",
+            "Title": "Space Pipe",
             "Tiles": [
                 {}
             ],
@@ -38,26 +38,8 @@
             "ReducedSides": []
         },
         {
-            "Id": "LayoutTunnelEntrance",
-            "Title": "Tunnel Entrance",
-            "Tiles": [
-                {}
-            ],
-            "RemovedNotches": [],
-            "ReducedSides": []
-        },
-        {
-            "Id": "LayoutTunnelExit",
-            "Title": "Tunnel Exit",
-            "Tiles": [
-                {}
-            ],
-            "RemovedNotches": [],
-            "ReducedSides": []
-        },
-        {
-            "Id": "LayoutMinerCompact",
-            "Title": "Asteroid Miner",
+            "Id": "Layout_ShapeMiner",
+            "Title": "Shape Miner",
             "Tiles": [
                 {}
             ],
@@ -75,8 +57,8 @@
             ]
         },
         {
-            "Id": "ChainMiner",
-            "Title": "Chain Miner",
+            "Id": "Layout_ShapeMinerExtension",
+            "Title": "Shape Miner Extension",
             "Tiles": [
                 {}
             ],
@@ -90,8 +72,42 @@
             ]
         },
         {
-            "Id": "Layout_SpaceBeltNode",
-            "Title": "Space Belt",
+            "Id": "Layout_FluidMiner",
+            "Title": "Fluid Miner",
+            "Tiles": [
+                {}
+            ],
+            "RemovedNotches": [],
+            "ReducedSides": [
+                {
+                    "Direction_L": 1
+                },
+                {
+                    "Direction_L": 2
+                },
+                {
+                    "Direction_L": 3
+                }
+            ]
+        },
+        {
+            "Id": "Layout_FluidMinerExtension",
+            "Title": "Fluid Miner Extension",
+            "Tiles": [
+                {}
+            ],
+            "RemovedNotches": [],
+            "ReducedSides": [],
+            "BuildAreaOverride": [
+                {
+                    "Tile": {},
+                    "Rects": []
+                }
+            ]
+        },
+        {
+            "Id": "Layout_Normal_1",
+            "Title": "1x1 Platform",
             "Tiles": [
                 {}
             ],
@@ -99,123 +115,7 @@
             "ReducedSides": []
         },
         {
-            "Id": "Layout_RailNode",
-            "Title": "Rail Island",
-            "Tiles": [
-                {}
-            ],
-            "RemovedNotches": [],
-            "ReducedSides": [],
-            "BuildAreaOverride": [
-                {
-                    "Tile": {},
-                    "Rects": []
-                }
-            ]
-        },
-        {
-            "Id": "Layout_LeftTrainStation",
-            "Title": "Train Station",
-            "Tiles": [
-                {},
-                {
-                    "Y": -1
-                }
-            ],
-            "RemovedNotches": [],
-            "ReducedSides": [],
-            "BuildAreaOverride": [
-                {
-                    "Tile": {},
-                    "Rects": [
-                        [
-                            3,
-                            0,
-                            14,
-                            8
-                        ],
-                        [
-                            3,
-                            8,
-                            4,
-                            1
-                        ],
-                        [
-                            8,
-                            8,
-                            4,
-                            1
-                        ],
-                        [
-                            13,
-                            8,
-                            4,
-                            1
-                        ]
-                    ]
-                }
-            ]
-        },
-        {
-            "Id": "Layout_RightTrainStation",
-            "Title": "Train Station (Mirrored)",
-            "Tiles": [
-                {},
-                {
-                    "Y": 1
-                }
-            ],
-            "RemovedNotches": [],
-            "ReducedSides": [],
-            "BuildAreaOverride": [
-                {
-                    "Tile": {},
-                    "Rects": [
-                        [
-                            3,
-                            12,
-                            14,
-                            8
-                        ],
-                        [
-                            3,
-                            11,
-                            4,
-                            1
-                        ],
-                        [
-                            8,
-                            11,
-                            4,
-                            1
-                        ],
-                        [
-                            13,
-                            11,
-                            4,
-                            1
-                        ]
-                    ]
-                }
-            ]
-        },
-        {
-            "Id": "TrainProducer",
-            "Title": "Train Deployer",
-            "Tiles": [
-                {}
-            ],
-            "RemovedNotches": [],
-            "ReducedSides": [],
-            "BuildAreaOverride": [
-                {
-                    "Tile": {},
-                    "Rects": []
-                }
-            ]
-        },
-        {
-            "Id": "Layout_2",
+            "Id": "Layout_Normal_2",
             "Title": "2x1 Platform",
             "Tiles": [
                 {},
@@ -227,29 +127,7 @@
             "ReducedSides": []
         },
         {
-            "Id": "LayoutFluidExtractor",
-            "Title": "Fluid Platform",
-            "Tiles": [
-                {},
-                {
-                    "X": 1
-                }
-            ],
-            "RemovedNotches": [
-                {
-                    "Direction_L": 1
-                },
-                {
-                    "Direction_L": 2
-                },
-                {
-                    "Direction_L": 3
-                }
-            ],
-            "ReducedSides": []
-        },
-        {
-            "Id": "Layout_3_L",
+            "Id": "Layout_Normal_3_L",
             "Title": "3L Platform",
             "Tiles": [
                 {},
@@ -264,7 +142,7 @@
             "ReducedSides": []
         },
         {
-            "Id": "Layout_4_Quad_TwoNotches",
+            "Id": "Layout_Normal_4_2x2",
             "Title": "2x2 Platform",
             "Tiles": [
                 {},
@@ -283,7 +161,7 @@
             "ReducedSides": []
         },
         {
-            "Id": "Layout_4_T",
+            "Id": "Layout_Normal_4_T",
             "Title": "4T Platform",
             "Tiles": [
                 {},
@@ -301,7 +179,7 @@
             "ReducedSides": []
         },
         {
-            "Id": "Layout_5_Cross",
+            "Id": "Layout_Normal_5_Cross",
             "Title": "5 Cross Platform",
             "Tiles": [
                 {},
@@ -322,7 +200,7 @@
             "ReducedSides": []
         },
         {
-            "Id": "Layout_9_Quad_TopAllNotches",
+            "Id": "Layout_Normal_9_3x3",
             "Title": "3x3 Platform",
             "Tiles": [
                 {
@@ -359,7 +237,296 @@
             "ReducedSides": []
         },
         {
-            "Id": "LayoutHUB",
+            "Id": "Layout_RailNode",
+            "Title": "Rail",
+            "Tiles": [
+                {}
+            ],
+            "RemovedNotches": [],
+            "ReducedSides": [],
+            "BuildAreaOverride": [
+                {
+                    "Tile": {},
+                    "Rects": []
+                }
+            ]
+        },
+        {
+            "Id": "Layout_TrainLauncher",
+            "Title": "Train Launcher",
+            "Tiles": [
+                {}
+            ],
+            "RemovedNotches": [],
+            "ReducedSides": [],
+            "BuildAreaOverride": [
+                {
+                    "Tile": {},
+                    "Rects": []
+                }
+            ]
+        },
+        {
+            "Id": "Layout_TrainCatcher",
+            "Title": "Train Catcher",
+            "Tiles": [
+                {}
+            ],
+            "RemovedNotches": [],
+            "ReducedSides": [],
+            "BuildAreaOverride": [
+                {
+                    "Tile": {},
+                    "Rects": []
+                }
+            ]
+        },
+        {
+            "Id": "Layout_TrainProducer_Red",
+            "Title": "Train Deposit (Red)",
+            "Tiles": [
+                {}
+            ],
+            "RemovedNotches": [],
+            "ReducedSides": [],
+            "BuildAreaOverride": [
+                {
+                    "Tile": {},
+                    "Rects": []
+                }
+            ]
+        },
+        {
+            "Id": "Layout_TrainProducer_Green",
+            "Title": "Train Deposit (Green)",
+            "Tiles": [
+                {}
+            ],
+            "RemovedNotches": [],
+            "ReducedSides": [],
+            "BuildAreaOverride": [
+                {
+                    "Tile": {},
+                    "Rects": []
+                }
+            ]
+        },
+        {
+            "Id": "Layout_TrainProducer_Blue",
+            "Title": "Train Deposit (Blue)",
+            "Tiles": [
+                {}
+            ],
+            "RemovedNotches": [],
+            "ReducedSides": [],
+            "BuildAreaOverride": [
+                {
+                    "Tile": {},
+                    "Rects": []
+                }
+            ]
+        },
+        {
+            "Id": "Layout_TrainProducer_White",
+            "Title": "Train Deposit (White)",
+            "Tiles": [
+                {}
+            ],
+            "RemovedNotches": [],
+            "ReducedSides": [],
+            "BuildAreaOverride": [
+                {
+                    "Tile": {},
+                    "Rects": []
+                }
+            ]
+        },
+        {
+            "Id": "Layout_TrainShapeWagonExtension",
+            "Title": "Shape Wagon Extension",
+            "Tiles": [
+                {}
+            ],
+            "RemovedNotches": [],
+            "ReducedSides": [],
+            "BuildAreaOverride": [
+                {
+                    "Tile": {},
+                    "Rects": []
+                }
+            ]
+        },
+        {
+            "Id": "Layout_TrainFluidWagonExtension",
+            "Title": "Fluid Wagon Extension",
+            "Tiles": [
+                {}
+            ],
+            "RemovedNotches": [],
+            "ReducedSides": [],
+            "BuildAreaOverride": [
+                {
+                    "Tile": {},
+                    "Rects": []
+                }
+            ]
+        },
+        {
+            "Id": "Layout_TrainFillerWagonExtension",
+            "Title": "Filler Wagon Extension",
+            "Tiles": [
+                {}
+            ],
+            "RemovedNotches": [],
+            "ReducedSides": [],
+            "BuildAreaOverride": [
+                {
+                    "Tile": {},
+                    "Rects": []
+                }
+            ]
+        },
+        {
+            "Id": "Layout_TrainStation",
+            "Title": "Train Station",
+            "Tiles": [
+                {}
+            ],
+            "RemovedNotches": [],
+            "ReducedSides": [],
+            "BuildAreaOverride": [
+                {
+                    "Tile": {},
+                    "Rects": []
+                }
+            ]
+        },
+        {
+            "Id": "Layout_TrainLoader_Shapes",
+            "Title": "Shape Loader Station",
+            "Tiles": [
+                {},
+                {
+                    "Y": -1
+                }
+            ],
+            "RemovedNotches": [],
+            "ReducedSides": [],
+            "BuildAreaOverride": [
+                {
+                    "Tile": {},
+                    "Rects": []
+                },
+                {
+                    "Tile": {
+                        "Y": -1
+                    },
+                    "Rects": [
+                        [
+                            8,
+                            2,
+                            4,
+                            2
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "Id": "Layout_TrainUnloader_Shapes",
+            "Title": "Shape Unloader Station",
+            "Tiles": [
+                {},
+                {
+                    "Y": -1
+                }
+            ],
+            "RemovedNotches": [],
+            "ReducedSides": [],
+            "BuildAreaOverride": [
+                {
+                    "Tile": {},
+                    "Rects": []
+                },
+                {
+                    "Tile": {
+                        "Y": -1
+                    },
+                    "Rects": [
+                        [
+                            8,
+                            2,
+                            4,
+                            2
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "Id": "Layout_TrainLoader_Fluids",
+            "Title": "Fluid Loader Station",
+            "Tiles": [
+                {},
+                {
+                    "Y": -1
+                }
+            ],
+            "RemovedNotches": [],
+            "ReducedSides": [],
+            "BuildAreaOverride": [
+                {
+                    "Tile": {},
+                    "Rects": []
+                },
+                {
+                    "Tile": {
+                        "Y": -1
+                    },
+                    "Rects": [
+                        [
+                            8,
+                            2,
+                            4,
+                            2
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "Id": "Layout_TrainUnloader_Fluids",
+            "Title": "Fluid Unloader Station",
+            "Tiles": [
+                {},
+                {
+                    "Y": -1
+                }
+            ],
+            "RemovedNotches": [],
+            "ReducedSides": [],
+            "BuildAreaOverride": [
+                {
+                    "Tile": {},
+                    "Rects": []
+                },
+                {
+                    "Tile": {
+                        "Y": -1
+                    },
+                    "Rects": [
+                        [
+                            8,
+                            2,
+                            4,
+                            2
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "Id": "Layout_HUB",
             "Title": "Hub Platform",
             "Tiles": [
                 {

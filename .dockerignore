@@ -1,6 +1,7 @@
 **/__pycache__/
 .git/
 gameInfos/extractGameInfos.py
+gameInfos/additionalBuildings.json
 .gitignore
 changelog.md
 operationGraphDoc.md

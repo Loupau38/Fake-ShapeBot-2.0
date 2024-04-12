@@ -1,5 +1,5 @@
 {
-    "GameVersion": "0.0.0-alpha18",
+    "GameVersion": "0.0.0-alpha19",
     "Buildings": [
         {
             "Id": "HubBuilding",
@@ -13,6 +13,216 @@
                             "Id": "HubDefaultInternalVariant",
                             "Tiles": [
                                 {}
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "Id": "TrainStationExchangerBuilding",
+            "Title": "[[building.TrainStationExchangerBuilding.title]]",
+            "Variants": [
+                {
+                    "Id": "TrainStationShapeLoaderVariant",
+                    "Title": "[[building-variant.TrainStationShapeLoaderVariant.title]]",
+                    "InternalVariants": [
+                        {
+                            "Id": "TrainStationShapeLoaderInternalVariant",
+                            "Tiles": [
+                                {},
+                                {
+                                    "Y": 1
+                                },
+                                {
+                                    "Y": 2
+                                },
+                                {
+                                    "Y": 3
+                                },
+                                {
+                                    "Z": 1
+                                },
+                                {
+                                    "Y": 1,
+                                    "Z": 1
+                                },
+                                {
+                                    "Y": 2,
+                                    "Z": 1
+                                },
+                                {
+                                    "Y": 3,
+                                    "Z": 1
+                                },
+                                {
+                                    "Z": 2
+                                },
+                                {
+                                    "Y": 1,
+                                    "Z": 2
+                                },
+                                {
+                                    "Y": 2,
+                                    "Z": 2
+                                },
+                                {
+                                    "Y": 3,
+                                    "Z": 2
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "Id": "TrainStationShapeUnloaderVariant",
+                    "Title": "[[building-variant.TrainStationShapeUnloaderVariant.title]]",
+                    "InternalVariants": [
+                        {
+                            "Id": "TrainStationShapeUnloaderInternalVariant",
+                            "Tiles": [
+                                {},
+                                {
+                                    "Y": 1
+                                },
+                                {
+                                    "Y": 2
+                                },
+                                {
+                                    "Y": 3
+                                },
+                                {
+                                    "Z": 1
+                                },
+                                {
+                                    "Y": 1,
+                                    "Z": 1
+                                },
+                                {
+                                    "Y": 2,
+                                    "Z": 1
+                                },
+                                {
+                                    "Y": 3,
+                                    "Z": 1
+                                },
+                                {
+                                    "Z": 2
+                                },
+                                {
+                                    "Y": 1,
+                                    "Z": 2
+                                },
+                                {
+                                    "Y": 2,
+                                    "Z": 2
+                                },
+                                {
+                                    "Y": 3,
+                                    "Z": 2
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "Id": "TrainStationFluidLoaderVariant",
+                    "Title": "[[building-variant.TrainStationFluidLoaderVariant.title]]",
+                    "InternalVariants": [
+                        {
+                            "Id": "TrainStationFluidLoaderInternalVariant",
+                            "Tiles": [
+                                {},
+                                {
+                                    "Y": 1
+                                },
+                                {
+                                    "Y": 2
+                                },
+                                {
+                                    "Y": 3
+                                },
+                                {
+                                    "Z": 1
+                                },
+                                {
+                                    "Y": 1,
+                                    "Z": 1
+                                },
+                                {
+                                    "Y": 2,
+                                    "Z": 1
+                                },
+                                {
+                                    "Y": 3,
+                                    "Z": 1
+                                },
+                                {
+                                    "Z": 2
+                                },
+                                {
+                                    "Y": 1,
+                                    "Z": 2
+                                },
+                                {
+                                    "Y": 2,
+                                    "Z": 2
+                                },
+                                {
+                                    "Y": 3,
+                                    "Z": 2
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "Id": "TrainStationFluidUnloaderVariant",
+                    "Title": "[[building-variant.TrainStationFluidUnloaderVariant.title]]",
+                    "InternalVariants": [
+                        {
+                            "Id": "TrainStationFluidUnloaderInternalVariant",
+                            "Tiles": [
+                                {},
+                                {
+                                    "Y": 1
+                                },
+                                {
+                                    "Y": 2
+                                },
+                                {
+                                    "Y": 3
+                                },
+                                {
+                                    "Z": 1
+                                },
+                                {
+                                    "Y": 1,
+                                    "Z": 1
+                                },
+                                {
+                                    "Y": 2,
+                                    "Z": 1
+                                },
+                                {
+                                    "Y": 3,
+                                    "Z": 1
+                                },
+                                {
+                                    "Z": 2
+                                },
+                                {
+                                    "Y": 1,
+                                    "Z": 2
+                                },
+                                {
+                                    "Y": 2,
+                                    "Z": 2
+                                },
+                                {
+                                    "Y": 3,
+                                    "Z": 2
+                                }
                             ]
                         }
                     ]
@@ -467,24 +677,6 @@
             ]
         },
         {
-            "Id": "PinPusherBuilding",
-            "Title": "Pin Pusher",
-            "Variants": [
-                {
-                    "Id": "PinPusherDefaultVariant",
-                    "Title": "Pin Pusher",
-                    "InternalVariants": [
-                        {
-                            "Id": "PinPusherDefaultInternalVariant",
-                            "Tiles": [
-                                {}
-                            ]
-                        }
-                    ]
-                }
-            ]
-        },
-        {
             "Id": "ExtractorBuilding",
             "Title": "Extractor",
             "Variants": [
@@ -494,6 +686,24 @@
                     "InternalVariants": [
                         {
                             "Id": "ExtractorDefaultInternalVariant",
+                            "Tiles": [
+                                {}
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "Id": "PinPusherBuilding",
+            "Title": "Pin Pusher",
+            "Variants": [
+                {
+                    "Id": "PinPusherDefaultVariant",
+                    "Title": "Pin Pusher",
+                    "InternalVariants": [
+                        {
+                            "Id": "PinPusherDefaultInternalVariant",
                             "Tiles": [
                                 {}
                             ]
@@ -514,56 +724,6 @@
                             "Id": "TrashDefaultInternalVariant",
                             "Tiles": [
                                 {}
-                            ]
-                        }
-                    ]
-                }
-            ]
-        },
-        {
-            "Id": "ShapePackerBuilding",
-            "Title": "Shape Packer",
-            "Variants": [
-                {
-                    "Id": "ShapePackerDefaultVariant",
-                    "Title": "Shape Packer",
-                    "InternalVariants": [
-                        {
-                            "Id": "ShapePackerDefaultInternalVariant",
-                            "Tiles": [
-                                {},
-                                {
-                                    "Z": 1
-                                },
-                                {
-                                    "X": -1
-                                },
-                                {
-                                    "X": -1,
-                                    "Z": 1
-                                }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "Id": "ShapeUnpackerDefaultVariant",
-                    "Title": "Shape Unpacker",
-                    "InternalVariants": [
-                        {
-                            "Id": "ShapeUnpackerDefaultInternalVariant",
-                            "Tiles": [
-                                {},
-                                {
-                                    "Z": 1
-                                },
-                                {
-                                    "X": 1
-                                },
-                                {
-                                    "X": 1,
-                                    "Z": 1
-                                }
                             ]
                         }
                     ]
@@ -651,6 +811,30 @@
                             ]
                         }
                     ]
+                },
+                {
+                    "Id": "FluidBridgeSenderVariant",
+                    "Title": "Fluid Launcher",
+                    "InternalVariants": [
+                        {
+                            "Id": "FluidBridgeSenderInternalVariant",
+                            "Tiles": [
+                                {}
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "Id": "FluidBridgeReceiverVariant",
+                    "Title": "Fluid Catcher",
+                    "InternalVariants": [
+                        {
+                            "Id": "FluidBridgeReceiverInternalVariant",
+                            "Tiles": [
+                                {}
+                            ]
+                        }
+                    ]
                 }
             ]
         },
@@ -678,7 +862,7 @@
             "Variants": [
                 {
                     "Id": "PainterDefaultVariant",
-                    "Title": "Topmost Painter",
+                    "Title": "Painter",
                     "InternalVariants": [
                         {
                             "Id": "PainterDefaultInternalVariant",
@@ -740,82 +924,6 @@
             ]
         },
         {
-            "Id": "FluidPackerBuilding",
-            "Title": "Fluid Packer",
-            "Variants": [
-                {
-                    "Id": "FluidPackerDefaultVariant",
-                    "Title": "Fluid Packer",
-                    "InternalVariants": [
-                        {
-                            "Id": "FluidPackerDefaultInternalVariant",
-                            "Tiles": [
-                                {},
-                                {
-                                    "Z": 1
-                                },
-                                {
-                                    "X": -1
-                                }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "Id": "FluidUnpackerDefaultVariant",
-                    "Title": "Fluid Unpacker",
-                    "InternalVariants": [
-                        {
-                            "Id": "FluidUnpackerDefaultInternalVariant",
-                            "Tiles": [
-                                {},
-                                {
-                                    "Z": 1
-                                },
-                                {
-                                    "Y": 1
-                                },
-                                {
-                                    "X": 1,
-                                    "Y": 1
-                                }
-                            ]
-                        }
-                    ]
-                }
-            ]
-        },
-        {
-            "Id": "TrainStationBuilding",
-            "Title": "Train Station",
-            "Variants": [
-                {
-                    "Id": "TrainStationLoaderVariant",
-                    "Title": "Train Loader",
-                    "InternalVariants": [
-                        {
-                            "Id": "TrainStationLoaderInternalVariant",
-                            "Tiles": [
-                                {}
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "Id": "TrainStationUnloaderVariant",
-                    "Title": "Train Unloader",
-                    "InternalVariants": [
-                        {
-                            "Id": "TrainStationUnloaderInternalVariant",
-                            "Tiles": [
-                                {}
-                            ]
-                        }
-                    ]
-                }
-            ]
-        },
-        {
             "Id": "CrystalGeneratorBuilding",
             "Title": "Crystal Generator",
             "Variants": [
@@ -861,6 +969,36 @@
                                 {},
                                 {
                                     "Y": -1
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "Id": "LabelBuilding",
+            "Title": "Label",
+            "Variants": [
+                {
+                    "Id": "LabelDefaultVariant",
+                    "Title": "Label",
+                    "InternalVariants": [
+                        {
+                            "Id": "LabelDefaultInternalVariant",
+                            "Tiles": [
+                                {
+                                    "X": -1
+                                },
+                                {},
+                                {
+                                    "X": 1
+                                },
+                                {
+                                    "X": -2
+                                },
+                                {
+                                    "X": 2
                                 }
                             ]
                         }
@@ -1019,15 +1157,15 @@
             ]
         },
         {
-            "Id": "SandboxItemProducerBuilding",
-            "Title": "Item Producer",
+            "Id": "WireDisplayBuilding",
+            "Title": "Display",
             "Variants": [
                 {
-                    "Id": "SandboxItemProducerDefaultVariant",
-                    "Title": "Item Producer",
+                    "Id": "DisplayDefaultVariant",
+                    "Title": "Display",
                     "InternalVariants": [
                         {
-                            "Id": "SandboxItemProducerDefaultInternalVariant",
+                            "Id": "DisplayDefaultInternalVariant",
                             "Tiles": [
                                 {}
                             ]
@@ -1037,15 +1175,15 @@
             ]
         },
         {
-            "Id": "SandboxFluidProducerBuilding",
-            "Title": "Fluid Producer",
+            "Id": "WireConstantSignalBuilding",
+            "Title": "Signal Producer",
             "Variants": [
                 {
-                    "Id": "SandboxFluidProducerDefaultVariant",
-                    "Title": "Fluid Producer",
+                    "Id": "ConstantSignalDefaultVariant",
+                    "Title": "Signal Producer",
                     "InternalVariants": [
                         {
-                            "Id": "SandboxFluidProducerDefaultInternalVariant",
+                            "Id": "ConstantSignalDefaultInternalVariant",
                             "Tiles": [
                                 {}
                             ]
@@ -1055,38 +1193,8 @@
             ]
         },
         {
-            "Id": "LabelBuilding",
-            "Title": "Label",
-            "Variants": [
-                {
-                    "Id": "LabelDefaultVariant",
-                    "Title": "Label",
-                    "InternalVariants": [
-                        {
-                            "Id": "LabelDefaultInternalVariant",
-                            "Tiles": [
-                                {
-                                    "X": -1
-                                },
-                                {},
-                                {
-                                    "X": 1
-                                },
-                                {
-                                    "X": -2
-                                },
-                                {
-                                    "X": 2
-                                }
-                            ]
-                        }
-                    ]
-                }
-            ]
-        },
-        {
-            "Id": "WireUtilityBuilding",
-            "Title": "Wire Utility",
+            "Id": "WireBeltInteractionBuilding",
+            "Title": "Belt Control",
             "Variants": [
                 {
                     "Id": "BeltReaderDefaultVariant",
@@ -1094,18 +1202,6 @@
                     "InternalVariants": [
                         {
                             "Id": "BeltReaderDefaultInternalVariant",
-                            "Tiles": [
-                                {}
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "Id": "ConstantSignalDefaultVariant",
-                    "Title": "Constant Signal",
-                    "InternalVariants": [
-                        {
-                            "Id": "ConstantSignalDefaultInternalVariant",
                             "Tiles": [
                                 {}
                             ]
@@ -1123,19 +1219,13 @@
                             ]
                         }
                     ]
-                },
-                {
-                    "Id": "DisplayDefaultVariant",
-                    "Title": "Display",
-                    "InternalVariants": [
-                        {
-                            "Id": "DisplayDefaultInternalVariant",
-                            "Tiles": [
-                                {}
-                            ]
-                        }
-                    ]
-                },
+                }
+            ]
+        },
+        {
+            "Id": "WireButtonBuilding",
+            "Title": "Button",
+            "Variants": [
                 {
                     "Id": "ButtonDefaultVariant",
                     "Title": "Button",
@@ -1216,7 +1306,7 @@
                 },
                 {
                     "Id": "LogicGateIfVariant",
-                    "Title": "IF Gate",
+                    "Title": "Transistor",
                     "InternalVariants": [
                         {
                             "Id": "LogicGateIfInternalVariant",
@@ -1281,54 +1371,6 @@
                     ]
                 },
                 {
-                    "Id": "VirtualShapePackerDefaultVariant",
-                    "Title": "Virtual Shape Packer",
-                    "InternalVariants": [
-                        {
-                            "Id": "VirtualShapePackerDefaultInternalVariant",
-                            "Tiles": [
-                                {}
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "Id": "VirtualShapeUnpackerDefaultVariant",
-                    "Title": "Virtual Shape Unpacker",
-                    "InternalVariants": [
-                        {
-                            "Id": "VirtualShapeUnpackerDefaultInternalVariant",
-                            "Tiles": [
-                                {}
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "Id": "VirtualFluidPackerDefaultVariant",
-                    "Title": "Virtual Fluid Packer",
-                    "InternalVariants": [
-                        {
-                            "Id": "VirtualFluidPackerDefaultInternalVariant",
-                            "Tiles": [
-                                {}
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "Id": "VirtualFluidUnpackerDefaultVariant",
-                    "Title": "Virtual Fluid Unpacker",
-                    "InternalVariants": [
-                        {
-                            "Id": "VirtualFluidUnpackerDefaultInternalVariant",
-                            "Tiles": [
-                                {}
-                            ]
-                        }
-                    ]
-                },
-                {
                     "Id": "VirtualHalfCutterDefaultVariant",
                     "Title": "Virtual Halves Destroyer",
                     "InternalVariants": [
@@ -1346,6 +1388,60 @@
                     "InternalVariants": [
                         {
                             "Id": "VirtualPainterDefaultInternalVariant",
+                            "Tiles": [
+                                {}
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "Id": "SandboxBuildings",
+            "Title": "Sandbox Buildings",
+            "Variants": [
+                {
+                    "Id": "SandboxItemProducerDefaultVariant",
+                    "Title": "Item Producer",
+                    "InternalVariants": [
+                        {
+                            "Id": "SandboxItemProducerDefaultInternalVariant",
+                            "Tiles": [
+                                {}
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "Id": "SandboxFluidProducerDefaultVariant",
+                    "Title": "Fluid Producer",
+                    "InternalVariants": [
+                        {
+                            "Id": "SandboxFluidProducerDefaultInternalVariant",
+                            "Tiles": [
+                                {}
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "Id": "SpaceBeltTransportBuilding",
+            "Title": "[[building.SpaceBeltTransportBuilding.title]]",
+            "Variants": [
+                {
+                    "Id": "SpaceBeltTransportVariantBuilding",
+                    "Title": "[[building-variant.SpaceBeltTransportVariantBuilding.title]]",
+                    "InternalVariants": [
+                        {
+                            "Id": "BlobCatcherInternalVariant",
+                            "Tiles": [
+                                {}
+                            ]
+                        },
+                        {
+                            "Id": "BlobLauncherInternalVariant",
                             "Tiles": [
                                 {}
                             ]

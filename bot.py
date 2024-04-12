@@ -761,7 +761,7 @@ def runDiscordBot() -> None:
         blueprint=globalInfos.SLASH_CMD_BP_PARAM_DESC,
         version=f"The blueprint version number (latest public : {gameInfos.versions.LATEST_PUBLIC_GAME_VERSION}, latest patreon only : {gameInfos.versions.LATEST_GAME_VERSION})",
         blueprint_file=globalInfos.SLASH_CMD_BP_FILE_PARAM_DESC,
-        advanced="Wether or not to fully decode and encode the blueprint"
+        advanced="Whether or not to fully decode and encode the blueprint"
     )
     async def changeBlueprintVersionCommand(interaction:discord.Interaction,blueprint:str,version:int,blueprint_file:discord.Attachment|None=None,advanced:bool=False) -> None:
         if exitCommandWithoutResponse(interaction):
@@ -852,9 +852,12 @@ def runDiscordBot() -> None:
     @tree.command(name="operation-graph",description="See documentation on github")
     @discord.app_commands.describe(
         public="Errors will be sent publicly if this is True! Sets if the result is sent publicly in the channel",
-        see_shape_vars="Wether or not to send the shape codes that were affected to every shape variable"
+        see_shape_vars="Whether or not to send the shape codes that were affected to every shape variable",
+        spoiler="Whether or not to send the resulting image as spoiler",
+        colorblind="Whether or not to include colorblind patterns in shapes"
     )
-    async def operationGraphCommand(interaction:discord.Interaction,instructions:str,public:bool=False,see_shape_vars:bool=False,spoiler:bool=False) -> None:
+    async def operationGraphCommand(interaction:discord.Interaction,instructions:str,
+        public:bool=False,see_shape_vars:bool=False,spoiler:bool=False,colorblind:bool=False) -> None:
         if exitCommandWithoutResponse(interaction):
             return
 
@@ -873,7 +876,7 @@ def runDiscordBot() -> None:
                 responseMsg = instructionsOrError
                 return
 
-            valid, responseOrError = operationGraph.genOperationGraph(instructionsOrError,see_shape_vars)
+            valid, responseOrError = operationGraph.genOperationGraph(instructionsOrError,see_shape_vars,colorblind)
             if not valid:
                 responseMsg = responseOrError
                 return
@@ -894,7 +897,7 @@ def runDiscordBot() -> None:
     @tree.command(name="blueprint-info",description="Get infos about a blueprint")
     @discord.app_commands.describe(
         blueprint=globalInfos.SLASH_CMD_BP_PARAM_DESC,
-        advanced="Wether or not to get extra infos about the blueprint",
+        advanced="Whether or not to get extra infos about the blueprint",
         blueprint_file=globalInfos.SLASH_CMD_BP_FILE_PARAM_DESC
     )
     async def blueprintInfoCommand(interaction:discord.Interaction,blueprint:str,advanced:bool=False,blueprint_file:discord.Attachment|None=None) -> None:
@@ -1000,7 +1003,7 @@ def runDiscordBot() -> None:
     @tree.command(name="msg",description="Public by default ! A command for shortcuts to messages")
     @discord.app_commands.describe(
         msg="The message id",
-        public="Wether to send the message publicly or not"
+        public="Whether to send the message publicly or not"
     )
     @discord.app_commands.choices(msg=[discord.app_commands.Choice(name=id,value=id) for id in msgCommandMessages.keys()])
     async def msgCommand(interaction:discord.Interaction,msg:discord.app_commands.Choice[str],public:bool=True) -> None:
@@ -1024,8 +1027,6 @@ def runDiscordBot() -> None:
     async def blueprintCreatorCommand(interaction:discord.Interaction,
         to_create:typing.Literal[
             "item-producer-w-shape",
-            "item-producer-w-shape-crate",
-            "item-producer-w-fluid-crate",
             "all-buildings",
             "all-platforms"
         ],extra:str="") -> None:
@@ -1054,26 +1055,18 @@ def runDiscordBot() -> None:
 
                 to_create = to_create.removeprefix("item-producer-w-")
 
-                if to_create in ("shape","shape-crate"):
-                    shapeCodesOrError, valid = shapeCodeGenerator.generateShapeCodes(extra)
+                shapeCodesOrError, valid = shapeCodeGenerator.generateShapeCodes(extra)
 
-                    if not valid:
-                        responseMsg = f"Invalid shape code : {shapeCodesOrError}"
-                        return
+                if not valid:
+                    responseMsg = f"Invalid shape code : {shapeCodesOrError}"
+                    return
 
-                    shapeCodesLen = len(shapeCodesOrError)
-                    if shapeCodesLen != 1:
-                        responseMsg = f"Not exactly one shape code returned ({shapeCodesLen})"
-                        return
+                shapeCodesLen = len(shapeCodesOrError)
+                if shapeCodesLen != 1:
+                    responseMsg = f"Not exactly one shape code returned ({shapeCodesLen})"
+                    return
 
-                    buildingExtra = {"type":"shapecrate" if to_create == "shape-crate" else "shape","value":shapeCodesOrError[0]}
-
-                else:
-                    if extra not in globalInfos.SHAPE_COLORS:
-                        responseMsg = "Invalid color"
-                        return
-
-                    buildingExtra = {"type":"fluidcrate","value":blueprints.COLOR_PREFIX+extra}
+                buildingExtra = {"type":"shape","value":shapeCodesOrError[0]}
 
                 try:
                     responseMsg = blueprints.encodeBlueprint(blueprints.Blueprint(
