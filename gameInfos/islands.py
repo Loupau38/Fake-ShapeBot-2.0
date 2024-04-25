@@ -5,7 +5,7 @@ import json
 
 ISLAND_SIZE = 20
 DEFAULT_REMOVED_ISLAND_SIZE = 3
-REDUCED_REMOVED_ISLAND_SIZE = 4
+REDUCED_REMOVED_ISLAND_SIZE = DEFAULT_REMOVED_ISLAND_SIZE + 1
 NOTCH_SIZE = 4
 
 class IslandTile:
@@ -14,10 +14,11 @@ class IslandTile:
         self.buildArea = buildArea
 
 class Island:
-    def __init__(self,id:str,title:str,tiles:list[IslandTile]) -> None:
+    def __init__(self,id:str,title:str,tiles:list[IslandTile],islandUnitCost:int) -> None:
         self.id = id
         self.title = title
         self.tiles = tiles
+        self.islandUnitCost = islandUnitCost
         self.totalBuildArea:list[Rect] = []
         for tile in tiles:
             for area in tile.buildArea:
@@ -29,7 +30,7 @@ class Island:
 def _loadIslands() -> dict[str,Island]:
 
     with open(globalInfos.GI_ISLANDS_PATH,encoding="utf-8") as f:
-        islandsRaw = json.load(f)
+        islandsRaw:dict[str,list[dict]] = json.load(f)
 
     allIslands = {}
 
@@ -211,7 +212,12 @@ def _loadIslands() -> dict[str,Island]:
 
             generatedIslandTiles.append(IslandTile(tile,buildAreas))
 
-        allIslands[islandRaw["Id"]] = Island(islandRaw["Id"],islandRaw["Title"],generatedIslandTiles)
+        allIslands[islandRaw["Id"]] = Island(
+            islandRaw["Id"],
+            islandRaw["Title"],
+            generatedIslandTiles,
+            islandRaw.get("IslandUnitCost",len(generatedIslandTiles))
+        )
 
     return allIslands
 

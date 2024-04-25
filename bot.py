@@ -441,14 +441,16 @@ def getBPInfoText(blueprint:blueprints.Blueprint,advanced:bool) -> str:
     responseParts = [[
         f"Version : `{blueprint.version}` / {versionTxt}",
         f"Blueprint type : `{bpTypeTxt}`",
-        f"Blueprint cost : {bpCost}"
+        f"Blueprint cost : {bpCost}",
+        f"Platform unit cost : `{utils.sepInGroupsNumber(blueprint.getIslandUnitCost())}`"
     ]]
 
     if blueprint.buildingBP is not None:
         buildingSize = blueprint.buildingBP.getSize()
         responseParts.append([
             f"Building count : `{utils.sepInGroupsNumber(blueprint.buildingBP.getBuildingCount())}`",
-            f"Building size : `{buildingSize.width}`x`{buildingSize.height}`x`{buildingSize.depth}`"
+            f"Building size : `{buildingSize.width}`x`{buildingSize.height}`x`{buildingSize.depth}`",
+            f"Building tiles : `{utils.sepInGroupsNumber(blueprint.buildingBP.getTileCount())}`"
         ])
 
     if blueprint.islandBP is not None:
@@ -456,7 +458,7 @@ def getBPInfoText(blueprint:blueprints.Blueprint,advanced:bool) -> str:
         responseParts.append([
             f"Platform count : `{utils.sepInGroupsNumber(blueprint.islandBP.getIslandCount())}`",
             f"Platform size : `{islandSize.width}`x`{islandSize.height}`",
-            f"Platform units : `{utils.sepInGroupsNumber(blueprint.islandBP.getTileCount())}`"
+            f"Platform tiles : `{utils.sepInGroupsNumber(blueprint.islandBP.getTileCount())}`"
         ])
 
     finalOutput = "\n".join(", ".join(part) for part in responseParts)

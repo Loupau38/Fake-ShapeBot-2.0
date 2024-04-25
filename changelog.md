@@ -1,3 +1,11 @@
+## 25 Apr 24
+- Add /msg pins
+- Reformat `messages.json`
+- Make reduced removed island size constant dependent of default removed island size constant in islands module of game infos
+- Separate platform unit count into platform unit cost and platform tile count and add building tile count to /blueprint-info
+- Fix full paint operation image not being removed
+- Fix mirrored train station islands not being included in islands of game infos
+
 ## 12 Apr 24
 - Update for alpha 19 :
   - Add version in game infos

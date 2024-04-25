@@ -74,7 +74,7 @@ def main() -> None:
     with open(EXTRACTED_ISLANDS_PATH,encoding="utf-8") as f:
         islandsRaw = json.load(f)
     islandsRaw["GameVersion"] = gameVersion
-    print("Remember to check that islands haven't changed")
+    print("Check if islands have changed and remember to use /blueprint-creator all-buildings and all-islands")
     with open(EXTRACTED_ISLANDS_PATH,"w",encoding="utf-8") as f:
         json.dump(islandsRaw,f,indent=4,ensure_ascii=True)
 

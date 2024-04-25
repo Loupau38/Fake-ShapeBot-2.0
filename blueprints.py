@@ -63,6 +63,9 @@ class BuildingBlueprint:
     def getBuildingCounts(self) -> dict[str,int]:
         return _genericGetCounts(self)
 
+    def getTileCount(self) -> int:
+        return len(self.asTileDict)
+
     def _encode(self) -> dict:
         return {
             "$type" : BUILDING_BP_TYPE,
@@ -159,6 +162,11 @@ class Blueprint:
             return math.ceil((buildingCount-1) ** 1.3)
         except Exception as e:
             raise BlueprintError("Failed to compute blueprint cost") from e
+
+    def getIslandUnitCost(self) -> int:
+        if self.islandBP is None:
+            return 0
+        return sum(island.type.islandUnitCost for island in self.islandBP.asEntryList)
 
     def _encode(self) -> tuple[dict,int]:
         return {
