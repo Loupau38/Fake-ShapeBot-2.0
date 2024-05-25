@@ -1,3 +1,29 @@
+## 25 May 24
+- Update for alpha 20 :
+  - Add version in game infos
+  - Add game translations support in game infos
+  - Update buildings and islands in game infos
+    - Move building and island titles from JSON files to being generated with translations module with possibility of override in JSON files
+  - Update colorblind shapes support to color skin support :
+    - Update shape viewer
+    - Add string diplay parameter type in responses module
+    - Change /cb display parameter to /colors
+    - Change /operation-graph 'colorblind' parameter to 'color_skin'
+  - Update pin color in shape viewer
+  - Add comparison gate and global wire transmitter additional data support in blueprints
+  - Update item, fluid, and signal producers additional data in blueprints
+    - Add function in shape code generator to determine if a shape is fully empty
+  - Remove 'k' color code :
+    - Update global infos shape colors constant
+    - Update readme
+    - Update /msg all-colors
+  - Update label default text in blueprints
+  - Update /msg pins
+- Type annotation tweaks
+- Add hack to not require global infos module in shape viewer
+- No longer try to convert to int value of /size display parameter in the string length is more than the max size int's string len
+- Fix shape code generator classifying a shape code as valid when it should not in some conditions
+
 ## 25 Apr 24
 - Add /msg pins
 - Reformat `messages.json`

@@ -1,5 +1,5 @@
 {
-    "GameVersion": "0.0.0-alpha19",
+    "GameVersion": "0.0.0-alpha20",
     "Buildings": [
         {
             "Id": "HubBuilding",
@@ -21,11 +21,9 @@
         },
         {
             "Id": "TrainStationExchangerBuilding",
-            "Title": "[[building.TrainStationExchangerBuilding.title]]",
             "Variants": [
                 {
                     "Id": "TrainStationShapeLoaderVariant",
-                    "Title": "[[building-variant.TrainStationShapeLoaderVariant.title]]",
                     "InternalVariants": [
                         {
                             "Id": "TrainStationShapeLoaderInternalVariant",
@@ -76,7 +74,6 @@
                 },
                 {
                     "Id": "TrainStationShapeUnloaderVariant",
-                    "Title": "[[building-variant.TrainStationShapeUnloaderVariant.title]]",
                     "InternalVariants": [
                         {
                             "Id": "TrainStationShapeUnloaderInternalVariant",
@@ -127,7 +124,6 @@
                 },
                 {
                     "Id": "TrainStationFluidLoaderVariant",
-                    "Title": "[[building-variant.TrainStationFluidLoaderVariant.title]]",
                     "InternalVariants": [
                         {
                             "Id": "TrainStationFluidLoaderInternalVariant",
@@ -178,7 +174,6 @@
                 },
                 {
                     "Id": "TrainStationFluidUnloaderVariant",
-                    "Title": "[[building-variant.TrainStationFluidUnloaderVariant.title]]",
                     "InternalVariants": [
                         {
                             "Id": "TrainStationFluidUnloaderInternalVariant",
@@ -231,11 +226,9 @@
         },
         {
             "Id": "BeltBuilding",
-            "Title": "Conveyor Belt",
             "Variants": [
                 {
                     "Id": "BeltDefaultVariant",
-                    "Title": "Conveyor Belt",
                     "InternalVariants": [
                         {
                             "Id": "BeltDefaultForwardInternalVariant",
@@ -259,7 +252,6 @@
                 },
                 {
                     "Id": "Splitter1To2Variant",
-                    "Title": "2-Way Splitter",
                     "InternalVariants": [
                         {
                             "Id": "Splitter1To2LInternalVariant",
@@ -277,7 +269,6 @@
                 },
                 {
                     "Id": "Splitter1To3Variant",
-                    "Title": "3-Way Splitter",
                     "InternalVariants": [
                         {
                             "Id": "Splitter1To3InternalVariant",
@@ -289,7 +280,6 @@
                 },
                 {
                     "Id": "SplitterTShapeVariant",
-                    "Title": "T-Splitter",
                     "InternalVariants": [
                         {
                             "Id": "SplitterTShapeInternalVariant",
@@ -301,7 +291,6 @@
                 },
                 {
                     "Id": "Merger2To1Variant",
-                    "Title": "2-Way Merger",
                     "InternalVariants": [
                         {
                             "Id": "Merger2To1LInternalVariant",
@@ -319,7 +308,6 @@
                 },
                 {
                     "Id": "Merger3To1Variant",
-                    "Title": "3-Way Merger",
                     "InternalVariants": [
                         {
                             "Id": "Merger3To1InternalVariant",
@@ -331,7 +319,6 @@
                 },
                 {
                     "Id": "MergerTShapeVariant",
-                    "Title": "T-Merger",
                     "InternalVariants": [
                         {
                             "Id": "MergerTShapeInternalVariant",
@@ -343,7 +330,6 @@
                 },
                 {
                     "Id": "Lift1LayerVariant",
-                    "Title": "1 Floor Lift",
                     "InternalVariants": [
                         {
                             "Id": "Lift1DownBackwardInternalVariant",
@@ -421,7 +407,6 @@
                 },
                 {
                     "Id": "Lift2LayerVariant",
-                    "Title": "2 Floor Lift",
                     "InternalVariants": [
                         {
                             "Id": "Lift2DownBackwardInternalVariant",
@@ -523,7 +508,6 @@
                 },
                 {
                     "Id": "BeltPortSenderVariant",
-                    "Title": "Belt Launcher",
                     "InternalVariants": [
                         {
                             "Id": "BeltPortSenderInternalVariant",
@@ -535,7 +519,6 @@
                 },
                 {
                     "Id": "BeltPortReceiverVariant",
-                    "Title": "Belt Catcher",
                     "InternalVariants": [
                         {
                             "Id": "BeltPortReceiverInternalVariant",
@@ -549,11 +532,9 @@
         },
         {
             "Id": "RotatorBuilding",
-            "Title": "Rotator",
             "Variants": [
                 {
                     "Id": "RotatorOneQuadVariant",
-                    "Title": "90\u00b0 CW Rotator",
                     "InternalVariants": [
                         {
                             "Id": "RotatorOneQuadInternalVariant",
@@ -565,7 +546,6 @@
                 },
                 {
                     "Id": "RotatorOneQuadCCWVariant",
-                    "Title": "90\u00b0 CCW Rotator",
                     "InternalVariants": [
                         {
                             "Id": "RotatorOneQuadCCWInternalVariant",
@@ -577,7 +557,6 @@
                 },
                 {
                     "Id": "RotatorHalfVariant",
-                    "Title": "180\u00b0 Rotator",
                     "InternalVariants": [
                         {
                             "Id": "RotatorHalfInternalVariant",
@@ -591,11 +570,9 @@
         },
         {
             "Id": "CutterBuilding",
-            "Title": "Cutting",
             "Variants": [
                 {
                     "Id": "CutterHalfVariant",
-                    "Title": "Half Destroyer",
                     "InternalVariants": [
                         {
                             "Id": "CutterHalfInternalVariant",
@@ -607,7 +584,6 @@
                 },
                 {
                     "Id": "CutterDefaultVariant",
-                    "Title": "Cutter",
                     "InternalVariants": [
                         {
                             "Id": "CutterDefaultInternalVariant",
@@ -631,7 +607,6 @@
                 },
                 {
                     "Id": "HalvesSwapperDefaultVariant",
-                    "Title": "Swapper",
                     "InternalVariants": [
                         {
                             "Id": "HalvesSwapperDefaultInternalVariant",
@@ -648,11 +623,9 @@
         },
         {
             "Id": "StackerBuilding",
-            "Title": "Stacker",
             "Variants": [
                 {
                     "Id": "StackerDefaultVariant",
-                    "Title": "Stacker",
                     "InternalVariants": [
                         {
                             "Id": "StackerDefaultInternalVariant",
@@ -678,11 +651,9 @@
         },
         {
             "Id": "ExtractorBuilding",
-            "Title": "Extractor",
             "Variants": [
                 {
                     "Id": "ExtractorDefaultVariant",
-                    "Title": "Extractor",
                     "InternalVariants": [
                         {
                             "Id": "ExtractorDefaultInternalVariant",
@@ -696,11 +667,9 @@
         },
         {
             "Id": "PinPusherBuilding",
-            "Title": "Pin Pusher",
             "Variants": [
                 {
                     "Id": "PinPusherDefaultVariant",
-                    "Title": "Pin Pusher",
                     "InternalVariants": [
                         {
                             "Id": "PinPusherDefaultInternalVariant",
@@ -714,11 +683,9 @@
         },
         {
             "Id": "TrashBuilding",
-            "Title": "Trash",
             "Variants": [
                 {
                     "Id": "TrashDefaultVariant",
-                    "Title": "Trash",
                     "InternalVariants": [
                         {
                             "Id": "TrashDefaultInternalVariant",
@@ -732,11 +699,9 @@
         },
         {
             "Id": "PipeBuilding",
-            "Title": "Pipe",
             "Variants": [
                 {
                     "Id": "PipeDefaultVariant",
-                    "Title": "Pipe",
                     "InternalVariants": [
                         {
                             "Id": "PipeForwardInternalVariant",
@@ -772,7 +737,6 @@
                 },
                 {
                     "Id": "Pipe1LayerVariant",
-                    "Title": "Pipe Up/Down",
                     "InternalVariants": [
                         {
                             "Id": "PipeUpBackwardInternalVariant",
@@ -813,8 +777,60 @@
                     ]
                 },
                 {
+                    "Id": "Pipe2LayerVariant",
+                    "InternalVariants": [
+                        {
+                            "Id": "Pipe2UpBackwardInternalVariant",
+                            "Tiles": [
+                                {},
+                                {
+                                    "Z": 1
+                                },
+                                {
+                                    "Z": 2
+                                }
+                            ]
+                        },
+                        {
+                            "Id": "Pipe2UpForwardInternalVariant",
+                            "Tiles": [
+                                {},
+                                {
+                                    "Z": 1
+                                },
+                                {
+                                    "Z": 2
+                                }
+                            ]
+                        },
+                        {
+                            "Id": "Pipe2UpLeftInternalVariant",
+                            "Tiles": [
+                                {},
+                                {
+                                    "Z": 1
+                                },
+                                {
+                                    "Z": 2
+                                }
+                            ]
+                        },
+                        {
+                            "Id": "Pipe2UpRightInternalVariant",
+                            "Tiles": [
+                                {},
+                                {
+                                    "Z": 1
+                                },
+                                {
+                                    "Z": 2
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
                     "Id": "FluidBridgeSenderVariant",
-                    "Title": "Fluid Launcher",
                     "InternalVariants": [
                         {
                             "Id": "FluidBridgeSenderInternalVariant",
@@ -826,7 +842,6 @@
                 },
                 {
                     "Id": "FluidBridgeReceiverVariant",
-                    "Title": "Fluid Catcher",
                     "InternalVariants": [
                         {
                             "Id": "FluidBridgeReceiverInternalVariant",
@@ -840,11 +855,9 @@
         },
         {
             "Id": "PumpBuilding",
-            "Title": "Pump",
             "Variants": [
                 {
                     "Id": "PumpDefaultVariant",
-                    "Title": "Pump",
                     "InternalVariants": [
                         {
                             "Id": "PumpDefaultInternalVariant",
@@ -858,11 +871,9 @@
         },
         {
             "Id": "PainterBuilding",
-            "Title": "Painters",
             "Variants": [
                 {
                     "Id": "PainterDefaultVariant",
-                    "Title": "Painter",
                     "InternalVariants": [
                         {
                             "Id": "PainterDefaultInternalVariant",
@@ -877,7 +888,6 @@
                 },
                 {
                     "Id": "PainterFullVariant",
-                    "Title": "Deep Painter",
                     "InternalVariants": [
                         {
                             "Id": "PainterFullInternalVariant",
@@ -894,11 +904,9 @@
         },
         {
             "Id": "MixerBuilding",
-            "Title": "Color Mixer",
             "Variants": [
                 {
                     "Id": "MixerDefaultVariant",
-                    "Title": "Color Mixer",
                     "InternalVariants": [
                         {
                             "Id": "MixerDefaultInternalVariant",
@@ -925,11 +933,9 @@
         },
         {
             "Id": "CrystalGeneratorBuilding",
-            "Title": "Crystal Generator",
             "Variants": [
                 {
                     "Id": "CrystalGeneratorDefaultVariant",
-                    "Title": "Crystal Generator",
                     "InternalVariants": [
                         {
                             "Id": "CrystalGeneratorDefaultInternalVariant",
@@ -950,11 +956,9 @@
         },
         {
             "Id": "FluidStorageBuilding",
-            "Title": "Fluid Tank",
             "Variants": [
                 {
                     "Id": "FluidStorageDefaultVariant",
-                    "Title": "Fluid Tank",
                     "InternalVariants": [
                         {
                             "Id": "FluidStorageDefaultInternalVariant",
@@ -978,11 +982,9 @@
         },
         {
             "Id": "LabelBuilding",
-            "Title": "Label",
             "Variants": [
                 {
                     "Id": "LabelDefaultVariant",
-                    "Title": "Label",
                     "InternalVariants": [
                         {
                             "Id": "LabelDefaultInternalVariant",
@@ -1008,11 +1010,9 @@
         },
         {
             "Id": "WireBuilding",
-            "Title": "Wire",
             "Variants": [
                 {
                     "Id": "WireDefaultVariant",
-                    "Title": "Wire",
                     "InternalVariants": [
                         {
                             "Id": "WireDefaultForwardInternalVariant",
@@ -1132,7 +1132,6 @@
                 },
                 {
                     "Id": "WireTransmitterSenderVariant",
-                    "Title": "Wire Transmitter",
                     "InternalVariants": [
                         {
                             "Id": "WireTransmitterSenderInternalVariant",
@@ -1144,7 +1143,6 @@
                 },
                 {
                     "Id": "WireTransmitterReceiverVariant",
-                    "Title": "Wire Receiver",
                     "InternalVariants": [
                         {
                             "Id": "WireTransmitterReceiverInternalVariant",
@@ -1153,16 +1151,259 @@
                             ]
                         }
                     ]
+                },
+                {
+                    "Id": "WireBridgeVariant",
+                    "InternalVariants": [
+                        {
+                            "Id": "WireDefaultBridgeInternalVariant",
+                            "Tiles": [
+                                {}
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "Id": "WireGlobalTransmitterSenderVariant",
+                    "InternalVariants": [
+                        {
+                            "Id": "WireGlobalTransmitterSenderInternalVariant",
+                            "Tiles": [
+                                {},
+                                {
+                                    "X": -1
+                                },
+                                {
+                                    "X": 1
+                                },
+                                {
+                                    "Y": 1
+                                },
+                                {
+                                    "X": -1,
+                                    "Y": 1
+                                },
+                                {
+                                    "X": 1,
+                                    "Y": 1
+                                },
+                                {
+                                    "Y": -1
+                                },
+                                {
+                                    "X": -1,
+                                    "Y": -1
+                                },
+                                {
+                                    "X": 1,
+                                    "Y": -1
+                                },
+                                {
+                                    "Z": 1
+                                },
+                                {
+                                    "X": -1,
+                                    "Z": 1
+                                },
+                                {
+                                    "X": 1,
+                                    "Z": 1
+                                },
+                                {
+                                    "Y": 1,
+                                    "Z": 1
+                                },
+                                {
+                                    "X": -1,
+                                    "Y": 1,
+                                    "Z": 1
+                                },
+                                {
+                                    "X": 1,
+                                    "Y": 1,
+                                    "Z": 1
+                                },
+                                {
+                                    "Y": -1,
+                                    "Z": 1
+                                },
+                                {
+                                    "X": -1,
+                                    "Y": -1,
+                                    "Z": 1
+                                },
+                                {
+                                    "X": 1,
+                                    "Y": -1,
+                                    "Z": 1
+                                },
+                                {
+                                    "Z": 2
+                                },
+                                {
+                                    "X": -1,
+                                    "Z": 2
+                                },
+                                {
+                                    "X": 1,
+                                    "Z": 2
+                                },
+                                {
+                                    "Y": 1,
+                                    "Z": 2
+                                },
+                                {
+                                    "X": -1,
+                                    "Y": 1,
+                                    "Z": 2
+                                },
+                                {
+                                    "X": 1,
+                                    "Y": 1,
+                                    "Z": 2
+                                },
+                                {
+                                    "Y": -1,
+                                    "Z": 2
+                                },
+                                {
+                                    "X": -1,
+                                    "Y": -1,
+                                    "Z": 2
+                                },
+                                {
+                                    "X": 1,
+                                    "Y": -1,
+                                    "Z": 2
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "Id": "WireGlobalTransmitterReceiverVariant",
+                    "InternalVariants": [
+                        {
+                            "Id": "WireGlobalTransmitterReceiverInternalVariant",
+                            "Tiles": [
+                                {},
+                                {
+                                    "X": -1
+                                },
+                                {
+                                    "X": 1
+                                },
+                                {
+                                    "Y": 1
+                                },
+                                {
+                                    "X": -1,
+                                    "Y": 1
+                                },
+                                {
+                                    "X": 1,
+                                    "Y": 1
+                                },
+                                {
+                                    "Y": -1
+                                },
+                                {
+                                    "X": -1,
+                                    "Y": -1
+                                },
+                                {
+                                    "X": 1,
+                                    "Y": -1
+                                },
+                                {
+                                    "Z": 1
+                                },
+                                {
+                                    "X": -1,
+                                    "Z": 1
+                                },
+                                {
+                                    "X": 1,
+                                    "Z": 1
+                                },
+                                {
+                                    "Y": 1,
+                                    "Z": 1
+                                },
+                                {
+                                    "X": -1,
+                                    "Y": 1,
+                                    "Z": 1
+                                },
+                                {
+                                    "X": 1,
+                                    "Y": 1,
+                                    "Z": 1
+                                },
+                                {
+                                    "Y": -1,
+                                    "Z": 1
+                                },
+                                {
+                                    "X": -1,
+                                    "Y": -1,
+                                    "Z": 1
+                                },
+                                {
+                                    "X": 1,
+                                    "Y": -1,
+                                    "Z": 1
+                                },
+                                {
+                                    "Z": 2
+                                },
+                                {
+                                    "X": -1,
+                                    "Z": 2
+                                },
+                                {
+                                    "X": 1,
+                                    "Z": 2
+                                },
+                                {
+                                    "Y": 1,
+                                    "Z": 2
+                                },
+                                {
+                                    "X": -1,
+                                    "Y": 1,
+                                    "Z": 2
+                                },
+                                {
+                                    "X": 1,
+                                    "Y": 1,
+                                    "Z": 2
+                                },
+                                {
+                                    "Y": -1,
+                                    "Z": 2
+                                },
+                                {
+                                    "X": -1,
+                                    "Y": -1,
+                                    "Z": 2
+                                },
+                                {
+                                    "X": 1,
+                                    "Y": -1,
+                                    "Z": 2
+                                }
+                            ]
+                        }
+                    ]
                 }
             ]
         },
         {
             "Id": "WireDisplayBuilding",
-            "Title": "Display",
             "Variants": [
                 {
                     "Id": "DisplayDefaultVariant",
-                    "Title": "Display",
                     "InternalVariants": [
                         {
                             "Id": "DisplayDefaultInternalVariant",
@@ -1176,11 +1417,9 @@
         },
         {
             "Id": "WireConstantSignalBuilding",
-            "Title": "Signal Producer",
             "Variants": [
                 {
                     "Id": "ConstantSignalDefaultVariant",
-                    "Title": "Signal Producer",
                     "InternalVariants": [
                         {
                             "Id": "ConstantSignalDefaultInternalVariant",
@@ -1194,11 +1433,9 @@
         },
         {
             "Id": "WireBeltInteractionBuilding",
-            "Title": "Belt Control",
             "Variants": [
                 {
                     "Id": "BeltReaderDefaultVariant",
-                    "Title": "Belt Reader",
                     "InternalVariants": [
                         {
                             "Id": "BeltReaderDefaultInternalVariant",
@@ -1210,7 +1447,6 @@
                 },
                 {
                     "Id": "BeltFilterDefaultVariant",
-                    "Title": "Belt Filter",
                     "InternalVariants": [
                         {
                             "Id": "BeltFilterDefaultInternalVariant",
@@ -1224,11 +1460,9 @@
         },
         {
             "Id": "WireButtonBuilding",
-            "Title": "Button",
             "Variants": [
                 {
                     "Id": "ButtonDefaultVariant",
-                    "Title": "Button",
                     "InternalVariants": [
                         {
                             "Id": "ButtonDefaultInternalVariant",
@@ -1242,11 +1476,9 @@
         },
         {
             "Id": "LogicGateBuilding",
-            "Title": "Logic Gate",
             "Variants": [
                 {
                     "Id": "LogicGateAndVariant",
-                    "Title": "AND Gate",
                     "InternalVariants": [
                         {
                             "Id": "LogicGateAndInternalVariant",
@@ -1258,7 +1490,6 @@
                 },
                 {
                     "Id": "LogicGateOrVariant",
-                    "Title": "OR Gate",
                     "InternalVariants": [
                         {
                             "Id": "LogicGateOrInternalVariant",
@@ -1270,7 +1501,6 @@
                 },
                 {
                     "Id": "LogicGateNotVariant",
-                    "Title": "NOT Gate",
                     "InternalVariants": [
                         {
                             "Id": "LogicGateNotInternalVariant",
@@ -1282,7 +1512,6 @@
                 },
                 {
                     "Id": "LogicGateXOrVariant",
-                    "Title": "XOR Gate",
                     "InternalVariants": [
                         {
                             "Id": "LogicGateXOrInternalVariant",
@@ -1294,7 +1523,6 @@
                 },
                 {
                     "Id": "LogicGateCompareVariant",
-                    "Title": "Comparison",
                     "InternalVariants": [
                         {
                             "Id": "LogicGateCompareInternalVariant",
@@ -1306,7 +1534,6 @@
                 },
                 {
                     "Id": "LogicGateIfVariant",
-                    "Title": "Transistor",
                     "InternalVariants": [
                         {
                             "Id": "LogicGateIfInternalVariant",
@@ -1320,11 +1547,9 @@
         },
         {
             "Id": "VirtualProcessorBuilding",
-            "Title": "Virtual Processors",
             "Variants": [
                 {
                     "Id": "VirtualRotatorDefaultVariant",
-                    "Title": "Virtual Rotator",
                     "InternalVariants": [
                         {
                             "Id": "VirtualRotatorDefaultInternalVariant",
@@ -1336,7 +1561,6 @@
                 },
                 {
                     "Id": "VirtualAnalyzerDefaultVariant",
-                    "Title": "Virtual Analyzer",
                     "InternalVariants": [
                         {
                             "Id": "VirtualAnalyzerDefaultInternalVariant",
@@ -1348,7 +1572,6 @@
                 },
                 {
                     "Id": "VirtualUnstackerDefaultVariant",
-                    "Title": "Virtual Unstacker",
                     "InternalVariants": [
                         {
                             "Id": "VirtualUnstackerDefaultInternalVariant",
@@ -1360,7 +1583,6 @@
                 },
                 {
                     "Id": "VirtualStackerDefaultVariant",
-                    "Title": "Virtual Stacker",
                     "InternalVariants": [
                         {
                             "Id": "VirtualStackerDefaultInternalVariant",
@@ -1372,7 +1594,6 @@
                 },
                 {
                     "Id": "VirtualHalfCutterDefaultVariant",
-                    "Title": "Virtual Halves Destroyer",
                     "InternalVariants": [
                         {
                             "Id": "VirtualHalfCutterDefaultInternalVariant",
@@ -1384,7 +1605,6 @@
                 },
                 {
                     "Id": "VirtualPainterDefaultVariant",
-                    "Title": "Virtual Painter",
                     "InternalVariants": [
                         {
                             "Id": "VirtualPainterDefaultInternalVariant",
@@ -1398,11 +1618,9 @@
         },
         {
             "Id": "SandboxBuildings",
-            "Title": "Sandbox Buildings",
             "Variants": [
                 {
                     "Id": "SandboxItemProducerDefaultVariant",
-                    "Title": "Item Producer",
                     "InternalVariants": [
                         {
                             "Id": "SandboxItemProducerDefaultInternalVariant",
@@ -1414,7 +1632,6 @@
                 },
                 {
                     "Id": "SandboxFluidProducerDefaultVariant",
-                    "Title": "Fluid Producer",
                     "InternalVariants": [
                         {
                             "Id": "SandboxFluidProducerDefaultInternalVariant",
@@ -1428,11 +1645,9 @@
         },
         {
             "Id": "SpaceBeltTransportBuilding",
-            "Title": "[[building.SpaceBeltTransportBuilding.title]]",
             "Variants": [
                 {
                     "Id": "SpaceBeltTransportVariantBuilding",
-                    "Title": "[[building-variant.SpaceBeltTransportVariantBuilding.title]]",
                     "InternalVariants": [
                         {
                             "Id": "BlobCatcherInternalVariant",

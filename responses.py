@@ -4,35 +4,67 @@ import globalInfos
 import utils
 import pygame
 import io
+import typing
 
 class DisplayParam:
 
-    def __init__(self,type:str,default,*,rangeStart:int|None=None,rangeStop:int|None=None) -> None:
+    def __init__(
+        self,
+        type:typing.Literal["bool","int","str"],
+        default,
+        *,
+        intRangeStart:int|None=None,
+        intRangeStop:int|None=None,
+        strAllowedValues:list[str]|None=None,
+        strCaseMatters:bool|None=None
+    ) -> None:
         self.type = type
         self.default = default
         if type == "int":
-            self.rangeStart = rangeStart
-            self.rangeStop = rangeStop
+            self.intRangeStart:int = intRangeStart
+            self.intRangeStop:int = intRangeStop
+        elif type == "str":
+            self.strAllowedValues:list[str] = strAllowedValues
+            self.strCaseMatters:bool = strCaseMatters
 
     def getValidValue(self,inputValue:tuple[str]|tuple[str,str]) -> bool|int|None:
         if self.type == "bool":
             return True
-        try:
-            return min(self.rangeStop,max(self.rangeStart,int(inputValue[1])))
-        except IndexError:
-            pass
-        except ValueError:
-            pass
+        if len(inputValue) < 2:
+            return None
+        if self.type == "int":
+            if len(inputValue[1]) > len(str(self.intRangeStop)):
+                return None
+            try:
+                inputValueInt = int(inputValue[1])
+            except ValueError:
+                return None
+            return min(self.intRangeStop,max(self.intRangeStart,inputValueInt))
+        inputValueStr = inputValue[1]
+        strAllowedValues = self.strAllowedValues
+        if not self.strCaseMatters:
+            inputValueStr = inputValueStr.lower()
+            strAllowedValues = [v.lower() for v in strAllowedValues]
+        if inputValueStr not in strAllowedValues:
+            return None
+        return inputValueStr
 
 DISPLAY_PARAMS:dict[str,DisplayParam] = {
     "spoiler" : DisplayParam("bool",False),
-    "size" : DisplayParam("int",
+    "size" : DisplayParam(
+        "int",
         globalInfos.DEFAULT_SHAPE_SIZE,
-        rangeStart=globalInfos.MIN_SHAPE_SIZE,
-        rangeStop=globalInfos.MAX_SHAPE_SIZE),
+        intRangeStart=globalInfos.MIN_SHAPE_SIZE,
+        intRangeStop=globalInfos.MAX_SHAPE_SIZE
+    ),
     "result" : DisplayParam("bool",False),
     "3d" : DisplayParam("bool",False),
-    "cb" : DisplayParam("bool",False)
+    "colors" : DisplayParam(
+        "str",
+        shapeViewer.EXTERNAL_COLOR_SKINS[0],
+        strAllowedValues=shapeViewer.EXTERNAL_COLOR_SKINS,
+        strCaseMatters=False
+    )
 }
 
 def handleResponse(message:str) -> None|tuple[None|tuple[tuple[io.BytesIO,int],bool,None|list[str],None|list[str]],bool,list[str]]:
@@ -68,6 +100,10 @@ def handleResponse(message:str) -> None|tuple[None|tuple[tuple[io.BytesIO,int],b
             if tempValue is not None:
                 curDisplayParams[param[0]] = tempValue
 
+    curDisplayParams["colors"] = curDisplayParams["colors"].upper()
+    if curDisplayParams["colors"].endswith("-CB"):
+        curDisplayParams["colors"] = curDisplayParams["colors"].removesuffix("-CB") + "-cb"
+
     numShapes = len(shapeCodes)
     size = curDisplayParams["size"]
     finalImage = pygame.Surface(
@@ -77,7 +113,7 @@ def handleResponse(message:str) -> None|tuple[None|tuple[tuple[io.BytesIO,int],b
     renderedShapesCache = {}
     for i,code in enumerate(shapeCodes):
         if renderedShapesCache.get(code) is None:
-            renderedShapesCache[code] = shapeViewer.renderShape(code,size,curDisplayParams["cb"])
+            renderedShapesCache[code] = shapeViewer.renderShape(code,size,curDisplayParams["colors"])
         divMod = divmod(i,globalInfos.SHAPES_PER_ROW)
         finalImage.blit(renderedShapesCache[code],(size*divMod[1],size*divMod[0]))
 

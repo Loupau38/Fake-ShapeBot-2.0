@@ -1,9 +1,8 @@
 {
-    "GameVersion": "0.0.0-alpha19",
+    "GameVersion": "0.0.0-alpha20",
     "Islands": [
         {
             "Id": "Layout_SpaceBeltNode",
-            "Title": "Space Belt",
             "Tiles": [
                 {}
             ],
@@ -12,27 +11,36 @@
         },
         {
             "Id": "Layout_SpaceBeltTunnel_Entrance",
-            "Title": "Space Tunnel Entrance",
             "Tiles": [
                 {}
             ],
             "RemovedNotches": [],
             "ReducedSides": [],
+            "BuildAreaOverride": [
+                {
+                    "Tile": {},
+                    "Rects": []
+                }
+            ],
             "IslandUnitCost": 3
         },
         {
             "Id": "Layout_SpaceBeltTunnel_Exit",
-            "Title": "Space Tunnel Exit",
             "Tiles": [
                 {}
             ],
             "RemovedNotches": [],
             "ReducedSides": [],
+            "BuildAreaOverride": [
+                {
+                    "Tile": {},
+                    "Rects": []
+                }
+            ],
             "IslandUnitCost": 3
         },
         {
             "Id": "Layout_SpacePipeNode",
-            "Title": "Space Pipe",
             "Tiles": [
                 {}
             ],
@@ -41,7 +49,6 @@
         },
         {
             "Id": "Layout_ShapeMiner",
-            "Title": "Shape Miner",
             "Tiles": [
                 {}
             ],
@@ -61,7 +68,6 @@
         },
         {
             "Id": "Layout_ShapeMinerExtension",
-            "Title": "Shape Miner Extension",
             "Tiles": [
                 {}
             ],
@@ -76,7 +82,6 @@
         },
         {
             "Id": "Layout_FluidMiner",
-            "Title": "Fluid Miner",
             "Tiles": [
                 {}
             ],
@@ -96,7 +101,6 @@
         },
         {
             "Id": "Layout_FluidMinerExtension",
-            "Title": "Fluid Miner Extension",
             "Tiles": [
                 {}
             ],
@@ -242,7 +246,6 @@
         },
         {
             "Id": "Layout_RailNode",
-            "Title": "Rail",
             "Tiles": [
                 {}
             ],
@@ -258,7 +261,6 @@
         },
         {
             "Id": "Layout_TrainLauncher",
-            "Title": "Train Launcher",
             "Tiles": [
                 {}
             ],
@@ -274,7 +276,6 @@
         },
         {
             "Id": "Layout_TrainCatcher",
-            "Title": "Train Catcher",
             "Tiles": [
                 {}
             ],
@@ -289,8 +290,31 @@
             "IslandUnitCost": 0
         },
         {
+            "Id": "Layout_TrainTwister",
+            "Tiles": [
+                {},
+                {
+                    "X": 1
+                }
+            ],
+            "RemovedNotches": [],
+            "ReducedSides": [],
+            "BuildAreaOverride": [
+                {
+                    "Tile": {},
+                    "Rects": []
+                },
+                {
+                    "Tile": {
+                        "X": 1
+                    },
+                    "Rects": []
+                }
+            ],
+            "IslandUnitCost": 5
+        },
+        {
             "Id": "Layout_TrainProducer_Red",
-            "Title": "Train Deposit (Red)",
             "Tiles": [
                 {}
             ],
@@ -306,7 +330,6 @@
         },
         {
             "Id": "Layout_TrainProducer_Green",
-            "Title": "Train Deposit (Green)",
             "Tiles": [
                 {}
             ],
@@ -322,7 +345,6 @@
         },
         {
             "Id": "Layout_TrainProducer_Blue",
-            "Title": "Train Deposit (Blue)",
             "Tiles": [
                 {}
             ],
@@ -338,7 +360,6 @@
         },
         {
             "Id": "Layout_TrainProducer_White",
-            "Title": "Train Deposit (White)",
             "Tiles": [
                 {}
             ],
@@ -354,7 +375,6 @@
         },
         {
             "Id": "Layout_TrainShapeWagonExtension",
-            "Title": "Shape Wagon Extension",
             "Tiles": [
                 {}
             ],
@@ -370,7 +390,6 @@
         },
         {
             "Id": "Layout_TrainFluidWagonExtension",
-            "Title": "Fluid Wagon Extension",
             "Tiles": [
                 {}
             ],
@@ -386,7 +405,6 @@
         },
         {
             "Id": "Layout_TrainFillerWagonExtension",
-            "Title": "Filler Wagon Extension",
             "Tiles": [
                 {}
             ],
@@ -402,7 +420,6 @@
         },
         {
             "Id": "Layout_TrainStation",
-            "Title": "Train Station",
             "Tiles": [
                 {}
             ],
@@ -417,7 +434,6 @@
         },
         {
             "Id": "Layout_TrainLoader_Shapes",
-            "Title": "Shape Loader Station",
             "Tiles": [
                 {},
                 {
@@ -448,7 +464,6 @@
         },
         {
             "Id": "Layout_TrainLoader_Shapes_Flipped",
-            "Title": "Shape Loader Station",
             "Tiles": [
                 {},
                 {
@@ -479,7 +494,6 @@
         },
         {
             "Id": "Layout_TrainUnloader_Shapes",
-            "Title": "Shape Unloader Station",
             "Tiles": [
                 {},
                 {
@@ -510,7 +524,6 @@
         },
         {
             "Id": "Layout_TrainUnloader_Shapes_Flipped",
-            "Title": "Shape Unloader Station",
             "Tiles": [
                 {},
                 {
@@ -541,7 +554,6 @@
         },
         {
             "Id": "Layout_TrainLoader_Fluids",
-            "Title": "Fluid Loader Station",
             "Tiles": [
                 {},
                 {
@@ -572,7 +584,6 @@
         },
         {
             "Id": "Layout_TrainLoader_Fluids_Flipped",
-            "Title": "Fluid Loader Station",
             "Tiles": [
                 {},
                 {
@@ -603,7 +614,6 @@
         },
         {
             "Id": "Layout_TrainUnloader_Fluids",
-            "Title": "Fluid Unloader Station",
             "Tiles": [
                 {},
                 {
@@ -634,7 +644,6 @@
         },
         {
             "Id": "Layout_TrainUnloader_Fluids_Flipped",
-            "Title": "Fluid Unloader Station",
             "Tiles": [
                 {},
                 {
@@ -665,7 +674,6 @@
         },
         {
             "Id": "Layout_HUB",
-            "Title": "Hub Platform",
             "Tiles": [
                 {
                     "X": -1,

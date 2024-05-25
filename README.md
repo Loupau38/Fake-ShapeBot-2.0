@@ -26,7 +26,6 @@ Put your shape code and parameters in `{}`
 - m : Magenta
 - y : Yellow
 - w : White
-- k : Black
 - \- : Nothing
 
 ### Parameters
@@ -58,7 +57,7 @@ Display parameters must be put outside of the `{}`, have a `/` in front of them 
 - /spoiler : Will mark the resulting image as spoiler
 - /result : Will additionally send the generated shape codes
 - /3d : Will additionally send links to [DontMash's 3D shape viewer](https://shapez.soren.codes/shape)
-- /cb : Will draw colorblind patterns on the generated shapes
+- /colors : Will control the color skin used for shapes (default:RGB, available:RGB,RYB,CMYK,RGB-cb)
 
 Note : shapes with more than 4 layers and/or with more/less than 4 quadrants per layer are supported
 
@@ -78,11 +77,11 @@ If you have the blueprint code as text, paste it in the 'blueprint' parameter. I
 
 - /member-count : Displays the member count of the server it is executed in (with additional info such as online/offline count and percentage)
 
-- /operation-graph [instructions] [public=False] [see_shape_vars=False] [spoiler=False] [colorblind=False] : See the [/operation-graph documentation](https://github.com/Loupau38/Fake-ShapeBot-2.0/blob/main/operationGraphDoc.md)
+- /operation-graph [instructions] [public=False] [see_shape_vars=False] [spoiler=False] [color_skin=RGB] : See the [/operation-graph documentation](https://github.com/Loupau38/Fake-ShapeBot-2.0/blob/main/operationGraphDoc.md)
 
 - /blueprint-info [blueprint] [advanced=False] [blueprint_file=None] : Will give the version, type, blueprint cost, platform unit cost, building count, building scale size, building tile count, platform count, platform scale size and platform tile count of the given blueprint. If 'advanced' is set to True, will also give the individual counts for every building and platforms
 
-- /research-viewer [level=0] [node=0] [public=False] : Without the 'level' or 'node' parameters set, displays the entire research tree. With the 'level' parameter set to a number starting from 1, displays the corresponding level (milestone + side goals). With the 'level' and 'node' parameter set to a number starting from 1, displays the corresponding node of the corresponding level (1 for the milestone then starting from 2 for the side goals). If 'public' is set to true, the result will be sent publicly in the channel the command was executed in. Error messages will also be sent publicly if this parameter is set to true. When viewing a single node, will display via text the node's name, id, description, goal shape, goal amount, unlocks, lock/unlock commands. Note : the version of the research tree is included in the bottom left of the images created by this command. Important note : due to the `debug.export-research-metadata` command not having been reintroduced yet, the research tree is the one of alpha15.2-wiretest1
+- /research-viewer [level=0] [node=0] [public=False] : Without the 'level' or 'node' parameters set, displays the entire research tree. With the 'level' parameter set to a number starting from 1, displays the corresponding level (milestone + side goals). With the 'level' and 'node' parameter set to a number starting from 1, displays the corresponding node of the corresponding level (1 for the milestone then starting from 2 for the side goals). If 'public' is set to true, the result will be sent publicly in the channel the command was executed in. Error messages will also be sent publicly if this parameter is set to true. When viewing a single node, will display via text the node's name, id, description, goal shape, goal amount, unlocks, lock/unlock commands. Note : the version of the research tree is included in the bottom left of the images created by this command. Important note : the research tree is the one of alpha15.2-wiretest1, updated version comming soon™
 
 - /msg [msg] [public=True] : A command for shortcuts to messages. Enter the message id in the 'msg' parameter. The 'public' parameter will determine if the message will be sent publicly in the channel the command was executed in or not ('True' by default !)
 

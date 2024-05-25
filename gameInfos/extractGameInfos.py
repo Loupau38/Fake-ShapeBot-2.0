@@ -24,22 +24,23 @@ def main() -> None:
         exit()
 
     # research
-    with open(RESEARCH_PATH,encoding="utf-8") as f:
-        researchRaw = json.load(f)
+    # with open(RESEARCH_PATH,encoding="utf-8") as f:
+    #     researchRaw = json.load(f)
 
-    gameVersion = researchRaw["GameVersion"]
-    extractedResearch = {"GameVersion":gameVersion}
-    extractedLevels = []
-    keys = ["Id","Title","Description","GoalShape","GoalAmount","Unlocks"]
-    for levelRaw in researchRaw["Levels"][1:]:
-        extractedLevels.append({
-            "Node" : extractKeys(levelRaw["Node"],{},keys),
-            "SideGoals" : [extractKeys(sg,{},keys) for sg in levelRaw["SideGoals"]]
-        })
-    extractedResearch["Levels"] = extractedLevels
+    # gameVersion = researchRaw["GameVersion"]
+    # extractedResearch = {"GameVersion":gameVersion}
+    # extractedLevels = []
+    # keys = ["Id","Title","Description","GoalShape","GoalAmount","Unlocks"]
+    # for levelRaw in researchRaw["Levels"][1:]:
+    #     extractedLevels.append({
+    #         "Node" : extractKeys(levelRaw["Node"],{},keys),
+    #         "SideGoals" : [extractKeys(sg,{},keys) for sg in levelRaw["SideGoals"]]
+    #     })
+    # extractedResearch["Levels"] = extractedLevels
 
-    with open(EXTRACTED_RESEARCH_PATH,"w",encoding="utf-8") as f:
-        json.dump(extractedResearch,f,indent=4,ensure_ascii=True)
+    # with open(EXTRACTED_RESEARCH_PATH,"w",encoding="utf-8") as f:
+    #     json.dump(extractedResearch,f,indent=4,ensure_ascii=True)
+    gameVersion = "0.0.0-alpha20"
 
 
 
@@ -49,15 +50,27 @@ def main() -> None:
         buildingsRaw = json.load(f)
     with open(ADDITIONAL_BUILDINGS_PATH,encoding="utf-8") as f:
         additionalBuildings = json.load(f)
-    toRemoveBuildings = [ab["Id"] for ab in additionalBuildings]
+
+    toRemoveBuildings = []
+    for ab in additionalBuildings:
+        if ab["Id"] in (b["Id"] for b in buildingsRaw):
+            toRemoveBuildings.append(ab["Id"])
+        else:
+            print(f"Additonal building {ab['Id']} not in base buildings")
 
     buildingsRaw = [b for b in buildingsRaw if b["Id"] not in toRemoveBuildings]
     extractedBuildings:dict[str,str|list] = {"GameVersion":gameVersion,"Buildings":[]}
     for variantListRaw in additionalBuildings+buildingsRaw:
-        extractedVariantList = extractKeys(variantListRaw,{},["Id","Title"])
+        curVariantListKeys = ["Id"]
+        if variantListRaw.get("Title") is not None:
+            curVariantListKeys.append("Title")
+        extractedVariantList = extractKeys(variantListRaw,{},curVariantListKeys)
         extractedVariantList["Variants"] = []
         for internalVariantListRaw in variantListRaw["Variants"]:
-            extractedInternalVariantList = extractKeys(internalVariantListRaw,{},["Id","Title"])
+            curInternalVariantListKeys = ["Id"]
+            if internalVariantListRaw.get("Title") is not None:
+                curInternalVariantListKeys.append("Title")
+            extractedInternalVariantList = extractKeys(internalVariantListRaw,{},curInternalVariantListKeys)
             extractedInternalVariantList["InternalVariants"] = []
             for buildingRaw in internalVariantListRaw["InternalVariants"]:
                 extractedBuilding = extractKeys(buildingRaw,{},["Id","Tiles"])

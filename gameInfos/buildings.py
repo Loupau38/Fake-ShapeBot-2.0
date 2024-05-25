@@ -1,6 +1,7 @@
 import globalInfos
 import utils
 import gameInfos.common
+import gameInfos.translations
 import json
 
 class VariantList:
@@ -32,10 +33,25 @@ def _loadBuildings() -> tuple[dict[str,VariantList],dict[str,InternalVariantList
     allBuildings = {}
 
     for variantListRaw in buildingsRaw["Buildings"]:
-        curVariantList = VariantList(variantListRaw["Id"],variantListRaw["Title"])
+        if variantListRaw.get("Title") is None:
+            curVariantListTitle = gameInfos.translations.getTranslation(f"building.{variantListRaw['Id']}.title")
+        else:
+            curVariantListTitle = variantListRaw["Title"]
+        curVariantList = VariantList(
+            variantListRaw["Id"],
+            curVariantListTitle
+        )
         allVariantLists[curVariantList.id] = curVariantList
         for internalVariantListRaw in variantListRaw["Variants"]:
-            curInternalVariantList = InternalVariantList(internalVariantListRaw["Id"],internalVariantListRaw["Title"],curVariantList)
+            if internalVariantListRaw.get("Title") is None:
+                curInternalVariantListTitle = gameInfos.translations.getTranslation(f"building-variant.{internalVariantListRaw['Id']}.title")
+            else:
+                curInternalVariantListTitle = internalVariantListRaw["Title"]
+            curInternalVariantList = InternalVariantList(
+                internalVariantListRaw["Id"],
+                curInternalVariantListTitle,
+                curVariantList
+            )
             allInternalVariantLists[curInternalVariantList.id] = curInternalVariantList
             curVariantList.variants.append(curInternalVariantList)
             for buildingRaw in internalVariantListRaw["InternalVariants"]:

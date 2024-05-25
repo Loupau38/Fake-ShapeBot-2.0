@@ -19,8 +19,6 @@ ISLAND_BP_TYPE = "Island"
 NUM_LAYERS = 3
 ISLAND_ROTATION_CENTER = utils.FloatPos(*([(gameInfos.islands.ISLAND_SIZE/2)-.5]*2))
 
-COLOR_PREFIX = "color-"
-
 class BlueprintError(Exception): ...
 
 class TileEntry:
@@ -208,21 +206,51 @@ def _decodeEntryExtraData(raw:str,entryType:str) -> typing.Any:
         except Exception as e:
             raise BlueprintError(f"Can't decode from bytes ({e.__class__.__name__})")
 
-    def checkIfValidColor(color:str) -> None:
-        if not color.startswith(COLOR_PREFIX):
-            raise BlueprintError(f"Doesn't start with '{COLOR_PREFIX}' prefix")
-        color = color.removeprefix(COLOR_PREFIX)
+    def getValidShapeGenerator(rawString:bytes) -> dict[str,str]:
+
+        if len(rawString) < 1:
+            raise BlueprintError("String must be at least 1 byte long")
+
+        if rawString[0] == 0:
+            return {"type":"empty"}
+
+        if len(rawString) < 2:
+            raise BlueprintError("String must be at least 2 bytes long")
+
+        if (rawString[0] != 1) or (rawString[1] != 1):
+            raise BlueprintError("First two bytes of shape generation string aren't '\\x01'")
+
+        shapeCode = standardDecode(rawString[2:],True)
+        error, valid = shapeCodeGenerator.isShapeCodeValid(shapeCode,True)
+
+        if not valid:
+            raise BlueprintError(f"Invalid shape code : {error}")
+
+        return {"type":"shape","value":shapeCode}
+
+    def getValidFluidGenerator(rawString:bytes) -> dict[str,str]:
+
+        if len(rawString) < 1:
+            raise BlueprintError("String must be at least 1 byte long")
+
+        if rawString[0] == 0:
+            return {"type":"empty"}
+
+        if len(rawString) < 2:
+            raise BlueprintError("String must be at least 2 bytes long")
+
+        if rawString[0] != 1:
+            raise BlueprintError("First byte of fluid generation string isn't '\\x01'")
+
+        try:
+            color = rawString[1:2].decode()
+        except Exception:
+            raise BlueprintError("Invalid color")
+
         if color not in globalInfos.SHAPE_COLORS:
             raise BlueprintError(f"Unknown color : '{color}'")
 
-    def getValidShapeGenerator(string:str) -> dict[str,str]:
-        if string.startswith("shape:"):
-            string = string.removeprefix("shape:")
-            error, valid = shapeCodeGenerator.isShapeCodeValid(string)
-            if not valid:
-                raise BlueprintError(f"Invalid shape code : {error}")
-            return {"type":f"shape","value":string}
-        raise BlueprintError("Invalid shape creation string")
+        return {"type":"paint","value":color}
 
     try:
         rawDecoded = base64.b64decode(raw)
@@ -260,43 +288,29 @@ def _decodeEntryExtraData(raw:str,entryType:str) -> typing.Any:
                 raise BlueprintError("Signal value must be 4 bytes long for integer signal type")
             return {"type":"int","value":int.from_bytes(signalValue,"little",signed=True)}
 
-        # shape or fluid
-        try:
-            signalValueDecoded = standardDecode(signalValue,True)
-        except BlueprintError as e:
-            raise BlueprintError(f"Error while decoding signal value : {e}")
-
         if signalType == 6: # shape
             try:
-                return {"type":"shape","value":getValidShapeGenerator(signalValueDecoded)}
+                return {"type":"shape","value":getValidShapeGenerator(signalValue)}
             except BlueprintError as e:
                 raise BlueprintError(f"Error while decoding shape signal value : {e}")
 
         # fluid
         try:
-            checkIfValidColor(signalValueDecoded)
+            return {"type":"fluid","value":getValidFluidGenerator(signalValue)}
         except BlueprintError as e:
-            raise BlueprintError(f"Invalid fluid signal value : {e}")
-        return {"type":"fluid","value":{"type":"paint","value":signalValueDecoded}}
+            raise BlueprintError(f"Error while decoding fluid signal value : {e}")
 
     if entryType == "SandboxItemProducerDefaultInternalVariant":
-        shapeCode = standardDecode(rawDecoded,True)
-        if shapeCode == "":
-            return {"type":"empty"}
         try:
-            return getValidShapeGenerator(shapeCode)
+            return getValidShapeGenerator(rawDecoded)
         except BlueprintError as e:
             raise BlueprintError(f"Error while decoding shape generation string : {e}")
 
     if entryType == "SandboxFluidProducerDefaultInternalVariant":
-        fluidCode = standardDecode(rawDecoded,True)
-        if fluidCode == "":
-            return {"type":"empty"}
         try:
-            checkIfValidColor(fluidCode)
+            return getValidFluidGenerator(rawDecoded)
         except BlueprintError as e:
-            raise BlueprintError(f"Invalid fluid : {e}")
-        return {"type":"paint","value":fluidCode}
+            raise BlueprintError(f"Error while decoding fluid generation string : {e}")
 
     # same color encoding format is used in rails, keeping code for that in case it can be useful in the future
 
@@ -338,6 +352,33 @@ def _decodeEntryExtraData(raw:str,entryType:str) -> typing.Any:
 
         return rawDecoded[0] != 0
 
+    if entryType == "LogicGateCompareInternalVariant":
+
+        if len(rawDecoded) < 1:
+            raise BlueprintError("String must be at least 1 byte long")
+
+        compareMode = rawDecoded[0]
+
+        if (compareMode < 1) or (compareMode > 6):
+            raise BlueprintError(f"Unknown compare mode : {compareMode}")
+
+        return [
+            "Equal",
+            "GreaterEqual",
+            "Greater",
+            "Less",
+            "LessEqual",
+            "NotEqual"
+        ][compareMode+1]
+
+    if entryType in ("WireGlobalTransmitterSenderInternalVariant","WireGlobalTransmitterReceiverInternalVariant"):
+        if len(rawDecoded) < 4:
+            raise BlueprintError("String must be at least 4 bytes long")
+        channel = int.from_bytes(rawDecoded[:4],"little",signed=True)
+        if channel < 0:
+            raise BlueprintError("Wire transmitter channel can't be negative")
+        return channel
+
     if entryType in ("Layout_SpaceBeltNode","Layout_SpacePipeNode","Layout_RailNode"):
         if len(rawDecoded) < 1:
             raise BlueprintError("String must be at least 1 byte long")
@@ -359,6 +400,16 @@ def _encodeEntryExtraData(extra:typing.Any,entryType:str) -> str:
     def standardEncode(string:str,emptyIsLengthNegative1:bool) -> str:
         return b64encode(utils.encodeStringWithLen(string.encode(),emptyIsLengthNegative1=emptyIsLengthNegative1))
 
+    def encodeShapeGen(shapeGen:dict[str,str]) -> bytes:
+        if shapeGen["type"] == "empty":
+            return bytes([0])
+        return bytes([1,1]) + utils.encodeStringWithLen(shapeGen["value"].encode())
+
+    def encodeFluidGen(fluidGen:dict[str,str]) -> bytes:
+        if fluidGen["type"] == "empty":
+            return bytes([0])
+        return bytes([1]) + fluidGen["value"].encode()
+
     if entryType == "LabelDefaultInternalVariant":
         return standardEncode(extra,False)
 
@@ -374,24 +425,16 @@ def _encodeEntryExtraData(extra:typing.Any,entryType:str) -> str:
             return b64encode(bytes([3])+extra["value"].to_bytes(4,"little",signed=True))
 
         if extra["type"] == "shape":
-            return b64encode(bytes([6])+utils.encodeStringWithLen(f"{extra['value']['type']}:{extra['value']['value']}".encode()))
+            return b64encode(bytes([6])+encodeShapeGen(extra["value"]))
 
         if extra["type"] == "fluid":
-            return b64encode(bytes([7])+utils.encodeStringWithLen(extra["value"].encode()))
+            return b64encode(bytes([7])+encodeFluidGen(extra["value"]))
 
     if entryType == "SandboxItemProducerDefaultInternalVariant":
-        if extra["type"] == "empty":
-            shapeCode = ""
-        else:
-            shapeCode = f"{extra['type']}:{extra['value']}"
-        return standardEncode(shapeCode,True)
+        return b64encode(encodeShapeGen(extra))
 
     if entryType == "SandboxFluidProducerDefaultInternalVariant":
-        if extra["type"] == "empty":
-            fluidCode = ""
-        else:
-            fluidCode = extra["value"]
-        return standardEncode(fluidCode,True)
+        return b64encode(encodeFluidGen(extra))
 
     # if entryType in ("TrainStationLoaderInternalVariant","TrainStationUnloaderInternalVariant"):
     #     encodedColor = 0
@@ -408,6 +451,19 @@ def _encodeEntryExtraData(extra:typing.Any,entryType:str) -> str:
     if entryType == "ButtonDefaultInternalVariant":
         return b64encode(bytes([int(extra)]))
 
+    if entryType == "LogicGateCompareInternalVariant":
+        return b64encode(bytes([{
+            "Equal" : 1,
+            "GreaterEqual" : 2,
+            "Greater" : 3,
+            "Less" : 4,
+            "LessEqual" : 5,
+            "NotEqual" : 6
+        }[extra]]))
+
+    if entryType in ("WireGlobalTransmitterSenderInternalVariant","WireGlobalTransmitterReceiverInternalVariant"):
+        return b64encode(extra.to_bytes(4,"little",signed=True))
+
     if entryType in ("Layout_SpaceBeltNode","Layout_SpacePipeNode","Layout_RailNode"):
         return b64encode(bytes([extra["type"]])+extra["layout"])
 
@@ -416,7 +472,7 @@ def _encodeEntryExtraData(extra:typing.Any,entryType:str) -> str:
 def _getDefaultEntryExtraData(entryType:str) -> typing.Any:
 
     if entryType == "LabelDefaultInternalVariant":
-        return "Click to change text"
+        return "Label"
 
     if entryType == "ConstantSignalDefaultInternalVariant":
         return {"type":"null"}
@@ -425,13 +481,19 @@ def _getDefaultEntryExtraData(entryType:str) -> typing.Any:
         return {"type":"shape","value":"CuCuCuCu"}
 
     if entryType == "SandboxFluidProducerDefaultInternalVariant":
-        return {"type":"paint","value":f"{COLOR_PREFIX}r"}
+        return {"type":"paint","value":"r"}
 
     # if entryType in ("TrainStationLoaderInternalVariant","TrainStationUnloaderInternalVariant"):
     #     return {"r":True,"g":True,"b":True,"w":True}
 
     if entryType == "ButtonDefaultInternalVariant":
         return False
+
+    if entryType == "LogicGateCompareInternalVariant":
+        return "Equal"
+
+    if entryType in ("WireGlobalTransmitterSenderInternalVariant","WireGlobalTransmitterReceiverInternalVariant"):
+        return 0
 
     if entryType in ("Layout_SpaceBeltNode","Layout_SpacePipeNode","Layout_RailNode"):
         return {
@@ -441,7 +503,7 @@ def _getDefaultEntryExtraData(entryType:str) -> typing.Any:
 
     return None
 
-def _getTileDictFromEntryList(entryList:list[BuildingEntry|IslandEntry]) -> dict[Pos,TileEntry]:
+def _getTileDictFromEntryList(entryList:list[BuildingEntry]|list[IslandEntry]) -> dict[Pos,TileEntry]:
     tileDict:dict[Pos,TileEntry] = {}
     for entry in entryList:
         if type(entry) == BuildingEntry:

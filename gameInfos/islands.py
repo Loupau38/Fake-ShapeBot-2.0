@@ -1,6 +1,7 @@
 import globalInfos
 from utils import Rotation, Pos, Size, Rect
 import gameInfos.common
+import gameInfos.translations
 import json
 
 ISLAND_SIZE = 20
@@ -212,9 +213,14 @@ def _loadIslands() -> dict[str,Island]:
 
             generatedIslandTiles.append(IslandTile(tile,buildAreas))
 
+        if islandRaw.get("Title") is None:
+            islandTitle = gameInfos.translations.getTranslation(f"island-layout.{islandRaw['Id']}.title")
+        else:
+            islandTitle = islandRaw["Title"]
+
         allIslands[islandRaw["Id"]] = Island(
             islandRaw["Id"],
-            islandRaw["Title"],
+            islandTitle,
             generatedIslandTiles,
             islandRaw.get("IslandUnitCost",len(generatedIslandTiles))
         )

@@ -1,8 +1,26 @@
-import globalInfos
 import pygame
 import math
+import typing
 
-COLORS:dict[str,tuple[int,int,int]] = {
+# hack for ease of copying this file into other projects
+try:
+    import globalInfos
+    INITIAL_SHAPE_SIZE = globalInfos.INITIAL_SHAPE_SIZE
+    SHAPE_NOTHING_CHAR = globalInfos.SHAPE_NOTHING_CHAR
+    SHAPE_LAYER_SEPARATOR = globalInfos.SHAPE_LAYER_SEPARATOR
+except ModuleNotFoundError:
+    INITIAL_SHAPE_SIZE = 500
+    SHAPE_NOTHING_CHAR = "-"
+    SHAPE_LAYER_SEPARATOR = ":"
+
+SHAPE_BORDER_COLOR = (35,25,35)
+BG_CIRCLE_COLOR = (31,41,61,25)
+SHADOW_COLOR = (50,50,50,127)
+EMPTY_COLOR = (0,0,0,0)
+PIN_COLOR = (71,69,75)
+COLORBLIND_PATTERN_COLOR = (0,0,0)
+
+BASE_COLORS:dict[str,tuple[int,int,int]] = {
     "u" : (164,158,165),
     "r" : (255,0,0),
     "g" : (0,255,0),
@@ -11,14 +29,48 @@ COLORS:dict[str,tuple[int,int,int]] = {
     "m" : (255,0,255),
     "y" : (255,255,0),
     "w" : (255,255,255),
-    "k" : (35,35,35)
+    "k" : (86,77,78),
+    "p" : (167,41,207),
+    "o" : (213,133,13)
 }
-SHAPE_BORDER_COLOR = (35,25,35)
-BG_CIRCLE_COLOR = (31,41,61,25)
-SHADOW_COLOR = (50,50,50,127)
-EMPTY_COLOR = (0,0,0,0)
-PIN_COLOR = (135,164,185)
-COLORBLIND_PATTERN_COLOR = (0,0,0)
+
+INTERNAL_COLOR_SKINS_COLORS:dict[str,dict[str,tuple[int,int,int]]] = {
+    "RGB" : {
+        "u" : BASE_COLORS["u"],
+        "r" : BASE_COLORS["r"],
+        "g" : BASE_COLORS["g"],
+        "b" : BASE_COLORS["b"],
+        "c" : BASE_COLORS["c"],
+        "m" : BASE_COLORS["m"],
+        "y" : BASE_COLORS["y"],
+        "w" : BASE_COLORS["w"]
+    },
+    "RYB" : {
+        "u" : BASE_COLORS["u"],
+        "r" : BASE_COLORS["r"],
+        "g" : BASE_COLORS["y"],
+        "b" : BASE_COLORS["b"],
+        "c" : BASE_COLORS["g"],
+        "m" : BASE_COLORS["p"],
+        "y" : BASE_COLORS["o"],
+        "w" : BASE_COLORS["k"]
+    },
+    "CMYK" : {
+        "u" : BASE_COLORS["u"],
+        "r" : BASE_COLORS["c"],
+        "g" : BASE_COLORS["m"],
+        "b" : BASE_COLORS["y"],
+        "c" : BASE_COLORS["r"],
+        "m" : BASE_COLORS["g"],
+        "y" : BASE_COLORS["b"],
+        "w" : BASE_COLORS["k"]
+    }
+}
+
+INTERNAL_COLOR_SKINS = ["RGB","RYB","CMYK"]
+INTERNAL_COLOR_SKINS_ANNOTATION = typing.Literal["RGB","RYB","CMYK"]
+EXTERNAL_COLOR_SKINS = ["RGB","RYB","CMYK","RGB-cb"]
+EXTERNAL_COLOR_SKINS_ANNOTATION = typing.Literal["RGB","RYB","CMYK","RGB-cb"]
 
 # according to 'dnSpy > ShapeMeshGenerator > GenerateShapeMesh()', this value should be 0.85
 # according to ingame screenshots, it should be 0.77
@@ -32,7 +84,7 @@ DEFAULT_BG_CIRCLE_DIAMETER = 520
 DEFAULT_SHAPE_DIAMETER = 407
 DEFAULT_BORDER_SIZE = 15
 
-FAKE_SURFACE_SIZE = globalInfos.INITIAL_SHAPE_SIZE
+FAKE_SURFACE_SIZE = INITIAL_SHAPE_SIZE
 SIZE_CHANGE_RATIO = FAKE_SURFACE_SIZE / DEFAULT_IMAGE_SIZE
 SHAPE_SIZE = DEFAULT_SHAPE_DIAMETER * SIZE_CHANGE_RATIO
 SHAPE_BORDER_SIZE = round(DEFAULT_BORDER_SIZE*SIZE_CHANGE_RATIO)
@@ -94,8 +146,15 @@ _preRenderColorblindPatterns()
 def _getScaledShapeSize(shapeSize:float,layerIndex:int) -> float:
     return shapeSize * (LAYER_SIZE_REDUCTION**layerIndex)
 
-def _drawQuadrant(quadShape:str,quadColor:str,shapeSize:float,quadIndex:int,layerIndex:int,
-    layers:list[list[str]]) -> tuple[pygame.Surface|None,pygame.Surface|None]:
+def _drawQuadrant(
+    quadShape:str,
+    quadColor:str,
+    shapeSize:float,
+    quadIndex:int,
+    layerIndex:int,
+    layers:list[list[str]],
+    colorSkin:INTERNAL_COLOR_SKINS_ANNOTATION
+    ) -> tuple[pygame.Surface|None,pygame.Surface|None]:
     # returns quadrant with shadow, border
 
     borderSize = SHAPE_BORDER_SIZE
@@ -111,10 +170,10 @@ def _drawQuadrant(quadShape:str,quadColor:str,shapeSize:float,quadIndex:int,laye
     quadSurfaceForBorder = quadSurface.copy()
 
     drawShadow = layerIndex != 0
-    color = COLORS.get(quadColor)
+    color = INTERNAL_COLOR_SKINS_COLORS[colorSkin].get(quadColor)
     borderColor = SHAPE_BORDER_COLOR
 
-    if quadShape == globalInfos.SHAPE_NOTHING_CHAR:
+    if quadShape == SHAPE_NOTHING_CHAR:
         return None, None
 
     if quadShape == "C":
@@ -300,11 +359,14 @@ def _rotateSurf(toRotate:pygame.Surface,numQuads:int,quadIndex:int,layerIndex:in
     tempSurf = pygame.transform.rotate(tempSurf,-((360/numQuads)*quadIndex))
     return tempSurf
 
-def renderShape(shapeCode:str,surfaceSize:int,colorblindPatterns:bool=False) -> pygame.Surface:
+def renderShape(shapeCode:str,surfaceSize:int,colorSkin:EXTERNAL_COLOR_SKINS_ANNOTATION=EXTERNAL_COLOR_SKINS[0]) -> pygame.Surface:
 
-    decomposedShapeCode = shapeCode.split(globalInfos.SHAPE_LAYER_SEPARATOR)
+    decomposedShapeCode = shapeCode.split(SHAPE_LAYER_SEPARATOR)
     numQuads = int(len(decomposedShapeCode[0])/2)
     decomposedShapeCode = [[layer[i*2:(i*2)+2] for i in range(numQuads)] for layer in decomposedShapeCode]
+
+    curInternalColorSkin = colorSkin.removesuffix("-cb")
+    colorblindPatterns = colorSkin.endswith("-cb")
 
     returnSurface = pygame.Surface((FAKE_SURFACE_SIZE,FAKE_SURFACE_SIZE),pygame.SRCALPHA)
     pygame.draw.circle(returnSurface,BG_CIRCLE_COLOR,(FAKE_SURFACE_SIZE/2,FAKE_SURFACE_SIZE/2),BG_CIRCLE_DIAMETER/2)
@@ -315,7 +377,7 @@ def renderShape(shapeCode:str,surfaceSize:int,colorblindPatterns:bool=False) -> 
 
         for quadIndex, quad in enumerate(layer):
 
-            quadSurface, quadBorder = _drawQuadrant(quad[0],quad[1],SHAPE_SIZE,quadIndex,layerIndex,decomposedShapeCode)
+            quadSurface, quadBorder = _drawQuadrant(quad[0],quad[1],SHAPE_SIZE,quadIndex,layerIndex,decomposedShapeCode,curInternalColorSkin)
             quadBorders.append(quadBorder)
 
             if quadSurface is None:

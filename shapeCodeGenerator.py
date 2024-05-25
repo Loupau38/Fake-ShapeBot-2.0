@@ -90,7 +90,7 @@ def _verifyShapesAndColorsInRightPos(layers:list[str]) -> tuple[str|None,bool]:
                 if nextMustBeColor and (char not in COLORS):
                     return f"{errorMsgStart} must be a color",False
                 if (not nextMustBeColor) and (char != NOTHING_CHAR):
-                    return f"{errorMsgStart} must be empty"
+                    return f"{errorMsgStart} must be empty",False
                 shapeMode = True
     return None,True
 
@@ -100,6 +100,9 @@ def _verifyAllLayersHaveSameLen(layers:list[str]) -> tuple[str|None,bool]:
         if len(layer) != expectedLayerLen:
             return f"Layer {layerIndex+2} ({layer}){f' (or 1 ({layers[0]}))' if layerIndex == 0 else ''} doesn't have the expected number of quadrants",False
     return None,True
+
+def _isShapeEmpty(layers:list[str]) -> bool:
+    return all(all(c == NOTHING_CHAR for c in l) for l in layers)
 
 def generateShapeCodes(potentialShapeCode:str) -> tuple[list[str]|str,bool]:
     """Returns (``[shapeCode0,shapeCode1,...]`` or ``errorMsg``), ``isShapeCodeValid``"""
@@ -267,12 +270,12 @@ def generateShapeCodes(potentialShapeCode:str) -> tuple[list[str]|str,bool]:
 
     noEmptyShapeCodes = []
     for shape in newShapeCodes:
-        if any((char != NOTHING_CHAR) for char in ("".join(shape))):
+        if not _isShapeEmpty(shape):
             noEmptyShapeCodes.append(globalInfos.SHAPE_LAYER_SEPARATOR.join(shape))
 
     return noEmptyShapeCodes,True
 
-def isShapeCodeValid(potentialShapeCode:str) -> tuple[None|str,bool]:
+def isShapeCodeValid(potentialShapeCode:str,emptyShapeInvalid:bool=False) -> tuple[None|str,bool]:
 
     layersResult = _separateInLayers(potentialShapeCode)
     if not layersResult[1]:
@@ -290,5 +293,8 @@ def isShapeCodeValid(potentialShapeCode:str) -> tuple[None|str,bool]:
     allLayersHaveSameLenResult = _verifyAllLayersHaveSameLen(layers)
     if not allLayersHaveSameLenResult[1]:
         return allLayersHaveSameLenResult[0],False
+
+    if emptyShapeInvalid and _isShapeEmpty(layers):
+        return "Shape is fully empty",False
 
     return None,True

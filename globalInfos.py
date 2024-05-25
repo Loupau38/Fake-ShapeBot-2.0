@@ -22,7 +22,7 @@ SLASH_CMD_BP_FILE_PARAM_DESC = "A file containing the blueprint code"
 
 # shape viewer
 INITIAL_SHAPE_SIZE = 500
-SHAPE_COLORS = ["u","r","g","b","c","m","y","w","k"]
+SHAPE_COLORS = ["u","r","g","b","c","m","y","w"]
 SHAPE_LAYER_SEPARATOR = ":"
 SHAPE_NOTHING_CHAR = "-"
 SHAPE_CHAR_REPLACEMENT = {} # unused but kept just in case
@@ -38,6 +38,7 @@ SHAPE_3D_VIEWER_LINK_START = "https://shapez.soren.codes/shape?identifier="
 GI_RESEARCH_PATH = "./gameInfos/research.json"
 GI_BUILDINGS_PATH = "./gameInfos/buildings.json"
 GI_ISLANDS_PATH = "./gameInfos/islands.json"
+GI_TRANSLATIONS_PATH = "./gameInfos/translations-en.json"
 
 # antispam
 ANTISPAM_MSG_COUNT_TRESHOLD = 4

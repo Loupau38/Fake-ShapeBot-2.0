@@ -17,7 +17,7 @@ class Operation:
         self.fullName = fullName
         self.func = func
         self.colorInputindexes = [] if colorInputIndexes is None else colorInputIndexes
-        self.image = None
+        self.image:pygame.Surface|None = None
 
 class Instruction:
 
@@ -186,7 +186,11 @@ def getInstructionsFromText(text:str) -> tuple[bool,list[Instruction]|str|Output
 
     return True,decodedInstructions
 
-def genOperationGraph(instructions:list[Instruction],showShapeVars:bool,colorblindPatterns:bool=False) -> tuple[bool,str|OutputString|tuple[tuple[io.BytesIO,int],dict[int,str]]]:
+def genOperationGraph(
+    instructions:list[Instruction],
+    showShapeVars:bool,
+    colorSkin:shapeViewer.EXTERNAL_COLOR_SKINS_ANNOTATION=shapeViewer.EXTERNAL_COLOR_SKINS[0]
+) -> tuple[bool,str|OutputString|tuple[tuple[io.BytesIO,int],dict[int,str]]]:
 
     seenInputVars = []
     seenOutputVars = []
@@ -248,7 +252,7 @@ def genOperationGraph(instructions:list[Instruction],showShapeVars:bool,colorbli
     wasProcessingInstructionIndex = None
 
     def renderShape(shapeCode) -> pygame.Surface:
-        return shapeViewer.renderShape(shapeCode,GRAPH_NODE_SIZE,colorblindPatterns)
+        return shapeViewer.renderShape(shapeCode,GRAPH_NODE_SIZE,colorSkin)
 
     def newId() -> int:
         nonlocal curId

@@ -12,6 +12,7 @@ import researchViewer
 import guildSettings
 import shapeCodeGenerator
 import autoMessages
+import shapeViewer
 
 import discord
 import json
@@ -765,7 +766,13 @@ def runDiscordBot() -> None:
         blueprint_file=globalInfos.SLASH_CMD_BP_FILE_PARAM_DESC,
         advanced="Whether or not to fully decode and encode the blueprint"
     )
-    async def changeBlueprintVersionCommand(interaction:discord.Interaction,blueprint:str,version:int,blueprint_file:discord.Attachment|None=None,advanced:bool=False) -> None:
+    async def changeBlueprintVersionCommand(
+        interaction:discord.Interaction,
+        blueprint:str,
+        version:int,
+        blueprint_file:discord.Attachment|None=None,
+        advanced:bool=False
+    ) -> None:
         if exitCommandWithoutResponse(interaction):
             return
 
@@ -856,10 +863,16 @@ def runDiscordBot() -> None:
         public="Errors will be sent publicly if this is True! Sets if the result is sent publicly in the channel",
         see_shape_vars="Whether or not to send the shape codes that were affected to every shape variable",
         spoiler="Whether or not to send the resulting image as spoiler",
-        colorblind="Whether or not to include colorblind patterns in shapes"
+        color_skin="The color skin to use for shapes"
     )
-    async def operationGraphCommand(interaction:discord.Interaction,instructions:str,
-        public:bool=False,see_shape_vars:bool=False,spoiler:bool=False,colorblind:bool=False) -> None:
+    async def operationGraphCommand(
+        interaction:discord.Interaction,
+        instructions:str,
+        public:bool=False,
+        see_shape_vars:bool=False,
+        spoiler:bool=False,
+        color_skin:shapeViewer.EXTERNAL_COLOR_SKINS_ANNOTATION=shapeViewer.EXTERNAL_COLOR_SKINS[0]
+    ) -> None:
         if exitCommandWithoutResponse(interaction):
             return
 
@@ -878,7 +891,7 @@ def runDiscordBot() -> None:
                 responseMsg = instructionsOrError
                 return
 
-            valid, responseOrError = operationGraph.genOperationGraph(instructionsOrError,see_shape_vars,colorblind)
+            valid, responseOrError = operationGraph.genOperationGraph(instructionsOrError,see_shape_vars,color_skin)
             if not valid:
                 responseMsg = responseOrError
                 return
@@ -902,7 +915,12 @@ def runDiscordBot() -> None:
         advanced="Whether or not to get extra infos about the blueprint",
         blueprint_file=globalInfos.SLASH_CMD_BP_FILE_PARAM_DESC
     )
-    async def blueprintInfoCommand(interaction:discord.Interaction,blueprint:str,advanced:bool=False,blueprint_file:discord.Attachment|None=None) -> None:
+    async def blueprintInfoCommand(
+        interaction:discord.Interaction,
+        blueprint:str,
+        advanced:bool=False,
+        blueprint_file:discord.Attachment|None=None
+    ) -> None:
         if exitCommandWithoutResponse(interaction):
             return
 
@@ -1026,12 +1044,15 @@ def runDiscordBot() -> None:
         to_create="What blueprint to create, see docs on github for specifics",
         extra="Extra data potentially required depending on the 'to_create' parameter"
     )
-    async def blueprintCreatorCommand(interaction:discord.Interaction,
+    async def blueprintCreatorCommand(
+        interaction:discord.Interaction,
         to_create:typing.Literal[
             "item-producer-w-shape",
             "all-buildings",
             "all-platforms"
-        ],extra:str="") -> None:
+        ],
+        extra:str=""
+    ) -> None:
         if exitCommandWithoutResponse(interaction):
             return
 
@@ -1132,7 +1153,12 @@ def runDiscordBot() -> None:
         blueprint=globalInfos.SLASH_CMD_BP_PARAM_DESC,
         blueprint_file=globalInfos.SLASH_CMD_BP_FILE_PARAM_DESC
     )
-    async def accessBlueprintCommand(interaction:discord.Interaction,message:str|None=None,blueprint:str|None=None,blueprint_file:discord.Attachment|None=None) -> None:
+    async def accessBlueprintCommand(
+        interaction:discord.Interaction,
+        message:str|None=None,
+        blueprint:str|None=None,
+        blueprint_file:discord.Attachment|None=None
+    ) -> None:
         if exitCommandWithoutResponse(interaction):
             return
 
@@ -1249,4 +1275,4 @@ executedOnReady = False
 globalPaused = False
 msgCommandMessages:dict[str,str]
 antiSpamLastMessages:dict[tuple[int,int],dict[str,str|list[discord.Message]|int|datetime.datetime]] = {}
-usageCooldownLastTriggered:dict[tuple[int,int],datetime.datetime] = {}
+usageCooldownLastTriggered:dict[tuple[int,int|None],datetime.datetime] = {}

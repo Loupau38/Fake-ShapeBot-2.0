@@ -19,11 +19,9 @@
     },
     {
         "Id": "TrainStationExchangerBuilding",
-        "Title": "[[building.TrainStationExchangerBuilding.title]]",
         "Variants": [
             {
                 "Id": "TrainStationShapeLoaderVariant",
-                "Title": "[[building-variant.TrainStationShapeLoaderVariant.title]]",
                 "InternalVariants": [
                     {
                         "Id": "TrainStationShapeLoaderInternalVariant",
@@ -74,7 +72,6 @@
             },
             {
                 "Id": "TrainStationShapeUnloaderVariant",
-                "Title": "[[building-variant.TrainStationShapeUnloaderVariant.title]]",
                 "InternalVariants": [
                     {
                         "Id": "TrainStationShapeUnloaderInternalVariant",
@@ -125,7 +122,6 @@
             },
             {
                 "Id": "TrainStationFluidLoaderVariant",
-                "Title": "[[building-variant.TrainStationFluidLoaderVariant.title]]",
                 "InternalVariants": [
                     {
                         "Id": "TrainStationFluidLoaderInternalVariant",
@@ -176,7 +172,6 @@
             },
             {
                 "Id": "TrainStationFluidUnloaderVariant",
-                "Title": "[[building-variant.TrainStationFluidUnloaderVariant.title]]",
                 "InternalVariants": [
                     {
                         "Id": "TrainStationFluidUnloaderInternalVariant",
