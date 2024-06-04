@@ -29,7 +29,7 @@ class TranslationString:
 
 def _loadTranslations() -> dict[str,TranslationString]:
     with open(globalInfos.GI_TRANSLATIONS_PATH,encoding="utf-8") as f:
-        raw:dict[str,str] = json.load(f)["Entries"]
+        raw:dict[str,str] = json.load(f)
     parsedTranslations:dict[str,TranslationString] = {}
     for key,rawString in raw.items():
         components:list[StringComponent|TagComponent] = []

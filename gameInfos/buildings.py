@@ -4,17 +4,10 @@ import gameInfos.common
 import gameInfos.translations
 import json
 
-class VariantList:
+class InternalVariantList:
     def __init__(self,id:str,title:str) -> None:
         self.id = id
         self.title = title
-        self.variants:list[InternalVariantList] = []
-
-class InternalVariantList:
-    def __init__(self,id:str,title:str,fromVariantList:VariantList) -> None:
-        self.id = id
-        self.title = title
-        self.fromVariantList = fromVariantList
         self.internalVariants:list[Building] = []
 
 class Building:
@@ -23,51 +16,38 @@ class Building:
         self.tiles = tiles
         self.fromInternalVariantList = fromInternalVariantList
 
-def _loadBuildings() -> tuple[dict[str,VariantList],dict[str,InternalVariantList],dict[str,Building]]:
+def _loadBuildings() -> tuple[dict[str,InternalVariantList],dict[str,Building]]:
 
     with open(globalInfos.GI_BUILDINGS_PATH,encoding="utf-8") as f:
         buildingsRaw = json.load(f)
 
-    allVariantLists = {}
     allInternalVariantLists = {}
     allBuildings = {}
 
-    for variantListRaw in buildingsRaw["Buildings"]:
-        if variantListRaw.get("Title") is None:
-            curVariantListTitle = gameInfos.translations.getTranslation(f"building.{variantListRaw['Id']}.title")
+    for internalVariantListRaw in buildingsRaw["Buildings"]:
+        if internalVariantListRaw.get("Title") is None:
+            curInternalVariantListTitle = gameInfos.translations.getTranslation(f"building-variant.{internalVariantListRaw['Id']}.title")
         else:
-            curVariantListTitle = variantListRaw["Title"]
-        curVariantList = VariantList(
-            variantListRaw["Id"],
-            curVariantListTitle
+            curInternalVariantListTitle = internalVariantListRaw["Title"]
+        curInternalVariantList = InternalVariantList(
+            internalVariantListRaw["Id"],
+            curInternalVariantListTitle
         )
-        allVariantLists[curVariantList.id] = curVariantList
-        for internalVariantListRaw in variantListRaw["Variants"]:
-            if internalVariantListRaw.get("Title") is None:
-                curInternalVariantListTitle = gameInfos.translations.getTranslation(f"building-variant.{internalVariantListRaw['Id']}.title")
-            else:
-                curInternalVariantListTitle = internalVariantListRaw["Title"]
-            curInternalVariantList = InternalVariantList(
-                internalVariantListRaw["Id"],
-                curInternalVariantListTitle,
-                curVariantList
+        allInternalVariantLists[curInternalVariantList.id] = curInternalVariantList
+        for buildingRaw in internalVariantListRaw["InternalVariants"]:
+            curBuilding = Building(
+                buildingRaw["Id"],
+                [gameInfos.common.loadPos(tile) for tile in buildingRaw["Tiles"]],
+                curInternalVariantList
             )
-            allInternalVariantLists[curInternalVariantList.id] = curInternalVariantList
-            curVariantList.variants.append(curInternalVariantList)
-            for buildingRaw in internalVariantListRaw["InternalVariants"]:
-                curBuilding = Building(
-                    buildingRaw["Id"],
-                    [gameInfos.common.loadPos(tile) for tile in buildingRaw["Tiles"]],
-                    curInternalVariantList
-                )
-                allBuildings[curBuilding.id] = curBuilding
-                curInternalVariantList.internalVariants.append(curBuilding)
+            allBuildings[curBuilding.id] = curBuilding
+            curInternalVariantList.internalVariants.append(curBuilding)
 
-    return allVariantLists, allInternalVariantLists, allBuildings
+    return allInternalVariantLists, allBuildings
 
-allVariantLists, allInternalVariantLists, allBuildings = _loadBuildings()
+allInternalVariantLists, allBuildings = _loadBuildings()
 
-def getCategorizedBuildingCounts(counts:dict[str,int]) -> dict[str,dict[str,dict[str,int]]]:
+def getCategorizedBuildingCounts(counts:dict[str,int]) -> dict[str,dict[str,int]]:
 
     internalVariants:dict[str,dict[str,int]] = {}
     for b,c in counts.items():
@@ -76,11 +56,4 @@ def getCategorizedBuildingCounts(counts:dict[str,int]) -> dict[str,dict[str,dict
             internalVariants[curIV] = {}
         internalVariants[curIV][b] = c
 
-    variants = {}
-    for iv,c in internalVariants.items():
-        curV = allInternalVariantLists[iv].fromVariantList.id
-        if variants.get(curV) is None:
-            variants[curV] = {}
-        variants[curV][iv] = c
-
-    return variants
+    return internalVariants

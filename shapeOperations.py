@@ -121,6 +121,7 @@ def _breakCrystals(layers:list[list[Quadrant]],layerIndex:int,quadIndex:int) -> 
     for curLayer,curQuad in _getConnectedMultiLayer(layers,layerIndex,quadIndex,_crystalsFused):
         layers[curLayer][curQuad] = Quadrant(NOTHING_CHAR,NOTHING_CHAR)
 
+# to do (in the future) : decide what to do in case of two crystals connected vertically above an empty quadrant : do they stick or both break
 def _makeLayersFall(layers:list[list[Quadrant]]) -> list[list[Quadrant]]:
 
     def sepInGroups(layer:list[Quadrant]) -> list[list[int]]:

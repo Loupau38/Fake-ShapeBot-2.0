@@ -338,6 +338,9 @@ async def antiSpam(message:discord.Message) -> None|bool:
 
     global antiSpamLastMessages
 
+    if globalPaused:
+        return
+
     if message.author.bot:
         return
 
@@ -414,12 +417,10 @@ def getBPInfoText(blueprint:blueprints.Blueprint,advanced:bool) -> str:
             if type(bp) == blueprints.BuildingBlueprint:
                 counts = bp.getBuildingCounts()
                 lines = []
-                for v,ivc in gameInfos.buildings.getCategorizedBuildingCounts(counts).items():
-                    lines.append(f"- `{gameInfos.buildings.allVariantLists[v].title}` : `{utils.sepInGroupsNumber(sum(sum(iv.values()) for iv in ivc.values()))}`")
-                    for iv,bc in ivc.items():
-                        lines.append(f"  - `{gameInfos.buildings.allInternalVariantLists[iv].title}` : `{utils.sepInGroupsNumber(sum(bc.values()))}`")
-                        for b,c in bc.items():
-                            lines.append(f"    - `{b}` : `{utils.sepInGroupsNumber(c)}`")
+                for iv,bc in gameInfos.buildings.getCategorizedBuildingCounts(counts).items():
+                    lines.append(f"  - `{gameInfos.buildings.allInternalVariantLists[iv].title}` : `{utils.sepInGroupsNumber(sum(bc.values()))}`")
+                    for b,c in bc.items():
+                        lines.append(f"    - `{b}` : `{utils.sepInGroupsNumber(c)}`")
                 output += "\n".join(lines)
             else:
                 counts = bp.getIslandCounts()

@@ -1,3 +1,16 @@
+## 04 Jun 24
+- Update for alphas : 21, 21.1 :
+  - Add versions in game infos
+  - Update buildings :
+    - Remove variant lists :
+      - Update extract game infos script
+      - Update buildings module in game infos
+      - Update /blueprint-info with advanced=true response formatting
+  - Update islands
+  - Add translations extraction in extract game infos script
+- Use constant from builtin string module for digit strings in utils
+- Make antispam not take effect when global paused
+
 ## 25 May 24
 - Update for alpha 20 :
   - Add version in game infos

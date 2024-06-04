@@ -1,13 +1,19 @@
+import versions
 import json
 import os
 
-BASE_PATH = os.path.expandvars("%LOCALAPPDATA%low\\tobspr Games\\shapez 2\\")
-BUILDINGS_PATH = BASE_PATH + "buildings-metadata.json"
+GAME_VERSION = versions.LATEST_GAME_VERSION
+BASE_PATH = os.path.expandvars(f"%LOCALAPPDATA%low\\tobspr Games\\shapez 2\\basedata-v{GAME_VERSION}\\")
+
+BUILDINGS_PATH = BASE_PATH + "buildings.json"
 ADDITIONAL_BUILDINGS_PATH = "./gameInfos/additionalBuildings.json"
-RESEARCH_PATH = BASE_PATH + "research-metadata-full.json"
+# RESEARCH_PATH = BASE_PATH + "research-metadata-full.json"
+TRANSLATIONS_PATH = BASE_PATH + "translations-en-US.json"
+
 EXTRACTED_BUILDINGS_PATH = "./gameInfos/buildings.json"
 EXTRACTED_RESEARCH_PATH = "./gameInfos/research.json"
 EXTRACTED_ISLANDS_PATH = "./gameInfos/islands.json"
+EXTRACTED_TRANSLATIONS_PATH = "./gameInfos/translations-en-US.json"
 
 def extractKeys(fromDict:dict,toDict:dict,keys:list[str]) -> dict:
     for key in keys:
@@ -40,7 +46,6 @@ def main() -> None:
 
     # with open(EXTRACTED_RESEARCH_PATH,"w",encoding="utf-8") as f:
     #     json.dump(extractedResearch,f,indent=4,ensure_ascii=True)
-    gameVersion = "0.0.0-alpha20"
 
 
 
@@ -59,24 +64,18 @@ def main() -> None:
             print(f"Additonal building {ab['Id']} not in base buildings")
 
     buildingsRaw = [b for b in buildingsRaw if b["Id"] not in toRemoveBuildings]
-    extractedBuildings:dict[str,str|list] = {"GameVersion":gameVersion,"Buildings":[]}
-    for variantListRaw in additionalBuildings+buildingsRaw:
-        curVariantListKeys = ["Id"]
-        if variantListRaw.get("Title") is not None:
-            curVariantListKeys.append("Title")
-        extractedVariantList = extractKeys(variantListRaw,{},curVariantListKeys)
-        extractedVariantList["Variants"] = []
-        for internalVariantListRaw in variantListRaw["Variants"]:
-            curInternalVariantListKeys = ["Id"]
-            if internalVariantListRaw.get("Title") is not None:
-                curInternalVariantListKeys.append("Title")
-            extractedInternalVariantList = extractKeys(internalVariantListRaw,{},curInternalVariantListKeys)
-            extractedInternalVariantList["InternalVariants"] = []
-            for buildingRaw in internalVariantListRaw["InternalVariants"]:
-                extractedBuilding = extractKeys(buildingRaw,{},["Id","Tiles"])
-                extractedInternalVariantList["InternalVariants"].append(extractedBuilding)
-            extractedVariantList["Variants"].append(extractedInternalVariantList)
-        extractedBuildings["Buildings"].append(extractedVariantList)
+    extractedBuildings:dict[str,str|list] = {"GameVersion":GAME_VERSION,"Buildings":[]}
+    for internalVariantListRaw in additionalBuildings+buildingsRaw:
+        curInternalVariantListKeys = ["Id"]
+        if internalVariantListRaw.get("Title") is not None:
+            curInternalVariantListKeys.append("Title")
+        extractedInternalVariantList = extractKeys(internalVariantListRaw,{},curInternalVariantListKeys)
+        extractedInternalVariantList["InternalVariants"] = []
+        for buildingRaw in internalVariantListRaw["InternalVariants"]:
+            extractedBuilding = extractKeys(buildingRaw,{},["Id","Tiles"])
+            extractedInternalVariantList["InternalVariants"].append(extractedBuilding)
+        extractedBuildings["Buildings"].append(extractedInternalVariantList)
+    extractedBuildings["Buildings"] = sorted(extractedBuildings["Buildings"],key=lambda b: b["Id"])
 
     with open(EXTRACTED_BUILDINGS_PATH,"w",encoding="utf-8") as f:
         json.dump(extractedBuildings,f,indent=4,ensure_ascii=True)
@@ -86,10 +85,18 @@ def main() -> None:
     # islands
     with open(EXTRACTED_ISLANDS_PATH,encoding="utf-8") as f:
         islandsRaw = json.load(f)
-    islandsRaw["GameVersion"] = gameVersion
+    islandsRaw["GameVersion"] = GAME_VERSION
     print("Check if islands have changed and remember to use /blueprint-creator all-buildings and all-islands")
     with open(EXTRACTED_ISLANDS_PATH,"w",encoding="utf-8") as f:
         json.dump(islandsRaw,f,indent=4,ensure_ascii=True)
+
+
+
+    # translations
+    with open(TRANSLATIONS_PATH,encoding="utf-8") as f:
+        translationsRaw = json.load(f)
+    with open(EXTRACTED_TRANSLATIONS_PATH,"w",encoding="utf-8") as f:
+        json.dump(translationsRaw["Entries"],f,ensure_ascii=False,indent=4)
 
 
 

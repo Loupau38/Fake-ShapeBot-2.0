@@ -1,5 +1,5 @@
 {
-    "GameVersion": "0.0.0-alpha20",
+    "GameVersion": 1064,
     "Islands": [
         {
             "Id": "Layout_SpaceBeltNode",
@@ -46,6 +46,36 @@
             ],
             "RemovedNotches": [],
             "ReducedSides": []
+        },
+        {
+            "Id": "Layout_SpacePipeTunnel_Entrance",
+            "Tiles": [
+                {}
+            ],
+            "RemovedNotches": [],
+            "ReducedSides": [],
+            "BuildAreaOverride": [
+                {
+                    "Tile": {},
+                    "Rects": []
+                }
+            ],
+            "IslandUnitCost": 3
+        },
+        {
+            "Id": "Layout_SpacePipeTunnel_Exit",
+            "Tiles": [
+                {}
+            ],
+            "RemovedNotches": [],
+            "ReducedSides": [],
+            "BuildAreaOverride": [
+                {
+                    "Tile": {},
+                    "Rects": []
+                }
+            ],
+            "IslandUnitCost": 3
         },
         {
             "Id": "Layout_ShapeMiner",
@@ -314,15 +344,75 @@
             "IslandUnitCost": 5
         },
         {
+            "Id": "Layout_TrainRollerCoasterLoop",
+            "Tiles": [
+                {
+                    "X": -2
+                },
+                {
+                    "X": -1
+                },
+                {},
+                {
+                    "X": 1
+                },
+                {
+                    "X": 2
+                }
+            ],
+            "RemovedNotches": [],
+            "ReducedSides": [],
+            "BuildAreaOverride": [
+                {
+                    "Tile": {
+                        "X": -2
+                    },
+                    "Rects": []
+                },
+                {
+                    "Tile": {
+                        "X": -1
+                    },
+                    "Rects": []
+                },
+                {
+                    "Tile": {},
+                    "Rects": []
+                },
+                {
+                    "Tile": {
+                        "X": 1
+                    },
+                    "Rects": []
+                },
+                {
+                    "Tile": {
+                        "X": 2
+                    },
+                    "Rects": []
+                }
+            ],
+            "IslandUnitCost": 5
+        },
+        {
             "Id": "Layout_TrainProducer_Red",
             "Tiles": [
-                {}
+                {},
+                {
+                    "X": -1
+                }
             ],
             "RemovedNotches": [],
             "ReducedSides": [],
             "BuildAreaOverride": [
                 {
                     "Tile": {},
+                    "Rects": []
+                },
+                {
+                    "Tile": {
+                        "X": -1
+                    },
                     "Rects": []
                 }
             ],
@@ -331,13 +421,22 @@
         {
             "Id": "Layout_TrainProducer_Green",
             "Tiles": [
-                {}
+                {},
+                {
+                    "X": -1
+                }
             ],
             "RemovedNotches": [],
             "ReducedSides": [],
             "BuildAreaOverride": [
                 {
                     "Tile": {},
+                    "Rects": []
+                },
+                {
+                    "Tile": {
+                        "X": -1
+                    },
                     "Rects": []
                 }
             ],
@@ -346,13 +445,22 @@
         {
             "Id": "Layout_TrainProducer_Blue",
             "Tiles": [
-                {}
+                {},
+                {
+                    "X": -1
+                }
             ],
             "RemovedNotches": [],
             "ReducedSides": [],
             "BuildAreaOverride": [
                 {
                     "Tile": {},
+                    "Rects": []
+                },
+                {
+                    "Tile": {
+                        "X": -1
+                    },
                     "Rects": []
                 }
             ],
@@ -361,13 +469,22 @@
         {
             "Id": "Layout_TrainProducer_White",
             "Tiles": [
-                {}
+                {},
+                {
+                    "X": -1
+                }
             ],
             "RemovedNotches": [],
             "ReducedSides": [],
             "BuildAreaOverride": [
                 {
                     "Tile": {},
+                    "Rects": []
+                },
+                {
+                    "Tile": {
+                        "X": -1
+                    },
                     "Rects": []
                 }
             ],
@@ -464,6 +581,7 @@
         },
         {
             "Id": "Layout_TrainLoader_Shapes_Flipped",
+            "Title": "Shape Loader Station (Mirrored)",
             "Tiles": [
                 {},
                 {
@@ -524,6 +642,7 @@
         },
         {
             "Id": "Layout_TrainUnloader_Shapes_Flipped",
+            "Title": "Shape Unloader Station (Mirrored)",
             "Tiles": [
                 {},
                 {
@@ -584,6 +703,7 @@
         },
         {
             "Id": "Layout_TrainLoader_Fluids_Flipped",
+            "Title": "Fluid Loader Station (Mirrored)",
             "Tiles": [
                 {},
                 {
@@ -644,6 +764,7 @@
         },
         {
             "Id": "Layout_TrainUnloader_Fluids_Flipped",
+            "Title": "Fluid Unloader Station (Mirrored)",
             "Tiles": [
                 {},
                 {

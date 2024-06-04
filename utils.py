@@ -1,13 +1,13 @@
 import typing
 import pygame
 import io
+from string import digits as DIGITS
 
-_NUMBERS = [str(num) for num in range(10)]
 def isNumber(string:str) -> bool:
     if string == "":
         return False
     for char in string:
-        if char not in _NUMBERS:
+        if char not in DIGITS:
             return False
     return True
 

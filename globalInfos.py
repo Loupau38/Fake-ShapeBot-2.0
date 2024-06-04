@@ -38,7 +38,7 @@ SHAPE_3D_VIEWER_LINK_START = "https://shapez.soren.codes/shape?identifier="
 GI_RESEARCH_PATH = "./gameInfos/research.json"
 GI_BUILDINGS_PATH = "./gameInfos/buildings.json"
 GI_ISLANDS_PATH = "./gameInfos/islands.json"
-GI_TRANSLATIONS_PATH = "./gameInfos/translations-en.json"
+GI_TRANSLATIONS_PATH = "./gameInfos/translations-en-US.json"
 
 # antispam
 ANTISPAM_MSG_COUNT_TRESHOLD = 4
