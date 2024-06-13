@@ -90,7 +90,7 @@ If you have the blueprint code as text, paste it in the 'blueprint' parameter. I
   - all-buildings : Will create a blueprint containing all buildings, starting at X=0 and increasing (Y=0 for all, Z is 0 or increased so no building tiles are below 0). Note : this is intended for testing external blueprint related tools, pasting the blueprint ingame will result in errors and not placed buildings
   - all-platforms : Same as above except with platforms instead of buildings
 
-- /access-blueprint [message=None] [blueprint=None] [blueprint_file=None] : Access a blueprint. To input a blueprint, provide a message ID or link in the 'message' parameter or use the 'blueprint' or 'blueprint_file' parameters. Note : if a message ID is given, the command has to be executed in the same channel the message is in. The response will include blueprint infos like in /blueprint-info with 'advanced' set to false, a link to view the blueprint in [DontMash's 3D blueprint viewer](https://shapez.soren.codes/blueprint), as well as `txt` and `spz2bp` files containing the blueprint
+- /access-blueprint [blueprint] [blueprint_file=None] : Access a blueprint. To input a blueprint, use the 'blueprint' or 'blueprint_file' parameters or right click a message and select the 'access-blueprint' app command. The response will include blueprint infos like in /blueprint-info with 'advanced' set to false, a link to view the blueprint in [DontMash's 3D blueprint viewer](https://shapez.soren.codes/blueprint), as well as `txt` and `spz2bp` files containing the blueprint
 
 ### Admin commands
 
