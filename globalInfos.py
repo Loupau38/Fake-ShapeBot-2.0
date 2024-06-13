@@ -5,7 +5,10 @@ BOT_ID = 1131514655404199936
 # owner only features
 OWNER_USERS = [579288989505421349]
 GLOBAL_LOG_CHANNEL = 1132693034673389659
-RESTRICT_TO_GUILDS = None # 'None' alone : enable everywhere, 'None' in the list : enable in DMs
+RESTRICT_TO_GUILDS = [ # 'None' alone : enable everywhere, 'None' in the list : enable in DMs
+    1000343719314198548,
+    1131614768835350709
+]
 
 # guild settings
 GUILD_SETTINGS_PATH = "./guildSettings.json"

@@ -471,6 +471,74 @@ def getBPInfoText(blueprint:blueprints.Blueprint,advanced:bool) -> str:
 
     return finalOutput
 
+async def accessBlueprintCommandInnerPart(
+    interaction:discord.Interaction,
+    getBPCode:typing.Callable[[],typing.Coroutine[typing.Any,typing.Any,tuple[str,bool]]]
+) -> None:
+    if exitCommandWithoutResponse(interaction):
+        return
+
+    async def inner() -> None:
+        nonlocal responseMsg, files
+        files = []
+
+        await interaction.response.defer(ephemeral=True)
+
+        if not await hasPermission(PermissionLvls.PRIVATE_FEATURE,interaction=interaction):
+            responseMsg = globalInfos.NO_PERMISSION_TEXT
+            return
+
+        toProcessBlueprint, bpCodeValid = await getBPCode()
+        if not bpCodeValid:
+            responseMsg = toProcessBlueprint
+            return
+
+        try:
+            decodedBP = blueprints.decodeBlueprint(toProcessBlueprint)
+        except blueprints.BlueprintError as e:
+            responseMsg = f"Error while decoding blueprint : {e}"
+            return
+
+        infoText = getBPInfoText(decodedBP,False)
+        infoText = "\n".join(f"> {l}" for l in infoText.split("\n"))
+
+        bpCodeLinkSafe = toProcessBlueprint
+        for old,new in globalInfos.LINK_CHAR_REPLACEMENT.items():
+            bpCodeLinkSafe = bpCodeLinkSafe.replace(old,new)
+        bpCode3dViewLink = f"{globalInfos.BLUEPRINT_3D_VIEWER_LINK_START}{bpCodeLinkSafe}"
+
+        responseMsg = "\n".join([
+            "**Blueprint Infos :**",
+            infoText,
+            "**Actions :**",
+            f"> [[View in 3D]](<{bpCode3dViewLink}>)"
+        ])
+
+        fileTooBig = False
+        toCreateFiles:list[tuple[str,str]] = []
+
+        if len(responseMsg) > globalInfos.MESSAGE_MAX_LENGTH:
+            toCreateFiles.append((infoText,"blueprint infos.txt"))
+            toCreateFiles.append((bpCode3dViewLink,"3D viewer link.txt"))
+            responseMsg = ""
+
+        toCreateFiles.append((toProcessBlueprint,"blueprint.txt"))
+        toCreateFiles.append((toProcessBlueprint,"blueprint.spz2bp"))
+
+        for fileContent,fileName in toCreateFiles:
+            file = msgToFile(fileContent,fileName,interaction.guild)
+            if file is None:
+                fileTooBig = True
+            else:
+                files.append(file)
+
+        if fileTooBig:
+            files.append(discord.File(globalInfos.FILE_TOO_BIG_PATH))
+
+    responseMsg:str; files:list[discord.File]
+    await inner()
+    await interaction.followup.send(responseMsg,files=files)
+
 ##################################################
 
 def runDiscordBot() -> None:
@@ -517,7 +585,7 @@ def runDiscordBot() -> None:
                     responseMsg = "\n".join(autoMsgResult)
                     try:
                         await message.reply(safenString(responseMsg),mention_author=False)
-                    except Exception:
+                    except discord.HTTPException: # error raised when og message was deleted
                         pass
 
             if publicPerm or (await hasPermission(PermissionLvls.REACTION,message=message)):
@@ -1150,123 +1218,35 @@ def runDiscordBot() -> None:
 
     @tree.command(name="access-blueprint",description="Access a blueprint")
     @discord.app_commands.describe(
-        message="A message ID or link",
         blueprint=globalInfos.SLASH_CMD_BP_PARAM_DESC,
         blueprint_file=globalInfos.SLASH_CMD_BP_FILE_PARAM_DESC
     )
     async def accessBlueprintCommand(
         interaction:discord.Interaction,
-        message:str|None=None,
-        blueprint:str|None=None,
+        blueprint:str,
         blueprint_file:discord.Attachment|None=None
     ) -> None:
-        if exitCommandWithoutResponse(interaction):
-            return
 
-        async def runCommand() -> None:
-            nonlocal responseMsg, files
-            files = []
+        async def getBPCode() -> tuple[str,bool]:
+            toProcessBlueprint = await getBPFromStringOrFile(blueprint,blueprint_file)
+            if toProcessBlueprint is None:
+                return "Error while processing blueprint file",False
+            return toProcessBlueprint,True
 
-            await interaction.response.defer(ephemeral=True)
+        await accessBlueprintCommandInnerPart(interaction,getBPCode)
 
-            if not await hasPermission(PermissionLvls.PRIVATE_FEATURE,interaction=interaction):
-                responseMsg = globalInfos.NO_PERMISSION_TEXT
-                return
+    @tree.context_menu(name="access-blueprint")
+    async def accessBlueprintContextMenu(interaction:discord.Interaction,message:discord.Message):
 
-            if (message is None) and (blueprint is None) and (blueprint_file is None):
-                responseMsg = "A message or blueprint must be provided"
-                return
+        async def getBPCode() -> tuple[str,bool]:
+            potentialBPCodes = blueprints.getPotentialBPCodesInString(
+                await concatMsgContentAndAttachments(message.content,message.attachments)
+            )
+            if len(potentialBPCodes) != 1:
+                return "Message doesn't contain exactly one blueprint code",False
+            return potentialBPCodes[0],True
 
-            if message is None:
-                toProcessBlueprint = await getBPFromStringOrFile(blueprint,blueprint_file)
-                if toProcessBlueprint is None:
-                    responseMsg = "Error while processing blueprint file"
-                    return
-
-            else:
-
-                if message.count("/") == 0:
-                    msgChannel = interaction.channel
-                    msgId = message
-
-                else:
-                    *_, msgChannel, msgId = message.split("/")
-                    try:
-                        msgChannel = int(msgChannel)
-                    except ValueError:
-                        responseMsg = "Invalid channel ID"
-                        return
-                    msgChannel = client.get_channel(msgChannel)
-                    if msgChannel is None:
-                        responseMsg = "Unknown channel"
-                        return
-
-                try:
-                    msgId = int(msgId)
-                except ValueError:
-                    responseMsg = "Invalid message ID"
-                    return
-
-                try:
-                    fetchedMsg = await msgChannel.fetch_message(msgId)
-                except Exception:
-                    responseMsg = "Error while trying to fetch message"
-                    return
-
-                potentialBPCodes = blueprints.getPotentialBPCodesInString(
-                    await concatMsgContentAndAttachments(fetchedMsg.content,fetchedMsg.attachments)
-                )
-                if len(potentialBPCodes) != 1:
-                    responseMsg = "Message doesn't contain exactly one blueprint code"
-                    return
-
-                toProcessBlueprint = potentialBPCodes[0]
-
-            try:
-                decodedBP = blueprints.decodeBlueprint(toProcessBlueprint)
-            except blueprints.BlueprintError as e:
-                responseMsg = f"Error while decoding blueprint : {e}"
-                return
-
-            infoText = getBPInfoText(decodedBP,False)
-            infoText = "\n".join(f"> {l}" for l in infoText.split("\n"))
-
-            bpCodeLinkSafe = toProcessBlueprint
-            for old,new in globalInfos.LINK_CHAR_REPLACEMENT.items():
-                bpCodeLinkSafe = bpCodeLinkSafe.replace(old,new)
-            bpCode3dViewLink = f"{globalInfos.BLUEPRINT_3D_VIEWER_LINK_START}{bpCodeLinkSafe}"
-
-            responseMsg = "\n".join([
-                "**Blueprint Infos :**",
-                infoText,
-                "**Actions :**",
-                f"> [[View in 3D]](<{bpCode3dViewLink}>)"
-            ])
-
-            fileTooBig = False
-            toCreateFiles:list[tuple[str,str]] = []
-
-            if len(responseMsg) > globalInfos.MESSAGE_MAX_LENGTH:
-                toCreateFiles.append((infoText,"blueprint infos.txt"))
-                toCreateFiles.append((bpCode3dViewLink,"3D viewer link.txt"))
-                responseMsg = ""
-
-            toCreateFiles.append((toProcessBlueprint,"blueprint.txt"))
-            toCreateFiles.append((toProcessBlueprint,"blueprint.spz2bp"))
-
-            for fileContent,fileName in toCreateFiles:
-                file = msgToFile(fileContent,fileName,interaction.guild)
-                if file is None:
-                    fileTooBig = True
-                else:
-                    files.append(file)
-
-            if fileTooBig:
-                files.append(discord.File(globalInfos.FILE_TOO_BIG_PATH))
-
-        responseMsg:str; files:list[discord.File]
-        await runCommand()
-        await interaction.followup.send(responseMsg,files=files)
+        await accessBlueprintCommandInnerPart(interaction,getBPCode)
 
     with open(globalInfos.TOKEN_PATH) as f:
         token = f.read()

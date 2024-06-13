@@ -1,3 +1,10 @@
+# 13 Jun 24
+- Make latest game version constant dynamically generated based on the game versions constant
+- Upgrade to discord.py 2.3.2
+- Set 'restrict to guilds' global infos constant
+- Update /msg all-shapes screenshot
+- Remove /access-blueprint message support and move that functionality to a message context menu command
+
 ## 04 Jun 24
 - Update for alphas : 21, 21.1 :
   - Add versions in game infos
