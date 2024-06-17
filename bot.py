@@ -242,10 +242,15 @@ def msgToFile(msg:str,filename:str,guild:discord.Guild|None) -> discord.File|Non
     return discord.File(io.BytesIO(msgBytes),filename)
 
 async def decodeAttachment(file:discord.Attachment) -> str|None:
+    if file.size > globalInfos.MAX_DOWNLOAD_TEXT_FILE_SIZE:
+        return None
     try:
         fileBytes = await file.read()
+    except (discord.HTTPException,discord.NotFound):
+        return None
+    try:
         fileStr = fileBytes.decode()
-    except Exception:
+    except UnicodeDecodeError:
         return None
     return fileStr
 
@@ -418,9 +423,9 @@ def getBPInfoText(blueprint:blueprints.Blueprint,advanced:bool) -> str:
                 counts = bp.getBuildingCounts()
                 lines = []
                 for iv,bc in gameInfos.buildings.getCategorizedBuildingCounts(counts).items():
-                    lines.append(f"  - `{gameInfos.buildings.allInternalVariantLists[iv].title}` : `{utils.sepInGroupsNumber(sum(bc.values()))}`")
+                    lines.append(f"- `{gameInfos.buildings.allInternalVariantLists[iv].title}` : `{utils.sepInGroupsNumber(sum(bc.values()))}`")
                     for b,c in bc.items():
-                        lines.append(f"    - `{b}` : `{utils.sepInGroupsNumber(c)}`")
+                        lines.append(f"  - `{b}` : `{utils.sepInGroupsNumber(c)}`")
                 output += "\n".join(lines)
             else:
                 counts = bp.getIslandCounts()
@@ -437,8 +442,8 @@ def getBPInfoText(blueprint:blueprints.Blueprint,advanced:bool) -> str:
     bpTypeTxt = "Platform" if blueprint.type == blueprints.ISLAND_BP_TYPE else "Building"
     try:
         bpCost = f"`{utils.sepInGroupsNumber(blueprint.getCost())}`"
-    except blueprints.BlueprintError as e:
-        bpCost = f"<Failed to compute (`{e.__cause__.__class__.__name__}`)>"
+    except blueprints.BlueprintError:
+        bpCost = f"<Failed to compute>"
 
     responseParts = [[
         f"Version : `{blueprint.version}` / {versionTxt}",

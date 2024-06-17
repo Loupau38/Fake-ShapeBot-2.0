@@ -1,4 +1,19 @@
-# 13 Jun 24
+## 17 Jun 24
+- Update for alpha 22.2 :
+  - Add version in game infos
+  - Update buildings, islands and translations in game infos
+  - Update space belts, pipes and rails additional data support in blueprints
+  - Add train loaders, unloaders, stops and producers additional data support in blueprints
+  - Allow strings to be shorter than their indicated length in blueprints additional data
+  - Change 'windmill' to 'diamond' in readme and /msg all-shapes
+- Add /msg play
+- Add text and image file download size limit
+- Replace `except Exception`s with more precise errors when the errors that can happen are documented
+- Remove unneeded string to bytes conversion in blueprint decoding
+- Use constants for building and island IDs in blueprints additional data
+- Fix incorrect advanced blueprint info formatting
+
+## 13 Jun 24
 - Make latest game version constant dynamically generated based on the game versions constant
 - Upgrade to discord.py 2.3.2
 - Set 'restrict to guilds' global infos constant

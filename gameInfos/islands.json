@@ -1,5 +1,5 @@
 {
-    "GameVersion": 1064,
+    "GameVersion": 1067,
     "Islands": [
         {
             "Id": "Layout_SpaceBeltNode",
@@ -7,7 +7,13 @@
                 {}
             ],
             "RemovedNotches": [],
-            "ReducedSides": []
+            "ReducedSides": [],
+            "BuildAreaOverride": [
+                {
+                    "Tile": {},
+                    "Rects": []
+                }
+            ]
         },
         {
             "Id": "Layout_SpaceBeltTunnel_Entrance",
@@ -45,7 +51,13 @@
                 {}
             ],
             "RemovedNotches": [],
-            "ReducedSides": []
+            "ReducedSides": [],
+            "BuildAreaOverride": [
+                {
+                    "Tile": {},
+                    "Rects": []
+                }
+            ]
         },
         {
             "Id": "Layout_SpacePipeTunnel_Entrance",
@@ -145,7 +157,7 @@
         },
         {
             "Id": "Layout_Normal_1",
-            "Title": "1x1 Platform",
+            "Title": "1x1 Foundation",
             "Tiles": [
                 {}
             ],
@@ -154,7 +166,7 @@
         },
         {
             "Id": "Layout_Normal_2",
-            "Title": "2x1 Platform",
+            "Title": "2x1 Foundation",
             "Tiles": [
                 {},
                 {
@@ -166,7 +178,7 @@
         },
         {
             "Id": "Layout_Normal_3_L",
-            "Title": "3L Platform",
+            "Title": "3 L Foundation",
             "Tiles": [
                 {},
                 {
@@ -181,7 +193,7 @@
         },
         {
             "Id": "Layout_Normal_4_2x2",
-            "Title": "2x2 Platform",
+            "Title": "2x2 Foundation",
             "Tiles": [
                 {},
                 {
@@ -200,7 +212,7 @@
         },
         {
             "Id": "Layout_Normal_4_T",
-            "Title": "4T Platform",
+            "Title": "4 T Foundation",
             "Tiles": [
                 {},
                 {
@@ -218,7 +230,7 @@
         },
         {
             "Id": "Layout_Normal_5_Cross",
-            "Title": "5 Cross Platform",
+            "Title": "5 Cross Foundation",
             "Tiles": [
                 {},
                 {
@@ -239,7 +251,7 @@
         },
         {
             "Id": "Layout_Normal_9_3x3",
-            "Title": "3x3 Platform",
+            "Title": "3x3 Foundation",
             "Tiles": [
                 {
                     "X": -1,
@@ -320,11 +332,11 @@
             "IslandUnitCost": 0
         },
         {
-            "Id": "Layout_TrainTwister",
+            "Id": "Layout_TrainLoader_Shapes",
             "Tiles": [
                 {},
                 {
-                    "X": 1
+                    "Y": -1
                 }
             ],
             "RemovedNotches": [],
@@ -336,59 +348,287 @@
                 },
                 {
                     "Tile": {
-                        "X": 1
+                        "Y": -1
                     },
+                    "Rects": [
+                        [
+                            8,
+                            2,
+                            4,
+                            2
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "Id": "Layout_TrainLoader_Shapes_Flipped",
+            "Title": "Shape Loader (Mirrored)",
+            "Tiles": [
+                {},
+                {
+                    "Y": 1
+                }
+            ],
+            "RemovedNotches": [],
+            "ReducedSides": [],
+            "BuildAreaOverride": [
+                {
+                    "Tile": {},
+                    "Rects": []
+                },
+                {
+                    "Tile": {
+                        "Y": 1
+                    },
+                    "Rects": [
+                        [
+                            8,
+                            16,
+                            4,
+                            2
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "Id": "Layout_TrainUnloader_Shapes",
+            "Tiles": [
+                {},
+                {
+                    "Y": -1
+                }
+            ],
+            "RemovedNotches": [],
+            "ReducedSides": [],
+            "BuildAreaOverride": [
+                {
+                    "Tile": {},
+                    "Rects": []
+                },
+                {
+                    "Tile": {
+                        "Y": -1
+                    },
+                    "Rects": [
+                        [
+                            8,
+                            2,
+                            4,
+                            2
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "Id": "Layout_TrainUnloader_Shapes_Flipped",
+            "Title": "Shape Unloader (Mirrored)",
+            "Tiles": [
+                {},
+                {
+                    "Y": 1
+                }
+            ],
+            "RemovedNotches": [],
+            "ReducedSides": [],
+            "BuildAreaOverride": [
+                {
+                    "Tile": {},
+                    "Rects": []
+                },
+                {
+                    "Tile": {
+                        "Y": 1
+                    },
+                    "Rects": [
+                        [
+                            8,
+                            16,
+                            4,
+                            2
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "Id": "Layout_TrainLoader_Fluids",
+            "Tiles": [
+                {},
+                {
+                    "Y": -1
+                }
+            ],
+            "RemovedNotches": [],
+            "ReducedSides": [],
+            "BuildAreaOverride": [
+                {
+                    "Tile": {},
+                    "Rects": []
+                },
+                {
+                    "Tile": {
+                        "Y": -1
+                    },
+                    "Rects": [
+                        [
+                            8,
+                            2,
+                            4,
+                            2
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "Id": "Layout_TrainLoader_Fluids_Flipped",
+            "Title": "Fluid Loader (Mirrored)",
+            "Tiles": [
+                {},
+                {
+                    "Y": 1
+                }
+            ],
+            "RemovedNotches": [],
+            "ReducedSides": [],
+            "BuildAreaOverride": [
+                {
+                    "Tile": {},
+                    "Rects": []
+                },
+                {
+                    "Tile": {
+                        "Y": 1
+                    },
+                    "Rects": [
+                        [
+                            8,
+                            16,
+                            4,
+                            2
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "Id": "Layout_TrainUnloader_Fluids",
+            "Tiles": [
+                {},
+                {
+                    "Y": -1
+                }
+            ],
+            "RemovedNotches": [],
+            "ReducedSides": [],
+            "BuildAreaOverride": [
+                {
+                    "Tile": {},
+                    "Rects": []
+                },
+                {
+                    "Tile": {
+                        "Y": -1
+                    },
+                    "Rects": [
+                        [
+                            8,
+                            2,
+                            4,
+                            2
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "Id": "Layout_TrainUnloader_Fluids_Flipped",
+            "Title": "Fluid Unloader (Mirrored)",
+            "Tiles": [
+                {},
+                {
+                    "Y": 1
+                }
+            ],
+            "RemovedNotches": [],
+            "ReducedSides": [],
+            "BuildAreaOverride": [
+                {
+                    "Tile": {},
+                    "Rects": []
+                },
+                {
+                    "Tile": {
+                        "Y": 1
+                    },
+                    "Rects": [
+                        [
+                            8,
+                            16,
+                            4,
+                            2
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "Id": "Layout_TrainStation",
+            "Tiles": [
+                {}
+            ],
+            "RemovedNotches": [],
+            "ReducedSides": [],
+            "BuildAreaOverride": [
+                {
+                    "Tile": {},
+                    "Rects": []
+                }
+            ]
+        },
+        {
+            "Id": "Layout_TrainShapeWagonExtension",
+            "Tiles": [
+                {}
+            ],
+            "RemovedNotches": [],
+            "ReducedSides": [],
+            "BuildAreaOverride": [
+                {
+                    "Tile": {},
                     "Rects": []
                 }
             ],
             "IslandUnitCost": 5
         },
         {
-            "Id": "Layout_TrainRollerCoasterLoop",
+            "Id": "Layout_TrainFluidWagonExtension",
             "Tiles": [
-                {
-                    "X": -2
-                },
-                {
-                    "X": -1
-                },
-                {},
-                {
-                    "X": 1
-                },
-                {
-                    "X": 2
-                }
+                {}
             ],
             "RemovedNotches": [],
             "ReducedSides": [],
             "BuildAreaOverride": [
                 {
-                    "Tile": {
-                        "X": -2
-                    },
-                    "Rects": []
-                },
-                {
-                    "Tile": {
-                        "X": -1
-                    },
-                    "Rects": []
-                },
-                {
                     "Tile": {},
                     "Rects": []
-                },
+                }
+            ],
+            "IslandUnitCost": 5
+        },
+        {
+            "Id": "Layout_TrainFillerWagonExtension",
+            "Tiles": [
+                {}
+            ],
+            "RemovedNotches": [],
+            "ReducedSides": [],
+            "BuildAreaOverride": [
                 {
-                    "Tile": {
-                        "X": 1
-                    },
-                    "Rects": []
-                },
-                {
-                    "Tile": {
-                        "X": 2
-                    },
+                    "Tile": {},
                     "Rects": []
                 }
             ],
@@ -491,70 +731,20 @@
             "IslandUnitCost": 10
         },
         {
-            "Id": "Layout_TrainShapeWagonExtension",
-            "Tiles": [
-                {}
-            ],
-            "RemovedNotches": [],
-            "ReducedSides": [],
-            "BuildAreaOverride": [
-                {
-                    "Tile": {},
-                    "Rects": []
-                }
-            ],
-            "IslandUnitCost": 5
-        },
-        {
-            "Id": "Layout_TrainFluidWagonExtension",
-            "Tiles": [
-                {}
-            ],
-            "RemovedNotches": [],
-            "ReducedSides": [],
-            "BuildAreaOverride": [
-                {
-                    "Tile": {},
-                    "Rects": []
-                }
-            ],
-            "IslandUnitCost": 5
-        },
-        {
-            "Id": "Layout_TrainFillerWagonExtension",
-            "Tiles": [
-                {}
-            ],
-            "RemovedNotches": [],
-            "ReducedSides": [],
-            "BuildAreaOverride": [
-                {
-                    "Tile": {},
-                    "Rects": []
-                }
-            ],
-            "IslandUnitCost": 5
-        },
-        {
-            "Id": "Layout_TrainStation",
-            "Tiles": [
-                {}
-            ],
-            "RemovedNotches": [],
-            "ReducedSides": [],
-            "BuildAreaOverride": [
-                {
-                    "Tile": {},
-                    "Rects": []
-                }
-            ]
-        },
-        {
-            "Id": "Layout_TrainLoader_Shapes",
+            "Id": "Layout_TrainTwister",
             "Tiles": [
                 {},
                 {
-                    "Y": -1
+                    "X": 1
+                },
+                {
+                    "X": 2
+                },
+                {
+                    "X": 3
+                },
+                {
+                    "X": 4
                 }
             ],
             "RemovedNotches": [],
@@ -566,26 +756,45 @@
                 },
                 {
                     "Tile": {
-                        "Y": -1
+                        "X": 1
                     },
-                    "Rects": [
-                        [
-                            8,
-                            2,
-                            4,
-                            2
-                        ]
-                    ]
+                    "Rects": []
+                },
+                {
+                    "Tile": {
+                        "X": 2
+                    },
+                    "Rects": []
+                },
+                {
+                    "Tile": {
+                        "X": 3
+                    },
+                    "Rects": []
+                },
+                {
+                    "Tile": {
+                        "X": 4
+                    },
+                    "Rects": []
                 }
             ]
         },
         {
-            "Id": "Layout_TrainLoader_Shapes_Flipped",
-            "Title": "Shape Loader Station (Mirrored)",
+            "Id": "Layout_TrainRollerCoasterLoop",
             "Tiles": [
                 {},
                 {
-                    "Y": 1
+                    "X": 1
+                },
+                {
+                    "X": 2
+                },
+                {
+                    "X": 3
+                },
+                {
+                    "X": 4
                 }
             ],
             "RemovedNotches": [],
@@ -597,204 +806,33 @@
                 },
                 {
                     "Tile": {
-                        "Y": 1
+                        "X": 1
                     },
-                    "Rects": [
-                        [
-                            8,
-                            16,
-                            4,
-                            2
-                        ]
-                    ]
-                }
-            ]
-        },
-        {
-            "Id": "Layout_TrainUnloader_Shapes",
-            "Tiles": [
-                {},
-                {
-                    "Y": -1
-                }
-            ],
-            "RemovedNotches": [],
-            "ReducedSides": [],
-            "BuildAreaOverride": [
-                {
-                    "Tile": {},
                     "Rects": []
                 },
                 {
                     "Tile": {
-                        "Y": -1
+                        "X": 2
                     },
-                    "Rects": [
-                        [
-                            8,
-                            2,
-                            4,
-                            2
-                        ]
-                    ]
-                }
-            ]
-        },
-        {
-            "Id": "Layout_TrainUnloader_Shapes_Flipped",
-            "Title": "Shape Unloader Station (Mirrored)",
-            "Tiles": [
-                {},
-                {
-                    "Y": 1
-                }
-            ],
-            "RemovedNotches": [],
-            "ReducedSides": [],
-            "BuildAreaOverride": [
-                {
-                    "Tile": {},
                     "Rects": []
                 },
                 {
                     "Tile": {
-                        "Y": 1
+                        "X": 3
                     },
-                    "Rects": [
-                        [
-                            8,
-                            16,
-                            4,
-                            2
-                        ]
-                    ]
-                }
-            ]
-        },
-        {
-            "Id": "Layout_TrainLoader_Fluids",
-            "Tiles": [
-                {},
-                {
-                    "Y": -1
-                }
-            ],
-            "RemovedNotches": [],
-            "ReducedSides": [],
-            "BuildAreaOverride": [
-                {
-                    "Tile": {},
                     "Rects": []
                 },
                 {
                     "Tile": {
-                        "Y": -1
+                        "X": 4
                     },
-                    "Rects": [
-                        [
-                            8,
-                            2,
-                            4,
-                            2
-                        ]
-                    ]
-                }
-            ]
-        },
-        {
-            "Id": "Layout_TrainLoader_Fluids_Flipped",
-            "Title": "Fluid Loader Station (Mirrored)",
-            "Tiles": [
-                {},
-                {
-                    "Y": 1
-                }
-            ],
-            "RemovedNotches": [],
-            "ReducedSides": [],
-            "BuildAreaOverride": [
-                {
-                    "Tile": {},
                     "Rects": []
-                },
-                {
-                    "Tile": {
-                        "Y": 1
-                    },
-                    "Rects": [
-                        [
-                            8,
-                            16,
-                            4,
-                            2
-                        ]
-                    ]
-                }
-            ]
-        },
-        {
-            "Id": "Layout_TrainUnloader_Fluids",
-            "Tiles": [
-                {},
-                {
-                    "Y": -1
-                }
-            ],
-            "RemovedNotches": [],
-            "ReducedSides": [],
-            "BuildAreaOverride": [
-                {
-                    "Tile": {},
-                    "Rects": []
-                },
-                {
-                    "Tile": {
-                        "Y": -1
-                    },
-                    "Rects": [
-                        [
-                            8,
-                            2,
-                            4,
-                            2
-                        ]
-                    ]
-                }
-            ]
-        },
-        {
-            "Id": "Layout_TrainUnloader_Fluids_Flipped",
-            "Title": "Fluid Unloader Station (Mirrored)",
-            "Tiles": [
-                {},
-                {
-                    "Y": 1
-                }
-            ],
-            "RemovedNotches": [],
-            "ReducedSides": [],
-            "BuildAreaOverride": [
-                {
-                    "Tile": {},
-                    "Rects": []
-                },
-                {
-                    "Tile": {
-                        "Y": 1
-                    },
-                    "Rects": [
-                        [
-                            8,
-                            16,
-                            4,
-                            2
-                        ]
-                    ]
                 }
             ]
         },
         {
             "Id": "Layout_HUB",
+            "Title": "Vortex Platform",
             "Tiles": [
                 {
                     "X": -1,

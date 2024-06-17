@@ -8,6 +8,7 @@ import base64
 import json
 import typing
 import math
+import binascii
 
 PREFIX = "SHAPEZ2"
 SEPARATOR = "-"
@@ -18,6 +19,52 @@ ISLAND_BP_TYPE = "Island"
 
 NUM_LAYERS = 3
 ISLAND_ROTATION_CENTER = utils.FloatPos(*([(gameInfos.islands.ISLAND_SIZE/2)-.5]*2))
+
+# use variables instead of string literals and make potential ID changes not go unnoticed at the same time
+BUILDING_IDS = {
+    "label" : gameInfos.buildings.allBuildings["LabelDefaultInternalVariant"].id,
+    "constantSignal" : gameInfos.buildings.allBuildings["ConstantSignalDefaultInternalVariant"].id,
+    "itemProducer" : gameInfos.buildings.allBuildings["SandboxItemProducerDefaultInternalVariant"].id,
+    "fluidProducer" : gameInfos.buildings.allBuildings["SandboxFluidProducerDefaultInternalVariant"].id,
+    "button" : gameInfos.buildings.allBuildings["ButtonDefaultInternalVariant"].id,
+    "compareGate" : gameInfos.buildings.allBuildings["LogicGateCompareInternalVariant"].id,
+    "wireGlobalSender" : gameInfos.buildings.allBuildings["WireGlobalTransmitterSenderInternalVariant"].id,
+    "wireGlobalReceiver" : gameInfos.buildings.allBuildings["WireGlobalTransmitterReceiverInternalVariant"].id
+}
+ISLAND_IDS = {
+    "spaceBelt" : gameInfos.islands.allIslands["Layout_SpaceBeltNode"].id,
+    "spacePipe" : gameInfos.islands.allIslands["Layout_SpacePipeNode"].id,
+    "rail" : gameInfos.islands.allIslands["Layout_RailNode"].id,
+    "trainShapesLoader" : gameInfos.islands.allIslands["Layout_TrainLoader_Shapes"].id,
+    "trainShapesLoaderFlipped" : gameInfos.islands.allIslands["Layout_TrainLoader_Shapes_Flipped"].id,
+    "trainShapesUnloader" : gameInfos.islands.allIslands["Layout_TrainUnloader_Shapes"].id,
+    "trainShapesUnloaderFlipped" : gameInfos.islands.allIslands["Layout_TrainUnloader_Shapes_Flipped"].id,
+    "trainFluidsLoader" : gameInfos.islands.allIslands["Layout_TrainLoader_Fluids"].id,
+    "trainFluidsLoaderFlipped" : gameInfos.islands.allIslands["Layout_TrainLoader_Fluids_Flipped"].id,
+    "trainFluidsUnloader" : gameInfos.islands.allIslands["Layout_TrainUnloader_Fluids"].id,
+    "trainFluidsUnloaderFlipped" : gameInfos.islands.allIslands["Layout_TrainUnloader_Fluids_Flipped"].id,
+    "trainStop" : gameInfos.islands.allIslands["Layout_TrainStation"].id,
+    "trainProducerRed" : gameInfos.islands.allIslands["Layout_TrainProducer_Red"].id,
+    "trainProducerGreen" : gameInfos.islands.allIslands["Layout_TrainProducer_Green"].id,
+    "trainProducerBlue" : gameInfos.islands.allIslands["Layout_TrainProducer_Blue"].id,
+    "trainProducerWhite" : gameInfos.islands.allIslands["Layout_TrainProducer_White"].id
+}
+
+ISLANDS_WITH_NOT_STRICT_RAIL_EXTRA_DATA = [ISLAND_IDS[id] for id in (
+    "trainShapesLoader",
+    "trainShapesLoaderFlipped",
+    "trainShapesUnloader",
+    "trainShapesUnloaderFlipped",
+    "trainFluidsLoader",
+    "trainFluidsLoaderFlipped",
+    "trainFluidsUnloader",
+    "trainFluidsUnloaderFlipped",
+    "trainStop",
+    "trainProducerRed",
+    "trainProducerGreen",
+    "trainProducerBlue",
+    "trainProducerWhite"
+)]
 
 class BlueprintError(Exception): ...
 
@@ -158,8 +205,8 @@ class Blueprint:
             return 0
         try:
             return math.ceil((buildingCount-1) ** 1.3)
-        except Exception as e:
-            raise BlueprintError("Failed to compute blueprint cost") from e
+        except OverflowError:
+            raise BlueprintError("Failed to compute blueprint cost")
 
     def getIslandUnitCost(self) -> int:
         if self.islandBP is None:
@@ -203,8 +250,8 @@ def _decodeEntryExtraData(raw:str,entryType:str) -> typing.Any:
             raise BlueprintError(f"Error while decoding string : {e}")
         try:
             return decodedBytes.decode()
-        except Exception as e:
-            raise BlueprintError(f"Can't decode from bytes ({e.__class__.__name__})")
+        except UnicodeDecodeError:
+            raise BlueprintError(f"Can't decode from bytes")
 
     def getValidShapeGenerator(rawString:bytes) -> dict[str,str]:
 
@@ -244,7 +291,7 @@ def _decodeEntryExtraData(raw:str,entryType:str) -> typing.Any:
 
         try:
             color = rawString[1:2].decode()
-        except Exception:
+        except UnicodeDecodeError:
             raise BlueprintError("Invalid color")
 
         if color not in globalInfos.SHAPE_COLORS:
@@ -253,14 +300,14 @@ def _decodeEntryExtraData(raw:str,entryType:str) -> typing.Any:
         return {"type":"paint","value":color}
 
     try:
-        rawDecoded = base64.b64decode(raw)
-    except Exception as e:
-        raise BlueprintError(f"Can't decode from base64 ({e.__class__.__name__})")
+        rawDecoded = base64.b64decode(raw,validate=True)
+    except binascii.Error:
+        raise BlueprintError(f"Can't decode from base64")
 
-    if entryType == "LabelDefaultInternalVariant":
+    if entryType == BUILDING_IDS["label"]:
         return standardDecode(rawDecoded,False)
 
-    if entryType == "ConstantSignalDefaultInternalVariant":
+    if entryType == BUILDING_IDS["constantSignal"]:
 
         if len(rawDecoded) < 1:
             raise BlueprintError("String must be at least 1 byte long")
@@ -300,13 +347,13 @@ def _decodeEntryExtraData(raw:str,entryType:str) -> typing.Any:
         except BlueprintError as e:
             raise BlueprintError(f"Error while decoding fluid signal value : {e}")
 
-    if entryType == "SandboxItemProducerDefaultInternalVariant":
+    if entryType == BUILDING_IDS["itemProducer"]:
         try:
             return getValidShapeGenerator(rawDecoded)
         except BlueprintError as e:
             raise BlueprintError(f"Error while decoding shape generation string : {e}")
 
-    if entryType == "SandboxFluidProducerDefaultInternalVariant":
+    if entryType == BUILDING_IDS["fluidProducer"]:
         try:
             return getValidFluidGenerator(rawDecoded)
         except BlueprintError as e:
@@ -345,14 +392,14 @@ def _decodeEntryExtraData(raw:str,entryType:str) -> typing.Any:
     #         "b" : (encodedColor & 1) != 0
     #     }
 
-    if entryType == "ButtonDefaultInternalVariant":
+    if entryType == BUILDING_IDS["button"]:
 
         if len(rawDecoded) < 1:
             raise BlueprintError("String must be at least 1 byte long")
 
         return rawDecoded[0] != 0
 
-    if entryType == "LogicGateCompareInternalVariant":
+    if entryType == BUILDING_IDS["compareGate"]:
 
         if len(rawDecoded) < 1:
             raise BlueprintError("String must be at least 1 byte long")
@@ -371,7 +418,7 @@ def _decodeEntryExtraData(raw:str,entryType:str) -> typing.Any:
             "NotEqual"
         ][compareMode+1]
 
-    if entryType in ("WireGlobalTransmitterSenderInternalVariant","WireGlobalTransmitterReceiverInternalVariant"):
+    if entryType in (BUILDING_IDS["wireGlobalSender"],BUILDING_IDS["wireGlobalReceiver"]):
         if len(rawDecoded) < 4:
             raise BlueprintError("String must be at least 4 bytes long")
         channel = int.from_bytes(rawDecoded[:4],"little",signed=True)
@@ -379,13 +426,29 @@ def _decodeEntryExtraData(raw:str,entryType:str) -> typing.Any:
             raise BlueprintError("Wire transmitter channel can't be negative")
         return channel
 
-    if entryType in ("Layout_SpaceBeltNode","Layout_SpacePipeNode","Layout_RailNode"):
-        if len(rawDecoded) < 1:
-            raise BlueprintError("String must be at least 1 byte long")
-        layoutType = rawDecoded[0]
+    if (
+        (entryType in (ISLAND_IDS["spaceBelt"],ISLAND_IDS["spacePipe"],ISLAND_IDS["rail"]))
+        or (entryType in ISLANDS_WITH_NOT_STRICT_RAIL_EXTRA_DATA)
+    ):
+
+        # to remove if the game no longer accepts no extra data for these islands
+        if (entryType in ISLANDS_WITH_NOT_STRICT_RAIL_EXTRA_DATA) and (rawDecoded == b""):
+            return _getDefaultEntryExtraData(entryType)
+
+        if len(rawDecoded) < 2:
+            raise BlueprintError("String must be at least 2 bytes long")
+
+        layoutHeader = rawDecoded[0]
+        if (entryType in (ISLAND_IDS["spaceBelt"],ISLAND_IDS["spacePipe"])) and (layoutHeader != 20):
+            raise BlueprintError("First byte of space belt/pipe layout isn't '\\x14'")
+        if ((entryType == ISLAND_IDS["rail"]) or (entryType in ISLANDS_WITH_NOT_STRICT_RAIL_EXTRA_DATA)) and (layoutHeader != 10):
+            raise BlueprintError("First byte of rail layout isn't '\\x0a'")
+
+        layoutType = rawDecoded[1]
         if layoutType > 3:
             raise BlueprintError(f"Unknown space belt/pipe/rail layout type : {layoutType}")
-        return {"type":layoutType,"layout":rawDecoded[1:]}
+
+        return {"type":layoutType,"layout":rawDecoded[2:]}
 
     return None
 
@@ -410,10 +473,10 @@ def _encodeEntryExtraData(extra:typing.Any,entryType:str) -> str:
             return bytes([0])
         return bytes([1]) + fluidGen["value"].encode()
 
-    if entryType == "LabelDefaultInternalVariant":
+    if entryType == BUILDING_IDS["label"]:
         return standardEncode(extra,False)
 
-    if entryType == "ConstantSignalDefaultInternalVariant":
+    if entryType == BUILDING_IDS["constantSignal"]:
 
         if extra["type"] in ("empty","null","conflict"):
             return b64encode(bytes([{"empty":0,"null":1,"conflict":2}[extra["type"]]]))
@@ -430,10 +493,10 @@ def _encodeEntryExtraData(extra:typing.Any,entryType:str) -> str:
         if extra["type"] == "fluid":
             return b64encode(bytes([7])+encodeFluidGen(extra["value"]))
 
-    if entryType == "SandboxItemProducerDefaultInternalVariant":
+    if entryType == BUILDING_IDS["itemProducer"]:
         return b64encode(encodeShapeGen(extra))
 
-    if entryType == "SandboxFluidProducerDefaultInternalVariant":
+    if entryType == BUILDING_IDS["fluidProducer"]:
         return b64encode(encodeFluidGen(extra))
 
     # if entryType in ("TrainStationLoaderInternalVariant","TrainStationUnloaderInternalVariant"):
@@ -448,10 +511,10 @@ def _encodeEntryExtraData(extra:typing.Any,entryType:str) -> str:
     #         encodedColor += 1
     #     return b64encode(encodedColor.to_bytes(4,"little"))
 
-    if entryType == "ButtonDefaultInternalVariant":
+    if entryType == BUILDING_IDS["button"]:
         return b64encode(bytes([int(extra)]))
 
-    if entryType == "LogicGateCompareInternalVariant":
+    if entryType == BUILDING_IDS["compareGate"]:
         return b64encode(bytes([{
             "Equal" : 1,
             "GreaterEqual" : 2,
@@ -461,44 +524,58 @@ def _encodeEntryExtraData(extra:typing.Any,entryType:str) -> str:
             "NotEqual" : 6
         }[extra]]))
 
-    if entryType in ("WireGlobalTransmitterSenderInternalVariant","WireGlobalTransmitterReceiverInternalVariant"):
+    if entryType in (BUILDING_IDS["wireGlobalSender"],BUILDING_IDS["wireGlobalReceiver"]):
         return b64encode(extra.to_bytes(4,"little",signed=True))
 
-    if entryType in ("Layout_SpaceBeltNode","Layout_SpacePipeNode","Layout_RailNode"):
-        return b64encode(bytes([extra["type"]])+extra["layout"])
+    if (
+        (entryType in (ISLAND_IDS["spaceBelt"],ISLAND_IDS["spacePipe"],ISLAND_IDS["rail"]))
+        or (entryType in ISLANDS_WITH_NOT_STRICT_RAIL_EXTRA_DATA)
+    ):
+        return b64encode(
+            (b"\x14" if entryType in (ISLAND_IDS["spaceBelt"],ISLAND_IDS["spacePipe"]) else b"\x0a")
+            + bytes([extra["type"]])
+            + extra["layout"]
+        )
 
     raise ValueError(f"Attempt to encode extra data of entry that shouldn't have any ({entryType})")
 
 def _getDefaultEntryExtraData(entryType:str) -> typing.Any:
 
-    if entryType == "LabelDefaultInternalVariant":
+    if entryType == BUILDING_IDS["label"]:
         return "Label"
 
-    if entryType == "ConstantSignalDefaultInternalVariant":
+    if entryType == BUILDING_IDS["constantSignal"]:
         return {"type":"null"}
 
-    if entryType == "SandboxItemProducerDefaultInternalVariant":
+    if entryType == BUILDING_IDS["itemProducer"]:
         return {"type":"shape","value":"CuCuCuCu"}
 
-    if entryType == "SandboxFluidProducerDefaultInternalVariant":
+    if entryType == BUILDING_IDS["fluidProducer"]:
         return {"type":"paint","value":"r"}
 
     # if entryType in ("TrainStationLoaderInternalVariant","TrainStationUnloaderInternalVariant"):
     #     return {"r":True,"g":True,"b":True,"w":True}
 
-    if entryType == "ButtonDefaultInternalVariant":
+    if entryType == BUILDING_IDS["button"]:
         return False
 
-    if entryType == "LogicGateCompareInternalVariant":
+    if entryType == BUILDING_IDS["compareGate"]:
         return "Equal"
 
-    if entryType in ("WireGlobalTransmitterSenderInternalVariant","WireGlobalTransmitterReceiverInternalVariant"):
+    if entryType in (BUILDING_IDS["wireGlobalSender"],BUILDING_IDS["wireGlobalReceiver"]):
         return 0
 
-    if entryType in ("Layout_SpaceBeltNode","Layout_SpacePipeNode","Layout_RailNode"):
+    if (
+        (entryType in (ISLAND_IDS["spaceBelt"],ISLAND_IDS["spacePipe"],ISLAND_IDS["rail"]))
+        or (entryType in ISLANDS_WITH_NOT_STRICT_RAIL_EXTRA_DATA)
+    ):
         return {
             "type" : 1,
-            "layout" : bytes([0,0]) + (bytes([7,0,0,0]) if entryType == "Layout_RailNode" else bytes())
+            "layout" : bytes([0,0]) + (
+                bytes([7,0,0,0])
+                if (entryType == ISLAND_IDS["rail"]) or (entryType in ISLANDS_WITH_NOT_STRICT_RAIL_EXTRA_DATA) else
+                bytes()
+            )
         }
 
     return None
@@ -567,13 +644,9 @@ def _decodeBlueprintFirstPart(rawBlueprint:str) -> tuple[dict,int]:
             raise BlueprintError("Empty encoded section")
 
         try:
-            encodedBP = encodedBP.encode()
-        except Exception as e:
-            raise BlueprintError(f"Can't encode in bytes ({e.__class__.__name__})")
-        try:
-            encodedBP = base64.b64decode(encodedBP)
-        except Exception as e:
-            raise BlueprintError(f"Can't decode from base64 ({e.__class__.__name__})")
+            encodedBP = base64.b64decode(encodedBP,validate=True)
+        except binascii.Error:
+            raise BlueprintError(f"Can't decode from base64")
         try:
             encodedBP = gzip.decompress(encodedBP)
         except Exception as e:

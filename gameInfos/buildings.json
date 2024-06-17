@@ -1,5 +1,5 @@
 {
-    "GameVersion": 1064,
+    "GameVersion": 1067,
     "Buildings": [
         {
             "Id": "BeltDefaultVariant",
@@ -272,10 +272,10 @@
             ]
         },
         {
-            "Id": "FluidBridgeReceiverVariant",
+            "Id": "FluidPortReceiverVariant",
             "InternalVariants": [
                 {
-                    "Id": "FluidBridgeReceiverInternalVariant",
+                    "Id": "FluidPortReceiverInternalVariant",
                     "Tiles": [
                         {
                             "X": 0,
@@ -287,10 +287,10 @@
             ]
         },
         {
-            "Id": "FluidBridgeSenderVariant",
+            "Id": "FluidPortSenderVariant",
             "InternalVariants": [
                 {
-                    "Id": "FluidBridgeSenderInternalVariant",
+                    "Id": "FluidPortSenderInternalVariant",
                     "Tiles": [
                         {
                             "X": 0,
@@ -1268,31 +1268,6 @@
             "InternalVariants": [
                 {
                     "Id": "SandboxItemProducerDefaultInternalVariant",
-                    "Tiles": [
-                        {
-                            "X": 0,
-                            "Y": 0,
-                            "Z": 0
-                        }
-                    ]
-                }
-            ]
-        },
-        {
-            "Id": "SpaceBeltTransportVariantBuilding",
-            "InternalVariants": [
-                {
-                    "Id": "BlobCatcherInternalVariant",
-                    "Tiles": [
-                        {
-                            "X": 0,
-                            "Y": 0,
-                            "Z": 0
-                        }
-                    ]
-                },
-                {
-                    "Id": "BlobLauncherInternalVariant",
                     "Tiles": [
                         {
                             "X": 0,

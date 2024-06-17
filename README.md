@@ -10,7 +10,7 @@ Put your shape code and parameters in `{}`
   - C : Circle
   - R : Square/Rectangle
   - S : Star/Spike
-  - W : Windmill/Fan
+  - W : Diamond
   - c : Crystal
 - Uncolorable :
   - P : Pin

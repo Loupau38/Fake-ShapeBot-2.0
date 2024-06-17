@@ -1,3 +1,4 @@
+import globalInfos
 import discord
 import pygame
 import io
@@ -29,12 +30,21 @@ async def _debugMenuCheck(message:discord.Message) -> str|None:
     if len(message.attachments) != 1:
         return None
 
-    try:
-        imageBytes = await message.attachments[0].read()
-        with io.BytesIO(imageBytes) as buffer:
-            image = pygame.image.load(buffer)
-    except Exception:
+    attachement = message.attachments[0]
+
+    if attachement.size > globalInfos.MAX_DOWNLOAD_IMAGE_FILE_SIZE:
         return None
+
+    try:
+        imageBytes = await attachement.read()
+    except (discord.HTTPException,discord.NotFound):
+        return None
+
+    with io.BytesIO(imageBytes) as buffer:
+        try:
+            image = pygame.image.load(buffer)
+        except pygame.error:
+            return None
 
     imageWidth, imageHeight = image.get_size()
 

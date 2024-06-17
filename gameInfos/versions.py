@@ -20,7 +20,8 @@ GAME_VERSIONS = {
     1042 : ["a18"],
     1045 : ["a19"],
     1057 : ["a20"],
-    1064 : ["a21","a21.1"]
+    1064 : ["a21","a21.1"],
+    1067 : ["a22.2"]
 }
 LATEST_GAME_VERSION = next(iter(reversed(GAME_VERSIONS.keys())))
 LATEST_PUBLIC_GAME_VERSION = 1033

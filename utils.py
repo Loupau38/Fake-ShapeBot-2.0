@@ -115,20 +115,21 @@ def sepInGroupsNumber(num:int) -> str:
     return f"{num:,}"
 
 def decodeStringWithLen(string:bytes,numBytesForLen:int=2,emptyIsLengthNegative1:bool=True) -> bytes:
+
     stringLen = len(string)
     if stringLen < numBytesForLen:
         raise ValueError(f"String must be at least {numBytesForLen} characters long but is {stringLen}")
+
     encodedLength, string = string[:numBytesForLen], string[numBytesForLen:]
     decodedLength = int.from_bytes(encodedLength,"little",signed=True)
+
     if (emptyIsLengthNegative1) and (decodedLength == -1):
         decodedLength = 0
+
     if decodedLength < 0:
         raise ValueError(f"String length can't be negative : {decodedLength}")
-    stringLen = len(string)
-    if stringLen < decodedLength:
-        raise ValueError(f"String is shorter than expected length ({stringLen} vs {decodedLength})")
-    decodedString = string[:decodedLength]
-    return decodedString
+
+    return string[:decodedLength]
 
 def encodeStringWithLen(string:bytes,numBytesForLen:int=2,emptyIsLengthNegative1:bool=True) -> bytes:
     stringLen = len(string)
