@@ -154,7 +154,10 @@ async def hasPermission(requestedLvl:int,*,message:discord.Message|None=None,int
         guildId = interaction.guild_id
         if interaction.guild is not None:
             userRoles = interaction.user.roles[1:]
-            adminPerm = interaction.user.guild_permissions.administrator
+            if interaction.is_user_integration(): # potentially a bodge bug fix
+                adminPerm = False
+            else:
+                adminPerm = interaction.user.guild_permissions.administrator
 
     else:
         raise ValueError("No message or interaction in 'hasPermission' function")
@@ -459,6 +462,7 @@ def getBPInfoText(blueprint:blueprints.Blueprint,advanced:bool) -> str:
             f"Building size : `{buildingSize.width}`x`{buildingSize.height}`x`{buildingSize.depth}`",
             f"Building tiles : `{utils.sepInGroupsNumber(blueprint.buildingBP.getTileCount())}`"
         ])
+        blueprintIcons = blueprint.buildingBP.icons
 
     if blueprint.islandBP is not None:
         islandSize = blueprint.islandBP.getSize()
@@ -467,6 +471,20 @@ def getBPInfoText(blueprint:blueprints.Blueprint,advanced:bool) -> str:
             f"Platform size : `{islandSize.width}`x`{islandSize.height}`",
             f"Platform tiles : `{utils.sepInGroupsNumber(blueprint.islandBP.getTileCount())}`"
         ])
+        blueprintIcons = blueprint.islandBP.icons
+
+    blueprintIconsStr = []
+    for icon in blueprintIcons:
+        if icon.type == "empty":
+            blueprintIconsStr.append("<empty>")
+        elif icon.type == "icon":
+            blueprintIconsStr.append(f"`{icon.value}`")
+        else:
+            blueprintIconsStr.append(f"{{{icon.value}}}")
+
+    responseParts.append([
+        f"Icons : {', '.join(blueprintIconsStr)}"
+    ])
 
     finalOutput = "\n".join(", ".join(part) for part in responseParts)
 
@@ -822,6 +840,7 @@ def runDiscordBot() -> None:
 
     @tree.command(name="view-shapes",description="View shapes, useful if the bot says a shape code is invalid and you want to know why")
     @discord.app_commands.describe(message="The message like you would normally send it")
+    @discord.app_commands.allowed_installs(guilds=True,users=True)
     async def viewShapesCommand(interaction:discord.Interaction,message:str) -> None:
         if exitCommandWithoutResponse(interaction):
             return
@@ -840,6 +859,7 @@ def runDiscordBot() -> None:
         blueprint_file=globalInfos.SLASH_CMD_BP_FILE_PARAM_DESC,
         advanced="Whether or not to fully decode and encode the blueprint"
     )
+    @discord.app_commands.allowed_installs(guilds=True,users=True)
     async def changeBlueprintVersionCommand(
         interaction:discord.Interaction,
         blueprint:str,
@@ -939,6 +959,7 @@ def runDiscordBot() -> None:
         spoiler="Whether or not to send the resulting image as spoiler",
         color_skin="The color skin to use for shapes"
     )
+    @discord.app_commands.allowed_installs(guilds=True,users=True)
     async def operationGraphCommand(
         interaction:discord.Interaction,
         instructions:str,
@@ -989,6 +1010,7 @@ def runDiscordBot() -> None:
         advanced="Whether or not to get extra infos about the blueprint",
         blueprint_file=globalInfos.SLASH_CMD_BP_FILE_PARAM_DESC
     )
+    @discord.app_commands.allowed_installs(guilds=True,users=True)
     async def blueprintInfoCommand(
         interaction:discord.Interaction,
         blueprint:str,
@@ -1100,6 +1122,7 @@ def runDiscordBot() -> None:
         public="Whether to send the message publicly or not"
     )
     @discord.app_commands.choices(msg=[discord.app_commands.Choice(name=id,value=id) for id in msgCommandMessages.keys()])
+    @discord.app_commands.allowed_installs(guilds=True,users=True)
     async def msgCommand(interaction:discord.Interaction,msg:discord.app_commands.Choice[str],public:bool=True) -> None:
         if exitCommandWithoutResponse(interaction):
             return
@@ -1118,6 +1141,7 @@ def runDiscordBot() -> None:
         to_create="What blueprint to create, see docs on github for specifics",
         extra="Extra data potentially required depending on the 'to_create' parameter"
     )
+    @discord.app_commands.allowed_installs(guilds=True,users=True)
     async def blueprintCreatorCommand(
         interaction:discord.Interaction,
         to_create:typing.Literal[
@@ -1210,7 +1234,9 @@ def runDiscordBot() -> None:
                 responseMsg = blueprints.encodeBlueprint(blueprints.Blueprint(
                     *blueprintInfos,
                     (blueprints.BuildingBlueprint if toCreateBuildings else blueprints.IslandBlueprint)
-                    (entryList)
+                    (entryList,blueprints.getDefaultBlueprintIcons(
+                        blueprints.BUILDING_BP_TYPE if toCreateBuildings else blueprints.ISLAND_BP_TYPE
+                    ))
                 ))
                 noErrors = True
             except blueprints.BlueprintError as e:
@@ -1226,6 +1252,7 @@ def runDiscordBot() -> None:
         blueprint=globalInfos.SLASH_CMD_BP_PARAM_DESC,
         blueprint_file=globalInfos.SLASH_CMD_BP_FILE_PARAM_DESC
     )
+    @discord.app_commands.allowed_installs(guilds=True,users=True)
     async def accessBlueprintCommand(
         interaction:discord.Interaction,
         blueprint:str,
@@ -1241,6 +1268,7 @@ def runDiscordBot() -> None:
         await accessBlueprintCommandInnerPart(interaction,getBPCode)
 
     @tree.context_menu(name="access-blueprint")
+    @discord.app_commands.allowed_installs(guilds=True,users=True)
     async def accessBlueprintContextMenu(interaction:discord.Interaction,message:discord.Message):
 
         async def getBPCode() -> tuple[str,bool]:

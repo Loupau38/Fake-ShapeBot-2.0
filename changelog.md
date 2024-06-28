@@ -1,3 +1,17 @@
+## 28 Jun 24
+- Update for alphas : 22.3, 22.4, 22.4-wiretest-1 :
+  - Add versions in game infos
+  - Update buildings, islands, translations
+  - Update blueprints :
+    - Make `$type` key mandatory
+    - Make additional data required for train related platforms
+    - Make no additional data be a single `\x00` byte
+    - Add support for blueprint icons
+- Upgrade to discord.py 2.4.0
+- Add user install support for some commands
+- Make 'copy-from' function in translation strings able to load strings that haven't been parsed yet
+- Make translation string objects use the components from after the 'copy-from' function has been used
+
 ## 17 Jun 24
 - Update for alpha 22.2 :
   - Add version in game infos

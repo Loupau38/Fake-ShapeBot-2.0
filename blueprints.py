@@ -50,7 +50,7 @@ ISLAND_IDS = {
     "trainProducerWhite" : gameInfos.islands.allIslands["Layout_TrainProducer_White"].id
 }
 
-ISLANDS_WITH_NOT_STRICT_RAIL_EXTRA_DATA = [ISLAND_IDS[id] for id in (
+ISLANDS_WITH_RAIL_EXTRA_DATA = [ISLAND_IDS[id] for id in (
     "trainShapesLoader",
     "trainShapesLoaderFlipped",
     "trainShapesUnloader",
@@ -68,11 +68,32 @@ ISLANDS_WITH_NOT_STRICT_RAIL_EXTRA_DATA = [ISLAND_IDS[id] for id in (
 
 class BlueprintError(Exception): ...
 
+class BlueprintIcon:
+
+    def __init__(self,raw:str|None) -> None:
+        self.type:typing.Literal["empty","icon","shape"]
+        if raw is None:
+            self.type = "empty"
+        elif raw.startswith("icon:"):
+            self.type = "icon"
+            self.value = raw.removeprefix("icon:")
+        else:
+            self.type = "shape"
+            self.value = raw.removeprefix("shape:")
+
+    def _encode(self) -> str|None:
+        if self.type == "empty":
+            return None
+        if self.type == "icon":
+            return f"icon:{self.value}"
+        return f"shape:{self.value}"
+
 class TileEntry:
     def __init__(self,referTo) -> None:
         self.referTo:BuildingEntry|IslandEntry = referTo
 
 class BuildingEntry:
+
     def __init__(self,pos:Pos,rotation:Rotation,type:gameInfos.buildings.Building,extra:typing.Any) -> None:
         self.pos = pos
         self.rotation = rotation
@@ -91,13 +112,15 @@ class BuildingEntry:
         _omitKeyIfDefault(toReturn,"Y",self.pos.y)
         _omitKeyIfDefault(toReturn,"L",self.pos.z)
         _omitKeyIfDefault(toReturn,"R",self.rotation.value)
-        _omitKeyIfDefault(toReturn,"C",_encodeEntryExtraData(self.extra,self.type.id))
+        _omitKeyIfDefault(toReturn,"C",_encodeEntryExtraData(self.extra,self.type.id,False))
         return toReturn
 
 class BuildingBlueprint:
-    def __init__(self,asEntryList:list[BuildingEntry]) -> None:
+
+    def __init__(self,asEntryList:list[BuildingEntry],icons:list[BlueprintIcon]) -> None:
         self.asEntryList = asEntryList
         self.asTileDict = _getTileDictFromEntryList(asEntryList)
+        self.icons = icons
 
     def getSize(self) -> Size:
         return _genericGetSize(self)
@@ -114,10 +137,14 @@ class BuildingBlueprint:
     def _encode(self) -> dict:
         return {
             "$type" : BUILDING_BP_TYPE,
+            "Icon" : {
+                "Data" : [i._encode() for i in self.icons]
+            },
             "Entries" : [e._encode() for e in self.asEntryList]
         }
 
 class IslandEntry:
+
     def __init__(self,pos:Pos,rotation:Rotation,type:gameInfos.islands.Island,buildingBP:BuildingBlueprint|None,extra:typing.Any) -> None:
         self.pos = pos
         self.rotation = rotation
@@ -135,15 +162,17 @@ class IslandEntry:
         _omitKeyIfDefault(toReturn,"X",self.pos.x)
         _omitKeyIfDefault(toReturn,"Y",self.pos.y)
         _omitKeyIfDefault(toReturn,"R",self.rotation.value)
-        _omitKeyIfDefault(toReturn,"C",_encodeEntryExtraData(self.extra,self.type.id))
+        _omitKeyIfDefault(toReturn,"C",_encodeEntryExtraData(self.extra,self.type.id,True))
         if self.buildingBP is not None:
             toReturn["B"] = self.buildingBP._encode()
         return toReturn
 
 class IslandBlueprint:
-    def __init__(self,asEntryList:list[IslandEntry]) -> None:
+
+    def __init__(self,asEntryList:list[IslandEntry],icons:list[BlueprintIcon]) -> None:
         self.asEntryList = asEntryList
         self.asTileDict = _getTileDictFromEntryList(asEntryList)
+        self.icons = icons
 
     def getSize(self) -> Size:
         return _genericGetSize(self)
@@ -160,10 +189,14 @@ class IslandBlueprint:
     def _encode(self) -> dict:
         return {
             "$type" : ISLAND_BP_TYPE,
+            "Icons" : {
+                "Data" : [i._encode() for i in self.icons]
+            },
             "Entries" : [e._encode() for e in self.asEntryList]
         }
 
 class Blueprint:
+
     def __init__(self,majorVersion:int,version:int,type_:str,blueprint:BuildingBlueprint|IslandBlueprint) -> None:
         self.majorVersion = majorVersion
         self.version = version
@@ -241,7 +274,7 @@ def _omitKeyIfDefault(dict:dict,key:str,value:int|str) -> None:
     if value not in (0,""):
         dict[key] = value
 
-def _decodeEntryExtraData(raw:str,entryType:str) -> typing.Any:
+def _decodeEntryExtraData(raw:str,entryType:str,isIsland:bool) -> typing.Any:
 
     def standardDecode(rawDecoded:bytes,emptyIsLengthNegative1:bool) -> str:
         try:
@@ -428,12 +461,8 @@ def _decodeEntryExtraData(raw:str,entryType:str) -> typing.Any:
 
     if (
         (entryType in (ISLAND_IDS["spaceBelt"],ISLAND_IDS["spacePipe"],ISLAND_IDS["rail"]))
-        or (entryType in ISLANDS_WITH_NOT_STRICT_RAIL_EXTRA_DATA)
+        or (entryType in ISLANDS_WITH_RAIL_EXTRA_DATA)
     ):
-
-        # to remove if the game no longer accepts no extra data for these islands
-        if (entryType in ISLANDS_WITH_NOT_STRICT_RAIL_EXTRA_DATA) and (rawDecoded == b""):
-            return _getDefaultEntryExtraData(entryType)
 
         if len(rawDecoded) < 2:
             raise BlueprintError("String must be at least 2 bytes long")
@@ -441,7 +470,7 @@ def _decodeEntryExtraData(raw:str,entryType:str) -> typing.Any:
         layoutHeader = rawDecoded[0]
         if (entryType in (ISLAND_IDS["spaceBelt"],ISLAND_IDS["spacePipe"])) and (layoutHeader != 20):
             raise BlueprintError("First byte of space belt/pipe layout isn't '\\x14'")
-        if ((entryType == ISLAND_IDS["rail"]) or (entryType in ISLANDS_WITH_NOT_STRICT_RAIL_EXTRA_DATA)) and (layoutHeader != 10):
+        if ((entryType == ISLAND_IDS["rail"]) or (entryType in ISLANDS_WITH_RAIL_EXTRA_DATA)) and (layoutHeader != 10):
             raise BlueprintError("First byte of rail layout isn't '\\x0a'")
 
         layoutType = rawDecoded[1]
@@ -450,15 +479,20 @@ def _decodeEntryExtraData(raw:str,entryType:str) -> typing.Any:
 
         return {"type":layoutType,"layout":rawDecoded[2:]}
 
+    if isIsland and (rawDecoded != bytes([0])):
+        raise BlueprintError("String must be '\\x00'")
+
     return None
 
-def _encodeEntryExtraData(extra:typing.Any,entryType:str) -> str:
-
-    if extra is None:
-        return ""
+def _encodeEntryExtraData(extra:typing.Any,entryType:str,isIsland:bool) -> str:
 
     def b64encode(string:bytes) -> str:
         return base64.b64encode(string).decode()
+
+    if extra is None:
+        if isIsland:
+            return b64encode(bytes([0]))
+        return ""
 
     def standardEncode(string:str,emptyIsLengthNegative1:bool) -> str:
         return b64encode(utils.encodeStringWithLen(string.encode(),emptyIsLengthNegative1=emptyIsLengthNegative1))
@@ -529,7 +563,7 @@ def _encodeEntryExtraData(extra:typing.Any,entryType:str) -> str:
 
     if (
         (entryType in (ISLAND_IDS["spaceBelt"],ISLAND_IDS["spacePipe"],ISLAND_IDS["rail"]))
-        or (entryType in ISLANDS_WITH_NOT_STRICT_RAIL_EXTRA_DATA)
+        or (entryType in ISLANDS_WITH_RAIL_EXTRA_DATA)
     ):
         return b64encode(
             (b"\x14" if entryType in (ISLAND_IDS["spaceBelt"],ISLAND_IDS["spacePipe"]) else b"\x0a")
@@ -567,13 +601,13 @@ def _getDefaultEntryExtraData(entryType:str) -> typing.Any:
 
     if (
         (entryType in (ISLAND_IDS["spaceBelt"],ISLAND_IDS["spacePipe"],ISLAND_IDS["rail"]))
-        or (entryType in ISLANDS_WITH_NOT_STRICT_RAIL_EXTRA_DATA)
+        or (entryType in ISLANDS_WITH_RAIL_EXTRA_DATA)
     ):
         return {
             "type" : 1,
             "layout" : bytes([0,0]) + (
                 bytes([7,0,0,0])
-                if (entryType == ISLAND_IDS["rail"]) or (entryType in ISLANDS_WITH_NOT_STRICT_RAIL_EXTRA_DATA) else
+                if (entryType == ISLAND_IDS["rail"]) or (entryType in ISLANDS_WITH_RAIL_EXTRA_DATA) else
                 bytes()
             )
         }
@@ -592,6 +626,14 @@ def _getTileDictFromEntryList(entryList:list[BuildingEntry]|list[IslandEntry]) -
         for curTile in curTiles:
             tileDict[curTile] = TileEntry(entry)
     return tileDict
+
+def _getDefaultRawIcons(bpType:str) -> list[str|None]:
+    return [
+        "icon:" + ("Buildings" if bpType == BUILDING_BP_TYPE else "Platforms"),
+        None,
+        None,
+        "shape:" + ("Cu"*4 if bpType == BUILDING_BP_TYPE else "Ru"*4)
+    ]
 
 
 
@@ -679,7 +721,7 @@ def _getValidBlueprint(blueprint:dict,mustBeBuildingBP:bool=False) -> dict:
 
     validBP = {}
 
-    bpType = _getKeyValue(blueprint,"$type",str,BUILDING_BP_TYPE) # default to building instead of nothing : support for pre-alpha 8 blueprints
+    bpType = _getKeyValue(blueprint,"$type",str)
 
     if bpType not in (BUILDING_BP_TYPE,ISLAND_BP_TYPE):
         raise BlueprintError(f"{_ERR_MSG_PATH_SEP}$type{_ERR_MSG_PATH_END}Unknown blueprint type : '{bpType}'")
@@ -689,16 +731,62 @@ def _getValidBlueprint(blueprint:dict,mustBeBuildingBP:bool=False) -> dict:
 
     validBP["$type"] = bpType
 
-    allowedEntryTypes = (
-        gameInfos.buildings.allBuildings.keys()
-        if bpType == BUILDING_BP_TYPE else
-        gameInfos.islands.allIslands.keys()
-    )
+    bpIcons = _getKeyValue(blueprint,"Icon",dict,{"Data":_getDefaultRawIcons(bpType)})
+
+    try:
+
+        bpIconsData = _getKeyValue(bpIcons,"Data",list,[])
+
+        validIcons = []
+
+        for i,icon in enumerate(bpIconsData):
+            try:
+
+                iconType = type(icon)
+
+                if iconType in (dict,list):
+                    raise BlueprintError(f"{_ERR_MSG_PATH_END}Incorrect value type")
+
+                if iconType in (bool,int,float):
+                    continue
+
+                if icon == "":
+                    icon = None
+
+                if icon is None:
+                    validIcons.append(icon)
+                    continue
+
+                icon:str
+
+                if not icon.startswith(("icon:","shape:")):
+                    continue
+
+                if icon.startswith("icon:") and (len(icon.removeprefix("icon:")) in (0,1)):
+                    continue
+
+                validIcons.append(icon)
+
+            except BlueprintError as e:
+                raise BlueprintError(f"{_ERR_MSG_PATH_SEP}Data{_ERR_MSG_PATH_SEP}{i}{e}")
+
+    except BlueprintError as e:
+        raise BlueprintError(f"{_ERR_MSG_PATH_SEP}Icon{e}")
+
+    validBP["Icon"] = {
+        "Data" : validIcons
+    }
 
     bpEntries = _getKeyValue(blueprint,"Entries",list)
 
     if bpEntries == []:
         raise BlueprintError(f"{_ERR_MSG_PATH_SEP}Entries{_ERR_MSG_PATH_END}Empty list")
+
+    allowedEntryTypes = (
+        gameInfos.buildings.allBuildings.keys()
+        if bpType == BUILDING_BP_TYPE else
+        gameInfos.islands.allIslands.keys()
+    )
 
     validBPEntries = []
 
@@ -729,7 +817,7 @@ def _getValidBlueprint(blueprint:dict,mustBeBuildingBP:bool=False) -> dict:
 
             c = _getKeyValue(entry,"C",str,"")
             try:
-                c = _decodeEntryExtraData(c,t)
+                c = _decodeEntryExtraData(c,t,bpType == ISLAND_BP_TYPE)
             except BlueprintError as e:
                 raise BlueprintError(f"{_ERR_MSG_PATH_SEP}C{_ERR_MSG_PATH_END}{e}")
             validEntry["C"] = c
@@ -753,7 +841,7 @@ def _getValidBlueprint(blueprint:dict,mustBeBuildingBP:bool=False) -> dict:
 
     return validBP
 
-def _decodeBuildingBP(buildings:list[dict[str,typing.Any]]) -> BuildingBlueprint:
+def _decodeBuildingBP(buildings:list[dict[str,typing.Any]],icons:list[str|None]) -> BuildingBlueprint:
 
     entryList:list[BuildingEntry] = []
     occupiedTiles:set[Pos] = set()
@@ -784,9 +872,9 @@ def _decodeBuildingBP(buildings:list[dict[str,typing.Any]]) -> BuildingBlueprint
             b["C"]
         ))
 
-    return BuildingBlueprint(entryList)
+    return BuildingBlueprint(entryList,[BlueprintIcon(i) for i in icons])
 
-def _decodeIslandBP(islands:list[dict[str,typing.Any]]) -> IslandBlueprint:
+def _decodeIslandBP(islands:list[dict[str,typing.Any]],icons:list[str|None]) -> IslandBlueprint:
 
     entryList:list[IslandEntry] = []
     occupiedTiles:set[Pos] = set()
@@ -823,7 +911,7 @@ def _decodeIslandBP(islands:list[dict[str,typing.Any]]) -> IslandBlueprint:
             continue
 
         try:
-            curBuildingBP = _decodeBuildingBP(island["B"]["Entries"])
+            curBuildingBP = _decodeBuildingBP(island["B"]["Entries"],island["B"]["Icon"]["Data"])
         except BlueprintError as e:
             raise BlueprintError(
                 f"Error while creating building blueprint representation of '{islandEntryInfos['t'].id}' at {islandEntryInfos['pos']} : {e}")
@@ -851,7 +939,7 @@ def _decodeIslandBP(islands:list[dict[str,typing.Any]]) -> IslandBlueprint:
             islandEntryInfos["c"]
         ))
 
-    return IslandBlueprint(entryList)
+    return IslandBlueprint(entryList,[BlueprintIcon(i) for i in icons])
 
 
 
@@ -885,7 +973,7 @@ def decodeBlueprint(rawBlueprint:str) -> Blueprint:
         text = "platform"
 
     try:
-        decodedDecodedBP = func(validBP["Entries"])
+        decodedDecodedBP = func(validBP["Entries"],validBP["Icon"]["Data"])
     except BlueprintError as e:
         raise BlueprintError(f"Error while creating {text} blueprint representation : {e}")
     return Blueprint(majorVersion,version,bpType,decodedDecodedBP)
@@ -913,3 +1001,6 @@ def getPotentialBPCodesInString(string:str) -> list[str]:
         bpCodes.append(PREFIX+bp+SUFFIX)
 
     return bpCodes
+
+def getDefaultBlueprintIcons(bpType:str) -> list[BlueprintIcon]:
+    return [BlueprintIcon(i) for i in _getDefaultRawIcons(bpType)]

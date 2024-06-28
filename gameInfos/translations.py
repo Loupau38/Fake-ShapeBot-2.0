@@ -28,13 +28,21 @@ class TranslationString:
         self.components = components
 
 def _loadTranslations() -> dict[str,TranslationString]:
+
     with open(globalInfos.GI_TRANSLATIONS_PATH,encoding="utf-8") as f:
         raw:dict[str,str] = json.load(f)
     parsedTranslations:dict[str,TranslationString] = {}
-    for key,rawString in raw.items():
+
+    def decodeString(key:str) -> TranslationString:
+
+        if parsedTranslations.get(key) is not None:
+            return parsedTranslations[key]
+
+        rawString = raw[key]
         components:list[StringComponent|TagComponent] = []
         openingSplits = rawString.split("<")
         components.append(StringComponent(openingSplits[0]))
+
         for split in openingSplits[1:]:
             tag,text = split.split(">")
             if tag.startswith("/"):
@@ -45,22 +53,26 @@ def _loadTranslations() -> dict[str,TranslationString]:
                 tagType = "start"
             components.append(TagComponent(tagType,tag.removeprefix("/").removesuffix("/")))
             components.append(StringComponent(text))
+
         newComponents:list[StringComponent|TagComponent] = []
         for component in components:
-            if type(component) == TagComponent:
-                if (component.type == "single") and (component.value.startswith("copy-from:")):
-                    newComponents.extend(parsedTranslations[component.value.removeprefix("copy-from:")].components)
-                else:
-                    newComponents.append(component)
+            if (type(component) == TagComponent) and (component.type == "single") and (component.value.startswith("copy-from:")):
+                newComponents.extend(decodeString(component.value.removeprefix("copy-from:")).components)
             else:
                 newComponents.append(component)
+
         parsedString = ""
         for component in newComponents:
             if type(component) == StringComponent:
                 parsedString += component.value
             else:
                 parsedString += component.asString()
-        parsedTranslations[key] = TranslationString(rawString,parsedString,components)
+
+        parsedTranslations[key] = TranslationString(rawString,parsedString,newComponents)
+        return parsedTranslations[key]
+
+    for key in raw.keys():
+        decodeString(key)
     return parsedTranslations
 
 _translations = _loadTranslations()
