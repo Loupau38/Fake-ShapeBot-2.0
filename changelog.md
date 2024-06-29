@@ -1,3 +1,6 @@
+## ?? ??? 24
+- Add /msg commands
+
 ## 28 Jun 24
 - Update for alphas : 22.3, 22.4, 22.4-wiretest-1 :
   - Add versions in game infos
