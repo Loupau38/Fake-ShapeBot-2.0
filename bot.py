@@ -462,7 +462,6 @@ def getBPInfoText(blueprint:blueprints.Blueprint,advanced:bool) -> str:
             f"Building size : `{buildingSize.width}`x`{buildingSize.height}`x`{buildingSize.depth}`",
             f"Building tiles : `{utils.sepInGroupsNumber(blueprint.buildingBP.getTileCount())}`"
         ])
-        blueprintIcons = blueprint.buildingBP.icons
 
     if blueprint.islandBP is not None:
         islandSize = blueprint.islandBP.getSize()
@@ -471,8 +470,8 @@ def getBPInfoText(blueprint:blueprints.Blueprint,advanced:bool) -> str:
             f"Platform size : `{islandSize.width}`x`{islandSize.height}`",
             f"Platform tiles : `{utils.sepInGroupsNumber(blueprint.islandBP.getTileCount())}`"
         ])
-        blueprintIcons = blueprint.islandBP.icons
 
+    blueprintIcons = blueprint.buildingBP.icons if blueprint.type == blueprints.BUILDING_BP_TYPE else blueprint.islandBP.icons
     blueprintIconsStr = []
     for icon in blueprintIcons:
         if icon.type == "empty":
@@ -1162,10 +1161,9 @@ def runDiscordBot() -> None:
                 responseMsg = globalInfos.NO_PERMISSION_TEXT
                 return
 
-            blueprintInfos:tuple[int,int,str] = (
+            blueprintInfos:tuple[int,int] = (
                 gameInfos.versions.LATEST_MAJOR_VERSION,
-                gameInfos.versions.LATEST_GAME_VERSION,
-                blueprints.BUILDING_BP_TYPE
+                gameInfos.versions.LATEST_GAME_VERSION
             )
 
             if to_create.startswith("item-producer-w-"):
@@ -1192,12 +1190,13 @@ def runDiscordBot() -> None:
                 try:
                     responseMsg = blueprints.encodeBlueprint(blueprints.Blueprint(
                         *blueprintInfos,
+                        blueprints.BUILDING_BP_TYPE,
                         blueprints.BuildingBlueprint([blueprints.BuildingEntry(
                             utils.Pos(0,0),
                             utils.Rotation(0),
                             gameInfos.buildings.allBuildings["SandboxItemProducerDefaultInternalVariant"],
                             buildingExtra
-                        )])
+                        )],blueprints.getDefaultBlueprintIcons(blueprints.BUILDING_BP_TYPE))
                     ))
                     noErrors = True
                 except blueprints.BlueprintError as e:
@@ -1230,13 +1229,13 @@ def runDiscordBot() -> None:
                     entryList.append(blueprints.IslandEntry(*shared,None))
                 curX += maxX + 1
 
+            bpType = blueprints.BUILDING_BP_TYPE if toCreateBuildings else blueprints.ISLAND_BP_TYPE
             try:
                 responseMsg = blueprints.encodeBlueprint(blueprints.Blueprint(
                     *blueprintInfos,
+                    bpType,
                     (blueprints.BuildingBlueprint if toCreateBuildings else blueprints.IslandBlueprint)
-                    (entryList,blueprints.getDefaultBlueprintIcons(
-                        blueprints.BUILDING_BP_TYPE if toCreateBuildings else blueprints.ISLAND_BP_TYPE
-                    ))
+                    (entryList,blueprints.getDefaultBlueprintIcons(bpType))
                 ))
                 noErrors = True
             except blueprints.BlueprintError as e:

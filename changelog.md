@@ -1,4 +1,9 @@
-## ?? ??? 24
+## 30 Jun 24
+- Fix error when decoding island blueprint containing buildings
+- Fix error when using /blueprint-creator item-producer-w-shape
+- Fix blueprint being of incorrect type internally when using /blueprint-creator all-platforms
+
+## 29 Jun 24
 - Add /msg commands
 
 ## 28 Jun 24

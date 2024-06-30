@@ -226,7 +226,7 @@ class Blueprint:
             if tempBuildingList == []:
                 self.buildingBP = None
             else:
-                self.buildingBP = BuildingBlueprint(tempBuildingList)
+                self.buildingBP = BuildingBlueprint(tempBuildingList,blueprint.icons)
 
     def getCost(self) -> int:
         # bp cost formula : last updated : alpha 15.2
