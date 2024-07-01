@@ -1,3 +1,5 @@
+**Moved to https://github.com/tobspr-games/shapez-2-discord-bot**
+
 # Fake ShapeBot 2
 
 ## Shape viewer
