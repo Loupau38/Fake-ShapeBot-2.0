@@ -1,4 +1,4 @@
-import pygame
+import pygamePIL
 import math
 import typing
 
@@ -98,12 +98,12 @@ def _preRenderColorblindPatterns() -> None:
 
     global _colorblindPatterns
     surfaceSize = FAKE_SURFACE_SIZE
-    redSurface = pygame.Surface((surfaceSize,surfaceSize),pygame.SRCALPHA)
+    redSurface = pygamePIL.Surface((surfaceSize,surfaceSize),pygamePIL.SRCALPHA)
     greenSurface = redSurface.copy()
     blueSurface = redSurface.copy()
 
     for i in range(COLORBLIND_NUM_PATTERNS):
-        pygame.draw.line(
+        pygamePIL.draw_line(
             redSurface,
             COLORBLIND_PATTERN_COLOR,
             (i*COLORBLIND_PATTERN_SPACING,0),
@@ -113,10 +113,10 @@ def _preRenderColorblindPatterns() -> None:
 
     for x in range(COLORBLIND_NUM_PATTERNS-1):
         for y in range(COLORBLIND_NUM_PATTERNS):
-            pygame.draw.rect(
+            pygamePIL.draw_rect(
                 greenSurface,
                 COLORBLIND_PATTERN_COLOR,
-                pygame.Rect(
+                pygamePIL.Rect(
                     (x*COLORBLIND_PATTERN_SPACING) + (COLORBLIND_PATTERN_SPACING/2) - (COLORBLIND_PATTERN_WIDTH/2),
                     (y*COLORBLIND_PATTERN_SPACING) - (COLORBLIND_PATTERN_WIDTH/2),
                     COLORBLIND_PATTERN_WIDTH,
@@ -125,7 +125,7 @@ def _preRenderColorblindPatterns() -> None:
             )
 
     for i in range((COLORBLIND_NUM_PATTERNS*2)-1):
-        pygame.draw.line(
+        pygamePIL.draw_line(
             blueSurface,
             COLORBLIND_PATTERN_COLOR,
             ((i-COLORBLIND_NUM_PATTERNS+1)*COLORBLIND_PATTERN_SPACING,0),
@@ -140,7 +140,7 @@ def _preRenderColorblindPatterns() -> None:
     }
 
 
-_colorblindPatterns:dict[str,pygame.Surface]
+_colorblindPatterns:dict[str,pygamePIL.Surface]
 _preRenderColorblindPatterns()
 
 def _getScaledShapeSize(shapeSize:float,layerIndex:int) -> float:
@@ -154,7 +154,7 @@ def _drawQuadrant(
     layerIndex:int,
     layers:list[list[str]],
     colorSkin:INTERNAL_COLOR_SKINS_ANNOTATION
-    ) -> tuple[pygame.Surface|None,pygame.Surface|None]:
+    ) -> tuple[pygamePIL.Surface|None,pygamePIL.Surface|None]:
     # returns quadrant with shadow, border
 
     borderSize = SHAPE_BORDER_SIZE
@@ -163,9 +163,9 @@ def _drawQuadrant(
     curQuadSize = curShapeSize / 2
 
     withBorderQuadSize = round(curQuadSize+borderSize)
-    quadSurface = pygame.Surface(
+    quadSurface = pygamePIL.Surface(
         (withBorderQuadSize,withBorderQuadSize),
-        pygame.SRCALPHA
+        pygamePIL.SRCALPHA
     )
     quadSurfaceForBorder = quadSurface.copy()
 
@@ -178,24 +178,24 @@ def _drawQuadrant(
 
     if quadShape == "C":
 
-        pygame.draw.circle(quadSurface,color, # main circle
+        pygamePIL.draw_circle(quadSurface,color, # main circle
             (halfBorderSize,withBorderQuadSize-halfBorderSize),
             curQuadSize,
             draw_top_right=True
         )
 
-        pygame.draw.circle(quadSurfaceForBorder,borderColor, # circle border
+        pygamePIL.draw_circle(quadSurfaceForBorder,borderColor, # circle border
             (halfBorderSize,withBorderQuadSize-halfBorderSize),
             curQuadSize+halfBorderSize,
             borderSize,
             draw_top_right=True
         )
-        pygame.draw.line(quadSurfaceForBorder,borderColor, # left border
+        pygamePIL.draw_line(quadSurfaceForBorder,borderColor, # left border
             (halfBorderSize,0),
             (halfBorderSize,withBorderQuadSize),
             borderSize
         )
-        pygame.draw.line(quadSurfaceForBorder,borderColor, # down border
+        pygamePIL.draw_line(quadSurfaceForBorder,borderColor, # down border
             (0,withBorderQuadSize-halfBorderSize),
             (withBorderQuadSize,withBorderQuadSize-halfBorderSize),
             borderSize
@@ -205,12 +205,12 @@ def _drawQuadrant(
 
     if quadShape == "R":
 
-        pygame.draw.rect(quadSurface,color, # main rect
-            pygame.Rect(halfBorderSize,halfBorderSize,curQuadSize,curQuadSize)
+        pygamePIL.draw_rect(quadSurface,color, # main rect
+            pygamePIL.Rect(halfBorderSize,halfBorderSize,curQuadSize,curQuadSize)
         )
 
-        pygame.draw.rect(quadSurfaceForBorder,borderColor, # rect border
-            pygame.Rect(0,0,withBorderQuadSize,withBorderQuadSize),
+        pygamePIL.draw_rect(quadSurfaceForBorder,borderColor, # rect border
+            pygamePIL.Rect(0,0,withBorderQuadSize,withBorderQuadSize),
             borderSize
         )
 
@@ -221,11 +221,11 @@ def _drawQuadrant(
         points = [(curQuadSize,0),(curQuadSize/2,curQuadSize),(0,curQuadSize),(0,curQuadSize/2)]
         points = [(halfBorderSize+x,halfBorderSize+y) for x,y in points]
 
-        pygame.draw.polygon(quadSurface,color,points) # main polygon
+        pygamePIL.draw_polygon(quadSurface,color,points) # main polygon
 
-        pygame.draw.polygon(quadSurfaceForBorder,borderColor,points,borderSize) # border polygon
+        pygamePIL.draw_polygon(quadSurfaceForBorder,borderColor,points,borderSize) # border polygon
         for point in points:
-            pygame.draw.circle(quadSurfaceForBorder,borderColor,point,halfBorderSize-1) # fill in the missing vertices
+            pygamePIL.draw_circle(quadSurfaceForBorder,borderColor,point,halfBorderSize-1) # fill in the missing vertices
 
         return quadSurface, quadSurfaceForBorder
 
@@ -235,28 +235,28 @@ def _drawQuadrant(
         arcRadius = curQuadSize * 1.18
         sideLength = curQuadSize / 3.75
 
-        pygame.draw.rect(quadSurface,color, # first fill in the whole quadrant
-            pygame.Rect(halfBorderSize,halfBorderSize,curQuadSize,curQuadSize)
+        pygamePIL.draw_rect(quadSurface,color, # first fill in the whole quadrant
+            pygamePIL.Rect(halfBorderSize,halfBorderSize,curQuadSize,curQuadSize)
         )
-        pygame.draw.circle(quadSurface,EMPTY_COLOR,arcCenter,arcRadius) # then carve out a circle
+        pygamePIL.draw_circle(quadSurface,EMPTY_COLOR,arcCenter,arcRadius) # then carve out a circle
 
-        pygame.draw.circle(quadSurfaceForBorder,borderColor,arcCenter,arcRadius+halfBorderSize,borderSize) # arc border
-        pygame.draw.line(quadSurfaceForBorder,borderColor, # left border
+        pygamePIL.draw_circle(quadSurfaceForBorder,borderColor,arcCenter,arcRadius+halfBorderSize,borderSize) # arc border
+        pygamePIL.draw_line(quadSurfaceForBorder,borderColor, # left border
             (halfBorderSize,0),
             (halfBorderSize,withBorderQuadSize),
             borderSize
         )
-        pygame.draw.line(quadSurfaceForBorder,borderColor, # down border
+        pygamePIL.draw_line(quadSurfaceForBorder,borderColor, # down border
             (0,withBorderQuadSize-halfBorderSize),
             (withBorderQuadSize,withBorderQuadSize-halfBorderSize),
             borderSize
         )
-        pygame.draw.line(quadSurfaceForBorder,borderColor, # top edge border
+        pygamePIL.draw_line(quadSurfaceForBorder,borderColor, # top edge border
             (halfBorderSize,halfBorderSize),
             (halfBorderSize+sideLength,halfBorderSize),
             borderSize
         )
-        pygame.draw.line(quadSurfaceForBorder,borderColor, # right edge border
+        pygamePIL.draw_line(quadSurfaceForBorder,borderColor, # right edge border
             (withBorderQuadSize-halfBorderSize,withBorderQuadSize-halfBorderSize-sideLength),
             (withBorderQuadSize-halfBorderSize,withBorderQuadSize-halfBorderSize),
             borderSize
@@ -270,9 +270,9 @@ def _drawQuadrant(
         pinRadius = curQuadSize/6
 
         if drawShadow:
-            pygame.draw.circle(quadSurface,SHADOW_COLOR,pinCenter,pinRadius+halfBorderSize) # shadow
+            pygamePIL.draw_circle(quadSurface,SHADOW_COLOR,pinCenter,pinRadius+halfBorderSize) # shadow
 
-        pygame.draw.circle(quadSurface,PIN_COLOR,pinCenter,pinRadius) # main circle
+        pygamePIL.draw_circle(quadSurface,PIN_COLOR,pinCenter,pinRadius) # main circle
 
         return quadSurface, None
 
@@ -284,7 +284,7 @@ def _drawQuadrant(
         stopAngle1 = math.radians(90-darkenedAreasOffset)
         startAngle2 = math.radians(22.5-darkenedAreasOffset)
         stopAngle2 = math.radians(45-darkenedAreasOffset)
-        darkenedAreasRect = pygame.Rect(
+        darkenedAreasRect = pygamePIL.Rect(
             halfBorderSize - curQuadSize,
             halfBorderSize,
             2 * curQuadSize,
@@ -292,25 +292,25 @@ def _drawQuadrant(
         )
 
         if drawShadow:
-            pygame.draw.circle(quadSurface,SHADOW_COLOR, # shadow
+            pygamePIL.draw_circle(quadSurface,SHADOW_COLOR, # shadow
                 (halfBorderSize,withBorderQuadSize-halfBorderSize),
                 curQuadSize+halfBorderSize,
                 borderSize,
                 draw_top_right=True
             )
 
-        pygame.draw.circle(quadSurface,color, # main circle
+        pygamePIL.draw_circle(quadSurface,color, # main circle
             (halfBorderSize,withBorderQuadSize-halfBorderSize),
             curQuadSize,
             draw_top_right=True
         )
-        pygame.draw.arc(quadSurface,darkenedColor, # 1st darkened area
+        pygamePIL.draw_arc(quadSurface,darkenedColor, # 1st darkened area
             darkenedAreasRect,
             startAngle1,
             stopAngle1,
             math.ceil(curQuadSize)
         )
-        pygame.draw.arc(quadSurface,darkenedColor, # 2nd darkened area
+        pygamePIL.draw_arc(quadSurface,darkenedColor, # 2nd darkened area
             darkenedAreasRect,
             startAngle2,
             stopAngle2,
@@ -321,9 +321,9 @@ def _drawQuadrant(
 
     raise ValueError(f"Unknown shape type : {quadShape}")
 
-def _drawColorblindPatterns(layerSurface:pygame.Surface,color:str) -> None:
+def _drawColorblindPatterns(layerSurface:pygamePIL.Surface,color:str) -> None:
 
-    curMask = pygame.mask.from_surface(layerSurface,200)
+    curMask = pygamePIL.mask_from_surface(layerSurface,200)
 
     for colors,pattern in zip(
         (["r","m","y","w"],["g","y","c","w"],["b","c","m","w"]),
@@ -332,15 +332,15 @@ def _drawColorblindPatterns(layerSurface:pygame.Surface,color:str) -> None:
         if color not in colors:
             continue
 
-        curPattern = pygame.Surface(layerSurface.get_size(),pygame.SRCALPHA)
+        curPattern = pygamePIL.Surface(layerSurface.get_size(),pygamePIL.SRCALPHA)
         _blitCentered(pattern,curPattern)
 
-        curPatternMasked = pygame.Surface(curPattern.get_size(),pygame.SRCALPHA)
+        curPatternMasked = pygamePIL.Surface(curPattern.get_size(),pygamePIL.SRCALPHA)
         curMask.to_surface(curPatternMasked,curPattern,unsetcolor=None)
 
         layerSurface.blit(curPatternMasked,(0,0))
 
-def _blitCentered(blitFrom:pygame.Surface,blitTo:pygame.Surface) -> None:
+def _blitCentered(blitFrom:pygamePIL.Surface,blitTo:pygamePIL.Surface) -> None:
     blitTo.blit(
         blitFrom,
         (
@@ -349,17 +349,17 @@ def _blitCentered(blitFrom:pygame.Surface,blitTo:pygame.Surface) -> None:
         )
     )
 
-def _rotateSurf(toRotate:pygame.Surface,numQuads:int,quadIndex:int,layerIndex:int,shapeSize:float) -> pygame.Surface:
+def _rotateSurf(toRotate:pygamePIL.Surface,numQuads:int,quadIndex:int,layerIndex:int,shapeSize:float) -> pygamePIL.Surface:
     curShapeSize = _getScaledShapeSize(shapeSize,layerIndex)
-    tempSurf = pygame.Surface(
+    tempSurf = pygamePIL.Surface(
         (curShapeSize+SHAPE_BORDER_SIZE,)*2,
-        pygame.SRCALPHA
+        pygamePIL.SRCALPHA
     )
     tempSurf.blit(toRotate,(curShapeSize/2,0))
-    tempSurf = pygame.transform.rotate(tempSurf,-((360/numQuads)*quadIndex))
+    tempSurf = pygamePIL.transform_rotate(tempSurf,-((360/numQuads)*quadIndex))
     return tempSurf
 
-def renderShape(shapeCode:str,surfaceSize:int,colorSkin:EXTERNAL_COLOR_SKINS_ANNOTATION=EXTERNAL_COLOR_SKINS[0]) -> pygame.Surface:
+def renderShape(shapeCode:str,surfaceSize:int,colorSkin:EXTERNAL_COLOR_SKINS_ANNOTATION=EXTERNAL_COLOR_SKINS[0]) -> pygamePIL.Surface:
 
     decomposedShapeCode = shapeCode.split(SHAPE_LAYER_SEPARATOR)
     numQuads = int(len(decomposedShapeCode[0])/2)
@@ -368,8 +368,8 @@ def renderShape(shapeCode:str,surfaceSize:int,colorSkin:EXTERNAL_COLOR_SKINS_ANN
     curInternalColorSkin = colorSkin.removesuffix("-cb")
     colorblindPatterns = colorSkin.endswith("-cb")
 
-    returnSurface = pygame.Surface((FAKE_SURFACE_SIZE,FAKE_SURFACE_SIZE),pygame.SRCALPHA)
-    pygame.draw.circle(returnSurface,BG_CIRCLE_COLOR,(FAKE_SURFACE_SIZE/2,FAKE_SURFACE_SIZE/2),BG_CIRCLE_DIAMETER/2)
+    returnSurface = pygamePIL.Surface((FAKE_SURFACE_SIZE,FAKE_SURFACE_SIZE),pygamePIL.SRCALPHA)
+    pygamePIL.draw_circle(returnSurface,BG_CIRCLE_COLOR,(FAKE_SURFACE_SIZE/2,FAKE_SURFACE_SIZE/2),BG_CIRCLE_DIAMETER/2)
 
     for layerIndex, layer in enumerate(decomposedShapeCode):
 
@@ -395,4 +395,4 @@ def renderShape(shapeCode:str,surfaceSize:int,colorSkin:EXTERNAL_COLOR_SKINS_ANN
 
             _blitCentered(_rotateSurf(border,numQuads,quadIndex,layerIndex,SHAPE_SIZE),returnSurface)
 
-    return pygame.transform.smoothscale(returnSurface,(surfaceSize,surfaceSize)) # pygame doesn't work well at low resolution so render at size 500 then downscale to the desired size
+    return pygamePIL.transform_smoothscale(returnSurface,(surfaceSize,surfaceSize)) # pygame doesn't work well at low resolution so render at size 500 then downscale to the desired size

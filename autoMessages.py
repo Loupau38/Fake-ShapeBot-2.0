@@ -1,11 +1,11 @@
 import globalInfos
 import discord
-import pygame
+import pygamePIL
 import io
 
 async def _debugMenuCheck(message:discord.Message) -> str|None:
 
-    PATTERN_COLOR = (64,166,204)
+    PATTERN_COLOR = (64,166,204,255)
     PATTERN_WIDTH = 9
     PATTERN_HEIGHT = 14
     PATTERN_MAX_X = 15
@@ -42,8 +42,8 @@ async def _debugMenuCheck(message:discord.Message) -> str|None:
 
     with io.BytesIO(imageBytes) as buffer:
         try:
-            image = pygame.image.load(buffer)
-        except pygame.error:
+            image = pygamePIL.image_load(buffer)
+        except pygamePIL.error:
             return None
 
     imageWidth, imageHeight = image.get_size()

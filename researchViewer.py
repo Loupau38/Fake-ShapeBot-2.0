@@ -2,7 +2,7 @@ import gameInfos
 import shapeViewer
 import utils
 import globalInfos
-import pygame
+import pygamePIL
 import io
 
 BG_COLOR = (40,60,82)
@@ -10,17 +10,17 @@ LEVEL_COLOR = (23,42,60)
 NODE_COLOR = (29,54,74)
 TEXT_COLOR = (255,255,255)
 
-pygame.font.init()
-VERSION_FONT = pygame.font.Font(globalInfos.FONT_BOLD_PATH,10)
-NODE_FONT = pygame.font.Font(globalInfos.FONT_PATH,30)
-NODE_FONT_BOLD = pygame.font.Font(globalInfos.FONT_BOLD_PATH,30)
+pygamePIL.font_init()
+VERSION_FONT = pygamePIL.font_Font(globalInfos.FONT_BOLD_PATH,10)
+NODE_FONT = pygamePIL.font_Font(globalInfos.FONT_PATH,30)
+NODE_FONT_BOLD = pygamePIL.font_Font(globalInfos.FONT_BOLD_PATH,30)
 
 SHAPE_SIZE = 100
 RECT_BORDER_RADIUS = 30
 MARGIN = 5
 
-def _preRenderAllNames() -> tuple[dict[str,pygame.Surface],int]:
-    nodeNames:dict[str,pygame.Surface] = {}
+def _preRenderAllNames() -> tuple[dict[str,pygamePIL.Surface],int]:
+    nodeNames:dict[str,pygamePIL.Surface] = {}
     for lvl in gameInfos.research.reserachTree:
         for n in [lvl.milestone,*lvl.sideGoals]:
             nodeNames[n.id] = utils.decodedFormatToPygameSurf(utils.decodeUnityFormat(n.title),NODE_FONT,NODE_FONT_BOLD,1,TEXT_COLOR)
@@ -38,17 +38,17 @@ _treeHeight = _levelHeight
 
 _treeCache:tuple[bytes,int]|None = None
 
-def _renderNode(node:gameInfos.research.Node) -> pygame.Surface:
-    nodeSurf = pygame.Surface((_nodeWidth,_nodeHeight),pygame.SRCALPHA)
-    pygame.draw.rect(nodeSurf,NODE_COLOR,pygame.Rect(0,0,*nodeSurf.get_size()),border_radius=RECT_BORDER_RADIUS)
+def _renderNode(node:gameInfos.research.Node) -> pygamePIL.Surface:
+    nodeSurf = pygamePIL.Surface((_nodeWidth,_nodeHeight),pygamePIL.SRCALPHA)
+    pygamePIL.draw_rect(nodeSurf,NODE_COLOR,pygamePIL.Rect(0,0,*nodeSurf.get_size()),border_radius=RECT_BORDER_RADIUS)
     nodeSurf.blit(shapeViewer.renderShape(node.goalShape,SHAPE_SIZE),(0,0))
     nodeName = _preRenderedNodeNames[node.id]
     nodeSurf.blit(nodeName,(SHAPE_SIZE,(nodeSurf.get_height()/2)-(nodeName.get_height()/2)))
     return nodeSurf
 
-def _renderLevel(level:gameInfos.research.Level) -> pygame.Surface:
-    levelSurf = pygame.Surface((_levelWidth,_levelHeight),pygame.SRCALPHA)
-    pygame.draw.rect(levelSurf,LEVEL_COLOR,pygame.Rect(0,0,*levelSurf.get_size()),border_radius=RECT_BORDER_RADIUS)
+def _renderLevel(level:gameInfos.research.Level) -> pygamePIL.Surface:
+    levelSurf = pygamePIL.Surface((_levelWidth,_levelHeight),pygamePIL.SRCALPHA)
+    pygamePIL.draw_rect(levelSurf,LEVEL_COLOR,pygamePIL.Rect(0,0,*levelSurf.get_size()),border_radius=RECT_BORDER_RADIUS)
     curY = MARGIN
     levelNum = NODE_FONT.render(str(gameInfos.research.reserachTree.index(level)+1),1,TEXT_COLOR)
     levelSurf.blit(levelNum,((levelSurf.get_width()/2)-(levelNum.get_width()/2),curY))
@@ -59,8 +59,8 @@ def _renderLevel(level:gameInfos.research.Level) -> pygame.Surface:
         curY += renderedNode.get_height() + MARGIN + ((2*MARGIN) if i == 0 else 0)
     return levelSurf
 
-def _renderTree() -> pygame.Surface:
-    treeSurf = pygame.Surface((_treeWidth,_treeHeight))
+def _renderTree() -> pygamePIL.Surface:
+    treeSurf = pygamePIL.Surface((_treeWidth,_treeHeight))
     treeSurf.fill(BG_COLOR)
     curX = 0
     for level in gameInfos.research.reserachTree:
@@ -69,8 +69,8 @@ def _renderTree() -> pygame.Surface:
         curX += renderedLevel.get_width() + MARGIN
     return treeSurf
 
-def _showSurface(surf:pygame.Surface) -> pygame.Surface:
-    newSurf = pygame.Surface((surf.get_width()+30,surf.get_height()+30))
+def _showSurface(surf:pygamePIL.Surface) -> pygamePIL.Surface:
+    newSurf = pygamePIL.Surface((surf.get_width()+30,surf.get_height()+30))
     newSurf.fill(BG_COLOR)
     newSurf.blit(surf,(15,15))
     versionText = VERSION_FONT.render(gameInfos.research.treeVersion,1,TEXT_COLOR)

@@ -1,3 +1,6 @@
+## 01 Jul 24
+- Switch to using Pillow instead of pygame
+
 ## 30 Jun 24
 - Fix error when decoding island blueprint containing buildings
 - Fix error when using /blueprint-creator item-producer-w-shape

@@ -1,5 +1,5 @@
 import typing
-import pygame
+import pygamePIL
 import io
 from string import digits as DIGITS
 
@@ -11,9 +11,9 @@ def isNumber(string:str) -> bool:
             return False
     return True
 
-def pygameSurfToBytes(surf:pygame.Surface) -> tuple[io.BytesIO,int]:
+def pygameSurfToBytes(surf:pygamePIL.Surface) -> tuple[io.BytesIO,int]:
     with io.BytesIO() as buffer:
-        pygame.image.save(surf,buffer,"png")
+        pygamePIL.image_save(surf,buffer,"png")
         bufferValue = buffer.getvalue()
         bytesLen = len(bufferValue)
         finalBytes = io.BytesIO(bufferValue)
@@ -93,9 +93,9 @@ def decodedFormatToDiscordFormat(decoded:list[dict[str,str|dict[str,bool|str]]])
 def decodeHexColor(hex:str) -> tuple[int,int,int]:
     return int(hex[:2],16), int(hex[2:4],16), int(hex[4:],16)
 
-def decodedFormatToPygameSurf(decoded:list[dict[str,str|dict[str,bool|str]]],font:pygame.font.Font,
-    boldFont:pygame.font.Font,antialias:bool|int,defaultColor:tuple[int,int,int]) -> pygame.Surface:
-    texts:list[pygame.Surface] = []
+def decodedFormatToPygameSurf(decoded:list[dict[str,str|dict[str,bool|str]]],font:pygamePIL.font_Font,
+    boldFont:pygamePIL.font_Font,antialias:bool|int,defaultColor:tuple[int,int,int]) -> pygamePIL.Surface:
+    texts:list[pygamePIL.Surface] = []
     for elem in decoded:
         curFont = boldFont if elem["format"]["bold"] else font
         args = [elem["text"],antialias]
@@ -104,7 +104,7 @@ def decodedFormatToPygameSurf(decoded:list[dict[str,str|dict[str,bool|str]]],fon
         else:
             args.append(decodeHexColor(elem["format"]["color"]))
         texts.append(curFont.render(*args))
-    surf = pygame.Surface((sum(t.get_width() for t in texts),max(t.get_height() for t in texts)),pygame.SRCALPHA)
+    surf = pygamePIL.Surface((sum(t.get_width() for t in texts),max(t.get_height() for t in texts)),pygamePIL.SRCALPHA)
     curX = 0
     for text in texts:
         surf.blit(text,(curX,(surf.get_height()/2)-(text.get_height()/2)))

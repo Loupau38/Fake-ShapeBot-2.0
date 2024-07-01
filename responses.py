@@ -2,7 +2,7 @@ import shapeCodeGenerator
 import shapeViewer
 import globalInfos
 import utils
-import pygame
+import pygamePIL
 import io
 import typing
 
@@ -106,9 +106,9 @@ def handleResponse(message:str) -> None|tuple[None|tuple[tuple[io.BytesIO,int],b
 
     numShapes = len(shapeCodes)
     size = curDisplayParams["size"]
-    finalImage = pygame.Surface(
+    finalImage = pygamePIL.Surface(
         (size*min(globalInfos.SHAPES_PER_ROW,numShapes),size*(((numShapes-1)//globalInfos.SHAPES_PER_ROW)+1)),
-        pygame.SRCALPHA)
+        pygamePIL.SRCALPHA)
 
     renderedShapesCache = {}
     for i,code in enumerate(shapeCodes):

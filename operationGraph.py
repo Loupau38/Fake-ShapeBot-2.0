@@ -4,7 +4,7 @@ import globalInfos
 import shapeViewer
 import utils
 from utils import OutputString
-import pygame
+import pygamePIL
 import io
 import typing
 
@@ -17,7 +17,7 @@ class Operation:
         self.fullName = fullName
         self.func = func
         self.colorInputindexes = [] if colorInputIndexes is None else colorInputIndexes
-        self.image:pygame.Surface|None = None
+        self.image:pygamePIL.Surface|None = None
 
 class Instruction:
 
@@ -41,7 +41,7 @@ class GraphNode:
     SHAPE = "shape"
     OP = "op"
 
-    def __init__(self,type:str,inputs:list[int]|None,outputs:list[int]|None,image:pygame.Surface,
+    def __init__(self,type:str,inputs:list[int]|None,outputs:list[int]|None,image:pygamePIL.Surface,
         shapeVar:int|None=None,shapeCode:str|None=None) -> None:
         self.type = type
         self.inputs = inputs
@@ -81,10 +81,10 @@ OPERATIONS:dict[str,Operation] = {
 }
 
 for k,v in OPERATIONS.items():
-    v.image = pygame.image.load(f"{IMAGES_START_PATH}{k}.png")
+    v.image = pygamePIL.image_load(f"{IMAGES_START_PATH}{k}.png")
 
-pygame.font.init()
-SHAPE_VAR_FONT = pygame.font.Font(globalInfos.FONT_PATH,30)
+pygamePIL.font_init()
+SHAPE_VAR_FONT = pygamePIL.font_Font(globalInfos.FONT_PATH,30)
 SHAPE_VAR_COLOR = (255,255,255)
 
 def getInstructionsFromText(text:str) -> tuple[bool,list[Instruction]|str|OutputString]:
@@ -251,7 +251,7 @@ def genOperationGraph(
     handledInstructions = {}
     wasProcessingInstructionIndex = None
 
-    def renderShape(shapeCode) -> pygame.Surface:
+    def renderShape(shapeCode) -> pygamePIL.Surface:
         return shapeViewer.renderShape(shapeCode,GRAPH_NODE_SIZE,colorSkin)
 
     def newId() -> int:
@@ -379,13 +379,13 @@ def genOperationGraph(
             node.pos = (((graphWidth-layerWidth)/2)+(nodeIndex*(GRAPH_NODE_SIZE+GRAPH_H_MARGIN)),
                 layerIndex*(GRAPH_NODE_SIZE+GRAPH_V_MARGIN))
 
-    graphSurface = pygame.Surface((graphWidth,graphHeight),pygame.SRCALPHA)
+    graphSurface = pygamePIL.Surface((graphWidth,graphHeight),pygamePIL.SRCALPHA)
 
     for node in graphNodes.values():
         if node.outputs is not None:
             for output in node.outputs:
                 outputPos = graphNodes[output].pos
-                pygame.draw.line(graphSurface,LINE_COLOR,
+                pygamePIL.draw_line(graphSurface,LINE_COLOR,
                     (node.pos[0]+(GRAPH_NODE_SIZE/2),node.pos[1]+GRAPH_NODE_SIZE),
                     (outputPos[0]+(GRAPH_NODE_SIZE/2),outputPos[1]),LINE_WIDTH)
 
